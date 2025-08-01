@@ -740,13 +740,29 @@
             const totalCash = parseFloat(document.getElementById('cashAvailable').value) || 0;
             const { totalInvested, remainingCash, reserves } = lastSummaryData;
 
+            // Determine portfolio source
+            let portfolioSource = 'None';
+            let portfolioName = '';
+            
+            if (portfolioData.length > 0) {
+                const selectedPortfolio = portfolioSelect.value;
+                if (selectedPortfolio) {
+                    portfolioSource = 'Model Portfolio';
+                    portfolioName = modelPortfolios[selectedPortfolio] || selectedPortfolio;
+                } else {
+                    portfolioSource = 'Custom Upload';
+                    portfolioName = portfolioFileNameDisplay.textContent.replace('Selected: ', '') || 'Custom Portfolio';
+                }
+            }
+
             const reportData = {
                 totalCash: totalCash,
                 totalInvested: totalInvested,
                 remainingCash: remainingCash,
                 reserves: reserves,
                 orders: lastBuyOrders,
-                portfolioUsed: portfolioData.length > 0 ? 'Custom/Model Portfolio' : 'None',
+                portfolioSource: portfolioSource,
+                portfolioName: portfolioName,
                 timestamp: new Date().toISOString()
             };
 
