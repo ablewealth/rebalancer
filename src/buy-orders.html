@@ -406,31 +406,43 @@
             const lines = csvText.trim().split('\n');
             if (lines.length < 2) return [];
             
-            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
             console.log('CSV Header:', header);
             
-            // Find column indices
-            const symbolIndex = header.findIndex(h => h.toLowerCase().includes('symbol'));
-            const nameIndex = header.findIndex(h => h.toLowerCase().includes('name'));
-            const priceIndex = header.findIndex(h => h.toLowerCase().includes('price'));
-            const targetPercentIndex = header.findIndex(h => h.toLowerCase().includes('target') && h.toLowerCase().includes('percent'));
+            // Find column indices with more flexible matching
+            const symbolIndex = header.findIndex(h => h.includes('symbol') || h.includes('ticker'));
+            const nameIndex = header.findIndex(h => h.includes('name') || h.includes('description') || h.includes('security'));
+            const priceIndex = header.findIndex(h => h.includes('price') || h.includes('value') || h.includes('cost'));
+            const targetPercentIndex = header.findIndex(h => 
+                (h.includes('target') && h.includes('percent')) || 
+                h.includes('weight') || 
+                h.includes('allocation') || 
+                h.includes('%')
+            );
+            
+            console.log('Column indices:', { symbolIndex, nameIndex, priceIndex, targetPercentIndex });
             
             if (symbolIndex === -1 || priceIndex === -1 || targetPercentIndex === -1) {
-                alert('CSV must contain Symbol, Price, and Target Percent columns');
+                alert('CSV must contain Symbol, Price, and Target Percent/Weight columns');
                 return [];
             }
 
             return lines.slice(1).map(line => {
-                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return null;
+                
+                const values = trimmedLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                 const symbol = values[symbolIndex]?.trim().replace(/"/g, '');
                 const name = values[nameIndex]?.trim().replace(/"/g, '') || '';
-                const priceStr = values[priceIndex]?.trim().replace(/[$, "]/g, '');
-                const targetPercentStr = values[targetPercentIndex]?.trim().replace(/[%, "]/g, '');
+                const priceStr = values[priceIndex]?.trim().replace(/[$\s,"]/g, '');
+                const targetPercentStr = values[targetPercentIndex]?.trim().replace(/[%\s,"]/g, '');
                 
-                if (!symbol) return null;
+                if (!symbol || symbol === 'Symbol') return null;
                 
                 const price = parseFloat(priceStr) || 0;
                 const targetPercent = parseFloat(targetPercentStr) || 0;
+                
+                console.log('Parsed item:', { symbol, name, price, targetPercent });
                 
                 return {
                     symbol: symbol,

@@ -341,30 +341,65 @@
             const lines = csvText.trim().split('\n');
             if (lines.length < 2) return null;
 
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
             const holdings = [];
 
-            // Find column indices
-            const symbolIndex = headers.findIndex(h => h.includes('symbol') || h.includes('ticker'));
-            const nameIndex = headers.findIndex(h => h.includes('name') || h.includes('description'));
-            const priceIndex = headers.findIndex(h => h.includes('price') || h.includes('value'));
-            const weightIndex = headers.findIndex(h => h.includes('weight') || h.includes('allocation') || h.includes('%'));
+            console.log('CSV Headers:', headers);
+
+            // Find column indices with more flexible matching
+            const symbolIndex = headers.findIndex(h => 
+                h.includes('symbol') || h.includes('ticker')
+            );
+            const nameIndex = headers.findIndex(h => 
+                h.includes('name') || h.includes('description') || h.includes('security')
+            );
+            const priceIndex = headers.findIndex(h => 
+                h.includes('price') || h.includes('value') || h.includes('cost')
+            );
+            const weightIndex = headers.findIndex(h => 
+                h.includes('weight') || h.includes('allocation') || h.includes('%') || 
+                h.includes('percent') || h.includes('target')
+            );
+
+            console.log('Column indices:', { symbolIndex, nameIndex, priceIndex, weightIndex });
 
             for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(',').map(v => v.trim());
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // Split CSV line properly handling quoted values
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/"/g, ''));
                 if (values.length < 2) continue;
 
+                // Clean and parse values
+                const symbol = symbolIndex >= 0 ? values[symbolIndex] : values[1];
+                const name = nameIndex >= 0 ? values[nameIndex] : (values[2] || values[1]);
+                const priceStr = priceIndex >= 0 ? values[priceIndex] : '0';
+                const weightStr = weightIndex >= 0 ? values[weightIndex] : '0';
+
+                // Clean price string (remove $, spaces, etc.)
+                const cleanPrice = priceStr.replace(/[$\s,]/g, '');
+                const price = parseFloat(cleanPrice) || 0;
+
+                // Clean weight string (remove %, spaces, etc.)
+                const cleanWeight = weightStr.replace(/[%\s,]/g, '');
+                const weight = parseFloat(cleanWeight) || 0;
+
                 const holding = {
-                    symbol: symbolIndex >= 0 ? values[symbolIndex] : values[0],
-                    name: nameIndex >= 0 ? values[nameIndex] : values[1] || values[0],
-                    price: priceIndex >= 0 ? parseFloat(values[priceIndex]) || 0 : 0,
-                    weight: weightIndex >= 0 ? parseFloat(values[weightIndex]) || 0 : 0
+                    symbol: symbol || '',
+                    name: name || '',
+                    price: price,
+                    weight: weight
                 };
 
-                if (holding.symbol && holding.symbol !== '') {
+                console.log('Parsed holding:', holding);
+
+                if (holding.symbol && holding.symbol !== '' && holding.symbol !== 'Symbol') {
                     holdings.push(holding);
                 }
             }
+
+            console.log('Final holdings:', holdings);
 
             return {
                 name: filename.replace('.csv', '').replace(/_/g, ' '),
