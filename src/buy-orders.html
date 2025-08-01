@@ -259,7 +259,7 @@
 
             try {
                 // Load the selected model portfolio
-                const response = await fetch(`model portfolios/${selectedFile}`);
+                const response = await fetch(`../data/models/${selectedFile}`);
                 if (!response.ok) {
                     throw new Error(`Failed to load ${selectedFile}`);
                 }
