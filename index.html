@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tax Harvesting & Portfolio Rebalancer</title>
-    <meta http-equiv="refresh" content="0; url=src/index.html">
+    <meta http-equiv="refresh" content="2; url=src/index.html">
     <link rel="canonical" href="src/index.html">
     <style>
         body {
@@ -46,14 +46,31 @@
         <div class="spinner"></div>
         <h1>Tax Harvesting & Portfolio Rebalancer</h1>
         <p>Redirecting to the application...</p>
-        <p>If you're not redirected automatically, <a href="src/index.html">click here</a>.</p>
+        <p>If you're not redirected automatically, <a href="src/index.html" onclick="window.location.href='src/index.html'; return false;">click here</a>.</p>
     </div>
     
     <script>
+        // Immediate redirect function
+        function redirectToApp() {
+            try {
+                window.location.href = 'src/index.html';
+            } catch (error) {
+                console.error('Redirect failed:', error);
+                // If redirect fails, update the link text
+                document.querySelector('a[href="src/index.html"]').textContent = 'Please click here to continue to the application';
+            }
+        }
+
+        // Try redirect immediately when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Small delay to allow page to render first
+            setTimeout(redirectToApp, 500);
+        });
+
         // Fallback redirect in case meta refresh doesn't work
         setTimeout(function() {
-            window.location.href = 'src/index.html';
-        }, 1000);
+            redirectToApp();
+        }, 2000);
     </script>
 </body>
 </html>
