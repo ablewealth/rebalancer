@@ -27,72 +27,69 @@
             animation: spin 1s linear infinite;
         }
 
-        /* Compact Layout Overrides */
-        .text-xs { font-size: 0.6rem; line-height: 0.75rem; }
-        .text-sm { font-size: 0.65rem; line-height: 0.85rem; }
-        .text-base { font-size: 0.75rem; line-height: 0.95rem; }
-        .text-lg { font-size: 0.8rem; line-height: 1rem; }
-        .text-xl { font-size: 0.85rem; line-height: 1.1rem; }
-        .text-2xl { font-size: 0.95rem; line-height: 1.2rem; }
-        .text-3xl { font-size: 1.1rem; line-height: 1.3rem; }
-        .text-4xl { font-size: 1.25rem; line-height: 1.4rem; }
+        /* Compact Layout Overrides - Apply only to specific content areas, not navigation */
+        .content-area .text-xs { font-size: 0.6rem; line-height: 0.75rem; }
+        .content-area .text-sm { font-size: 0.65rem; line-height: 0.85rem; }
+        .content-area .text-base { font-size: 0.75rem; line-height: 0.95rem; }
+        .content-area .text-lg { font-size: 0.8rem; line-height: 1rem; }
+        .content-area .text-xl { font-size: 0.85rem; line-height: 1.1rem; }
+        .content-area .text-2xl { font-size: 0.95rem; line-height: 1.2rem; }
+        .content-area .text-3xl { font-size: 1.1rem; line-height: 1.3rem; }
+        .content-area .text-4xl { font-size: 1.25rem; line-height: 1.4rem; }
         
-        .p-2 { padding: 0.35rem; }
-        .p-3 { padding: 0.5rem; }
-        .p-4 { padding: 0.6rem; }
-        .p-6 { padding: 0.8rem; }
-        .p-8 { padding: 1rem; }
+        .content-area .p-2 { padding: 0.35rem; }
+        .content-area .p-3 { padding: 0.5rem; }
+        .content-area .p-4 { padding: 0.6rem; }
+        .content-area .p-6 { padding: 0.8rem; }
+        .content-area .p-8 { padding: 1rem; }
         
-        .py-1 { padding-top: 0.15rem; padding-bottom: 0.15rem; }
-        .py-2 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-        .py-3 { padding-top: 0.4rem; padding-bottom: 0.4rem; }
-        .py-4 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-        .py-8 { padding-top: 1rem; padding-bottom: 1rem; }
+        .content-area .py-1 { padding-top: 0.15rem; padding-bottom: 0.15rem; }
+        .content-area .py-2 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .content-area .py-3 { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+        .content-area .py-4 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .content-area .py-8 { padding-top: 1rem; padding-bottom: 1rem; }
         
-        .px-3 { padding-left: 0.4rem; padding-right: 0.4rem; }
-        .px-4 { padding-left: 0.6rem; padding-right: 0.6rem; }
-        .px-6 { padding-left: 0.8rem; padding-right: 0.8rem; }
+        .content-area .px-3 { padding-left: 0.4rem; padding-right: 0.4rem; }
+        .content-area .px-4 { padding-left: 0.6rem; padding-right: 0.6rem; }
+        .content-area .px-6 { padding-left: 0.8rem; padding-right: 0.8rem; }
         
-        .mb-2 { margin-bottom: 0.3rem; }
-        .mb-3 { margin-bottom: 0.5rem; }
-        .mb-4 { margin-bottom: 0.6rem; }
-        .mb-6 { margin-bottom: 0.8rem; }
-        .mb-8 { margin-bottom: 1rem; }
+        .content-area .mb-2 { margin-bottom: 0.3rem; }
+        .content-area .mb-3 { margin-bottom: 0.5rem; }
+        .content-area .mb-4 { margin-bottom: 0.6rem; }
+        .content-area .mb-6 { margin-bottom: 0.8rem; }
+        .content-area .mb-8 { margin-bottom: 1rem; }
         
-        .mt-1 { margin-top: 0.15rem; }
-        .mt-2 { margin-top: 0.3rem; }
-        .mt-4 { margin-top: 0.6rem; }
-        .mt-8 { margin-top: 1rem; }
+        .content-area .mt-1 { margin-top: 0.15rem; }
+        .content-area .mt-2 { margin-top: 0.3rem; }
+        .content-area .mt-4 { margin-top: 0.6rem; }
+        .content-area .mt-8 { margin-top: 1rem; }
         
-        .gap-4 { gap: 0.6rem; }
-        .gap-8 { gap: 1rem; }
+        .content-area .gap-4 { gap: 0.6rem; }
+        .content-area .gap-8 { gap: 1rem; }
         
-        .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.6rem; }
+        .content-area .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.6rem; }
         
         /* Table specific compact styling */
-        table th, table td { 
+        .content-area table th, .content-area table td { 
             padding: 0.4rem 0.6rem !important; 
             font-size: 0.65rem !important;
             line-height: 0.85rem !important;
         }
         
         /* Button compact styling */
-        button { 
+        .content-area button { 
             padding: 0.4rem 0.8rem !important; 
             font-size: 0.7rem !important;
         }
         
         /* Input compact styling */
-        input, select { 
+        .content-area input, .content-area select { 
             padding: 0.35rem !important; 
             font-size: 0.65rem !important;
         }
         
-        /* Container max width adjustment for better space usage */
-        .max-w-7xl { max-width: 95vw; }
-        
         /* Reduce card padding */
-        .rounded-xl { padding: 0.8rem !important; }
+        .content-area .rounded-xl { padding: 0.8rem !important; }
 
         /* Navigation Styles */
         .nav-link {
@@ -125,7 +122,6 @@
                     <div class="flex items-center">
                         <div class="flex-shrink-0 flex items-center">
                             <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-3">
-                            <h1 class="text-lg font-bold text-gray-900 whitespace-nowrap">Portfolio Rebalancer</h1>
                         </div>
                     </div>
                     
@@ -185,7 +181,7 @@
                             Model Portfolios
                         </a>
                         <a href="buy-orders.html" class="mobile-nav-link bg-green-100 text-green-700 block px-3 py-2 rounded-md text-base font-medium hover:bg-green-200 transition-colors duration-200">
-                            Buy Orders
+                            Buy Orders  
                         </a>
                         <a href="price-manager.html" class="mobile-nav-link text-gray-600 hover:text-teal-600 hover:bg-teal-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
                             Price Manager
@@ -197,7 +193,8 @@
                 </div>
             </div>
         </nav>
-                            Tax Harvesting
+
+        <div class="content-area">
                         </a>
                         <a href="model-portfolios.html" class="mobile-nav-link text-gray-600 hover:text-purple-600 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
                             Model Portfolios
@@ -1036,6 +1033,43 @@
 
             localStorage.setItem('buyOrdersReport', JSON.stringify(reportData));
         }
+        
+        // Mobile menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const mobileMenuButton = document.getElementById('mobile-menu-button');
+                const mobileMenu = document.getElementById('mobile-menu');
+                
+                if (mobileMenuButton && mobileMenu) {
+                    mobileMenuButton.addEventListener('click', function() {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                    
+                    // Close mobile menu when clicking outside
+                    document.addEventListener('click', function(event) {
+                        if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
+                            mobileMenu.classList.add('hidden');
+                        }
+                    });
+                }
+                
+                // Handle navigation links
+                const navLinks = document.querySelectorAll('a[href]');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        const href = this.getAttribute('href');
+                        if (href && href !== '#') {
+                            console.log('Navigating to:', href);
+                            // Let the browser handle the navigation normally
+                        }
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Navigation initialization error:', error);
+            }
+        });
     </script>
+    </div> <!-- End content-area -->
 </body>
 </html>

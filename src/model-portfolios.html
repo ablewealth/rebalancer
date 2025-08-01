@@ -67,7 +67,6 @@
                     <div class="flex items-center">
                         <div class="flex-shrink-0 flex items-center">
                             <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-3">
-                            <h1 class="text-lg font-bold text-gray-900 whitespace-nowrap">Portfolio Rebalancer</h1>
                         </div>
                     </div>
                     
@@ -127,7 +126,7 @@
                             Model Portfolios
                         </a>
                         <a href="buy-orders.html" class="mobile-nav-link text-gray-600 hover:text-green-600 hover:bg-green-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
-                            Buy Orders
+                            Buy Orders  
                         </a>
                         <a href="price-manager.html" class="mobile-nav-link text-gray-600 hover:text-teal-600 hover:bg-teal-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
                             Price Manager
@@ -139,15 +138,6 @@
                 </div>
             </div>
         </nav>
-                    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 rounded-lg mt-2">
-                        <a href="index.html" class="mobile-nav-link text-gray-600 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
-                            Tax Harvesting
-                        </a>
-                        <a href="model-portfolios.html" class="mobile-nav-link bg-purple-100 text-purple-700 block px-3 py-2 rounded-md text-base font-medium">
-                            Model Portfolios
-                        </a>
-                        <a href="buy-orders.html" class="mobile-nav-link text-gray-600 hover:text-green-600 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
-                            Buy Orders
                         </a>
                         <a href="price-manager.html" class="mobile-nav-link text-gray-600 hover:text-teal-600 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
                             Price Manager
@@ -1314,6 +1304,42 @@
             }
         }
         initializePortfolios();
+        
+        // Mobile menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const mobileMenuButton = document.getElementById('mobile-menu-button');
+                const mobileMenu = document.getElementById('mobile-menu');
+                
+                if (mobileMenuButton && mobileMenu) {
+                    mobileMenuButton.addEventListener('click', function() {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                    
+                    // Close mobile menu when clicking outside
+                    document.addEventListener('click', function(event) {
+                        if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
+                            mobileMenu.classList.add('hidden');
+                        }
+                    });
+                }
+                
+                // Handle navigation links
+                const navLinks = document.querySelectorAll('a[href]');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        const href = this.getAttribute('href');
+                        if (href && href !== '#') {
+                            console.log('Navigating to:', href);
+                            // Let the browser handle the navigation normally
+                        }
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Navigation initialization error:', error);
+            }
+        });
     </script>
 </body>
 
