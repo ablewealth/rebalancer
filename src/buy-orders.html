@@ -76,8 +76,8 @@
             line-height: 0.85rem !important;
         }
         
-        /* Button compact styling */
-        .content-area button { 
+        /* Button compact styling - exclude navigation */
+        .content-area button:not(nav button) { 
             padding: 0.4rem 0.8rem !important; 
             font-size: 0.7rem !important;
         }
@@ -91,23 +91,28 @@
         /* Reduce card padding */
         .content-area .rounded-xl { padding: 0.8rem !important; }
 
-        /* Navigation Styles */
+        /* Navigation Styles - Full sized, professional appearance */
         .nav-link {
             position: relative;
             overflow: hidden;
+            min-height: 2.5rem;
+            display: flex !important;
+            align-items: center !important;
         }
-
-        .nav-link:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
         }
-
-        .nav-link.active {
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .mobile-nav-link:hover {
-            background-color: rgba(0, 0, 0, 0.05);
+        
+        .nav-link:hover::before {
+            left: 100%;
         }
     </style>
 </head>
@@ -196,11 +201,7 @@
 
         <!-- Main Content Area -->
         <div class="content-area">
-                    </div>
-                </div>
-            </div>
-        </nav>
-
+        
         <!-- Breadcrumb -->
         <div class="breadcrumb max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="index.html">Home</a>
