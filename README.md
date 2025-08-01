@@ -1,6 +1,6 @@
-# Tax Harvesting Calculator
+# Tax Harvesting & Portfolio Rebalancer
 
-An advanced tax harvesting optimization tool that helps investors find optimal trades to meet their tax goals.
+An advanced tax harvesting optimization tool that helps investors find optimal trades to meet their tax goals and rebalance portfolios.
 
 ## Features
 
@@ -13,7 +13,7 @@ An advanced tax harvesting optimization tool that helps investors find optimal t
 ## Project Structure
 
 ```
-tax-harvesting/
+rebalancer/
 ├── src/                    # Source HTML files
 │   ├── index.html         # Main tax harvesting calculator
 │   ├── buy-orders.html    # Buy order generation page
