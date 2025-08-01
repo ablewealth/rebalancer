@@ -145,6 +145,7 @@
             <div class="mt-4 flex justify-center space-x-4">
                 <a href="model-portfolios.html" class="text-purple-600 hover:text-purple-800 underline">Model Portfolios</a>
                 <a href="buy-orders.html" class="text-green-600 hover:text-green-800 underline">Generate Buy Orders →</a>
+                <a href="report.html" class="text-orange-600 hover:text-orange-800 underline">📊 View Report</a>
             </div>
         </header>
 
@@ -1056,6 +1057,9 @@
                 return;
             }
 
+            // Save data for report
+            saveReportData();
+
             const accountNumber = document.getElementById('accountNumber').value || 'N/A';
             const headers = [
                 "Account Number", "Security Symbol", "Purchase Date", "Quantity Owned",
@@ -1098,6 +1102,9 @@
                 return;
             }
 
+            // Save data for report
+            saveReportData();
+
             // Calculate total market value from trades (cash generated from sales)
             const totalCashFromSales = lastSummaryData.totalMarketValueFromTrades;
 
@@ -1119,6 +1126,39 @@
 
             // Navigate to buy-orders page
             window.location.href = 'buy-orders.html';
+        }
+
+        function saveReportData() {
+            const clientName = document.getElementById('clientName').value;
+            const custodian = document.getElementById('custodian').value;
+            const accountNumber = document.getElementById('accountNumber').value;
+            const realizedST = parseFloat(document.getElementById('realizedST').value) || 0;
+            const realizedLT = parseFloat(document.getElementById('realizedLT').value) || 0;
+            const targetST = parseFloat(document.getElementById('targetST').value) || 0;
+            const targetLT = parseFloat(document.getElementById('targetLT').value) || 0;
+
+            const reportData = {
+                client: {
+                    name: clientName,
+                    custodian: custodian,
+                    accountNumber: accountNumber
+                },
+                realizedST: realizedST,
+                realizedLT: realizedLT,
+                targetST: targetST,
+                targetLT: targetLT,
+                finalST: lastSummaryData.finalST || 0,
+                finalLT: lastSummaryData.finalLT || 0,
+                totalGainLoss: lastSummaryData.totalGainFromTrades || 0,
+                totalMarketValue: lastSummaryData.totalMarketValueFromTrades || 0,
+                recommendations: lastRecommendations,
+                totalPositions: portfolioData.length,
+                selectedPositions: portfolioData.filter(lot => lot.includedInSelling).length,
+                excludedPositions: portfolioData.filter(lot => !lot.includedInSelling).length,
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('taxHarvestingReport', JSON.stringify(reportData));
         }
     </script>
 </body>

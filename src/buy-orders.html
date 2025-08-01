@@ -104,6 +104,7 @@
             <div class="mt-4 flex justify-center space-x-4">
                 <a href="index.html" class="text-blue-600 hover:text-blue-800 underline">← Tax Harvesting</a>
                 <a href="model-portfolios.html" class="text-purple-600 hover:text-purple-800 underline">Model Portfolios</a>
+                <a href="report.html" class="text-orange-600 hover:text-orange-800 underline">📊 View Report</a>
             </div>
         </header>
 
@@ -547,6 +548,8 @@
                 buyOrdersDiv.classList.remove('hidden');
                 if(lastBuyOrders.length > 0) {
                     exportBtn.classList.remove('hidden');
+                    // Auto-save data for report
+                    saveBuyOrdersReportData();
                 }
             }, 500);
         }
@@ -689,6 +692,9 @@
                 return;
             }
 
+            // Save data for report
+            saveBuyOrdersReportData();
+
             const accountNumber = document.getElementById('accountNumber').value || 'N/A';
             const clientName = document.getElementById('clientName').value || 'N/A';
             const custodian = document.getElementById('custodian').value || 'N/A';
@@ -728,6 +734,23 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        function saveBuyOrdersReportData() {
+            const totalCash = parseFloat(document.getElementById('cashAvailable').value) || 0;
+            const { totalInvested, remainingCash, reserves } = lastSummaryData;
+
+            const reportData = {
+                totalCash: totalCash,
+                totalInvested: totalInvested,
+                remainingCash: remainingCash,
+                reserves: reserves,
+                orders: lastBuyOrders,
+                portfolioUsed: portfolioData.length > 0 ? 'Custom/Model Portfolio' : 'None',
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('buyOrdersReport', JSON.stringify(reportData));
         }
     </script>
 </body>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Harvesting & Rebalancing Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Print-specific styles */
+        @media print {
+            body { 
+                font-size: 12px; 
+                line-height: 1.4;
+                color: #000;
+                background: white;
+            }
+            .no-print { display: none !important; }
+            .print-break { page-break-before: always; }
+            .print-avoid-break { page-break-inside: avoid; }
+            .shadow-md, .shadow-lg { box-shadow: none !important; }
+            .border { border: 1px solid #000 !important; }
+            .bg-gray-50, .bg-gray-100 { background-color: #f8f9fa !important; }
+            .text-blue-600, .text-green-600, .text-red-600, .text-purple-600 { 
+                color: #000 !important; 
+            }
+            table { border-collapse: collapse; }
+            th, td { border: 1px solid #000 !important; padding: 4px 8px !important; }
+            .header-logo { max-height: 60px; }
+        }
+        
+        /* Screen-specific compact styles */
+        @media screen {
+            .text-xs { font-size: 0.6rem; line-height: 0.75rem; }
+            .text-sm { font-size: 0.65rem; line-height: 0.85rem; }
+            .text-base { font-size: 0.75rem; line-height: 0.95rem; }
+            .text-lg { font-size: 0.8rem; line-height: 1rem; }
+            .text-xl { font-size: 0.85rem; line-height: 1.1rem; }
+            .text-2xl { font-size: 0.95rem; line-height: 1.2rem; }
+            .text-3xl { font-size: 1.1rem; line-height: 1.3rem; }
+            
+            .p-2 { padding: 0.35rem; }
+            .p-3 { padding: 0.5rem; }
+            .p-4 { padding: 0.6rem; }
+            .p-6 { padding: 0.8rem; }
+            
+            .py-2 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+            .py-3 { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+            .py-4 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            
+            .px-3 { padding-left: 0.4rem; padding-right: 0.4rem; }
+            .px-4 { padding-left: 0.6rem; padding-right: 0.6rem; }
+            .px-6 { padding-left: 0.8rem; padding-right: 0.8rem; }
+            
+            .mb-2 { margin-bottom: 0.3rem; }
+            .mb-3 { margin-bottom: 0.5rem; }
+            .mb-4 { margin-bottom: 0.6rem; }
+            .mb-6 { margin-bottom: 0.8rem; }
+            
+            .gap-4 { gap: 0.6rem; }
+            .gap-6 { gap: 0.8rem; }
+            
+            table th, table td { 
+                padding: 0.3rem 0.5rem !important; 
+                font-size: 0.65rem !important;
+                line-height: 0.85rem !important;
+            }
+            
+            button { 
+                padding: 0.4rem 0.8rem !important; 
+                font-size: 0.7rem !important;
+            }
+        }
+        
+        .signature-line {
+            border-bottom: 1px solid #000;
+            min-height: 40px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Navigation (No Print) -->
+    <div class="no-print bg-white shadow-sm border-b border-gray-200 mb-6">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex space-x-4">
+                    <a href="index.html" class="text-blue-600 hover:text-blue-800 underline text-sm">← Tax Harvesting</a>
+                    <a href="model-portfolios.html" class="text-purple-600 hover:text-purple-800 underline text-sm">Model Portfolios</a>
+                    <a href="buy-orders.html" class="text-green-600 hover:text-green-800 underline text-sm">Buy Orders</a>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="printBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+                        🖨️ Print Report
+                    </button>
+                    <button id="exportPdfBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
+                        📄 Export PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 max-w-6xl">
+        <!-- Report Header -->
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6 print-avoid-break">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Tax Harvesting & Portfolio Rebalancing Report</h1>
+                    <p class="text-sm text-gray-600">Comprehensive Investment Activity Summary</p>
+                </div>
+                <div class="text-right text-sm text-gray-600">
+                    <p><strong>Report Generated:</strong> <span id="reportDate"></span></p>
+                    <p><strong>Report Time:</strong> <span id="reportTime"></span></p>
+                </div>
+            </div>
+            
+            <!-- Client Information -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div>
+                    <p class="text-xs font-medium text-gray-700 mb-1">Client Name</p>
+                    <p class="text-sm font-semibold" id="clientNameDisplay">-</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-700 mb-1">Custodian</p>
+                    <p class="text-sm font-semibold" id="custodianDisplay">-</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-700 mb-1">Account Number</p>
+                    <p class="text-sm font-semibold" id="accountNumberDisplay">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6 print-avoid-break">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Executive Summary</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="executiveSummary">
+                <!-- Summary cards will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Tax Harvesting Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6 print-avoid-break">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">1. Tax Harvesting Analysis</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h3 class="text-lg font-medium mb-3">Tax Targets vs. Projected Results</h3>
+                    <div class="space-y-2" id="taxTargetsDisplay">
+                        <!-- Tax targets will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium mb-3">Portfolio Analysis</h3>
+                    <div class="space-y-2" id="portfolioAnalysisDisplay">
+                        <!-- Portfolio analysis will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="sellOrdersSection">
+                <h3 class="text-lg font-medium mb-3">Recommended Sell Orders</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 border border-gray-300">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Acquired Date</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Market Value</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Cost Basis</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Gain/(Loss)</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Term</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sellOrdersTable" class="bg-white divide-y divide-gray-200">
+                            <!-- Sell orders will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Portfolio Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6 print-avoid-break" id="modelPortfolioSection">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">2. Model Portfolio Selection</h2>
+            <div id="modelPortfolioDisplay">
+                <!-- Model portfolio info will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Buy Orders Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">3. Portfolio Rebalancing - Buy Orders</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="buyOrdersSummary">
+                <!-- Buy orders summary will be populated by JavaScript -->
+            </div>
+
+            <div id="buyOrdersSection">
+                <h3 class="text-lg font-medium mb-3">Recommended Buy Orders</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 border border-gray-300">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Security Name</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Shares to Buy</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Investment Amount</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Target %</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actual %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="buyOrdersTable" class="bg-white divide-y divide-gray-200">
+                            <!-- Buy orders will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance & Signatures Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6 print-break">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-2">Compliance & Authorization</h2>
+            
+            <div class="space-y-4 mb-6">
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h3 class="text-sm font-medium text-yellow-800 mb-2">Important Disclosures:</h3>
+                    <ul class="text-xs text-yellow-700 space-y-1">
+                        <li>• This report is generated for informational purposes and record-keeping compliance.</li>
+                        <li>• All trades are subject to market conditions and execution availability.</li>
+                        <li>• Tax implications should be reviewed with a qualified tax professional.</li>
+                        <li>• Wash sale rules apply to securities sold at a loss and repurchased within 30 days.</li>
+                        <li>• Past performance does not guarantee future results.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-sm font-medium mb-3">Client Authorization</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-xs text-gray-600 mb-1">Client Signature:</p>
+                            <div class="signature-line"></div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-600 mb-1">Date:</p>
+                            <div class="signature-line"></div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium mb-3">Advisor Authorization</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-xs text-gray-600 mb-1">Advisor Signature:</p>
+                            <div class="signature-line"></div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-600 mb-1">Date:</p>
+                            <div class="signature-line"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-gray-500 mt-8 no-print">
+            <p>This report was generated by the Tax Harvesting & Portfolio Rebalancing System</p>
+            <p>Report ID: <span id="reportId"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Report data storage
+        let reportData = {
+            client: {},
+            taxHarvesting: {},
+            modelPortfolio: {},
+            buyOrders: {},
+            timestamp: new Date().toISOString()
+        };
+
+        // Initialize report on page load
+        window.addEventListener('load', initializeReport);
+
+        function initializeReport() {
+            loadReportData();
+            populateReportHeader();
+            populateExecutiveSummary();
+            populateTaxHarvestingSection();
+            populateModelPortfolioSection();
+            populateBuyOrdersSection();
+            generateReportId();
+        }
+
+        function loadReportData() {
+            // Load data from localStorage (transferred from previous pages)
+            const taxData = localStorage.getItem('taxHarvestingReport');
+            const modelData = localStorage.getItem('modelPortfolioReport');
+            const buyData = localStorage.getItem('buyOrdersReport');
+
+            if (taxData) {
+                try {
+                    reportData.taxHarvesting = JSON.parse(taxData);
+                    reportData.client = reportData.taxHarvesting.client || {};
+                } catch (e) {
+                    console.error('Error parsing tax harvesting data:', e);
+                }
+            }
+
+            if (modelData) {
+                try {
+                    reportData.modelPortfolio = JSON.parse(modelData);
+                } catch (e) {
+                    console.error('Error parsing model portfolio data:', e);
+                }
+            }
+
+            if (buyData) {
+                try {
+                    reportData.buyOrders = JSON.parse(buyData);
+                } catch (e) {
+                    console.error('Error parsing buy orders data:', e);
+                }
+            }
+        }
+
+        function populateReportHeader() {
+            const now = new Date();
+            document.getElementById('reportDate').textContent = now.toLocaleDateString();
+            document.getElementById('reportTime').textContent = now.toLocaleTimeString();
+
+            document.getElementById('clientNameDisplay').textContent = reportData.client.name || 'Not Specified';
+            document.getElementById('custodianDisplay').textContent = reportData.client.custodian || 'Not Specified';
+            document.getElementById('accountNumberDisplay').textContent = reportData.client.accountNumber || 'Not Specified';
+        }
+
+        function populateExecutiveSummary() {
+            const summary = document.getElementById('executiveSummary');
+            const formatCurrency = (num) => num ? num.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : '$0.00';
+
+            const sellValue = reportData.taxHarvesting.totalMarketValue || 0;
+            const sellGainLoss = reportData.taxHarvesting.totalGainLoss || 0;
+            const buyValue = reportData.buyOrders.totalInvested || 0;
+            const cashRemaining = reportData.buyOrders.remainingCash || 0;
+
+            summary.innerHTML = `
+                <div class="text-center p-3 bg-red-50 rounded-lg">
+                    <p class="text-xs text-gray-600">Total Sell Orders</p>
+                    <p class="text-lg font-bold text-red-600">${formatCurrency(sellValue)}</p>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <p class="text-xs text-gray-600">Total Buy Orders</p>
+                    <p class="text-lg font-bold text-green-600">${formatCurrency(buyValue)}</p>
+                </div>
+                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                    <p class="text-xs text-gray-600">Net Gain/(Loss)</p>
+                    <p class="text-lg font-bold ${sellGainLoss >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(sellGainLoss)}</p>
+                </div>
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <p class="text-xs text-gray-600">Cash Remaining</p>
+                    <p class="text-lg font-bold text-gray-700">${formatCurrency(cashRemaining)}</p>
+                </div>
+            `;
+        }
+
+        function populateTaxHarvestingSection() {
+            const taxData = reportData.taxHarvesting;
+            const formatCurrency = (num) => num ? num.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : '$0.00';
+
+            // Tax targets display
+            const taxTargetsDisplay = document.getElementById('taxTargetsDisplay');
+            taxTargetsDisplay.innerHTML = `
+                <div class="text-xs">
+                    <p><strong>Target ST Gain/(Loss):</strong> ${formatCurrency(taxData.targetST || 0)}</p>
+                    <p><strong>Projected ST Gain/(Loss):</strong> ${formatCurrency(taxData.finalST || 0)}</p>
+                    <p class="mt-2"><strong>Target LT Gain/(Loss):</strong> ${formatCurrency(taxData.targetLT || 0)}</p>
+                    <p><strong>Projected LT Gain/(Loss):</strong> ${formatCurrency(taxData.finalLT || 0)}</p>
+                </div>
+            `;
+
+            // Portfolio analysis display
+            const portfolioAnalysisDisplay = document.getElementById('portfolioAnalysisDisplay');
+            portfolioAnalysisDisplay.innerHTML = `
+                <div class="text-xs">
+                    <p><strong>Total Positions Analyzed:</strong> ${taxData.totalPositions || 0}</p>
+                    <p><strong>Positions Selected for Sale:</strong> ${taxData.selectedPositions || 0}</p>
+                    <p><strong>Excluded Positions:</strong> ${taxData.excludedPositions || 0}</p>
+                    <p><strong>Total Market Value:</strong> ${formatCurrency(taxData.totalMarketValue || 0)}</p>
+                </div>
+            `;
+
+            // Sell orders table
+            const sellOrdersTable = document.getElementById('sellOrdersTable');
+            if (taxData.recommendations && taxData.recommendations.length > 0) {
+                sellOrdersTable.innerHTML = taxData.recommendations.map(order => `
+                    <tr>
+                        <td class="px-4 py-2 text-sm font-medium">${order.symbol}</td>
+                        <td class="px-4 py-2 text-sm">${order.acquired}</td>
+                        <td class="px-4 py-2 text-sm text-right">${order.quantity.toLocaleString()}</td>
+                        <td class="px-4 py-2 text-sm text-right">${formatCurrency(order.marketValue)}</td>
+                        <td class="px-4 py-2 text-sm text-right">${formatCurrency(order.costBasis)}</td>
+                        <td class="px-4 py-2 text-sm text-right ${order.unrealizedGain >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(order.unrealizedGain)}</td>
+                        <td class="px-4 py-2 text-sm text-center">${order.term}</td>
+                    </tr>
+                `).join('');
+            } else {
+                sellOrdersTable.innerHTML = '<tr><td colspan="7" class="px-4 py-2 text-center text-gray-500">No sell orders generated</td></tr>';
+            }
+        }
+
+        function populateModelPortfolioSection() {
+            const modelData = reportData.modelPortfolio;
+            const modelPortfolioDisplay = document.getElementById('modelPortfolioDisplay');
+
+            if (modelData && modelData.name) {
+                modelPortfolioDisplay.innerHTML = `
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <h3 class="text-sm font-medium text-purple-800 mb-2">Selected Model Portfolio</h3>
+                        <p class="text-sm font-semibold">${modelData.name}</p>
+                        <p class="text-xs text-gray-600 mt-1">${modelData.holdings ? modelData.holdings.length : 0} holdings</p>
+                        ${modelData.description ? `<p class="text-xs text-gray-600 mt-1">${modelData.description}</p>` : ''}
+                    </div>
+                `;
+            } else {
+                modelPortfolioDisplay.innerHTML = `
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">No model portfolio was selected or custom portfolio was used</p>
+                    </div>
+                `;
+            }
+        }
+
+        function populateBuyOrdersSection() {
+            const buyData = reportData.buyOrders;
+            const formatCurrency = (num) => num ? num.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : '$0.00';
+
+            // Buy orders summary
+            const buyOrdersSummary = document.getElementById('buyOrdersSummary');
+            buyOrdersSummary.innerHTML = `
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <p class="text-xs text-gray-600">Total Cash Available</p>
+                    <p class="text-lg font-bold text-gray-800">${formatCurrency(buyData.totalCash || 0)}</p>
+                </div>
+                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                    <p class="text-xs text-gray-600">Total Invested</p>
+                    <p class="text-lg font-bold text-green-600">${formatCurrency(buyData.totalInvested || 0)}</p>
+                </div>
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <p class="text-xs text-gray-600">Cash Remaining</p>
+                    <p class="text-lg font-bold text-gray-700">${formatCurrency(buyData.remainingCash || 0)}</p>
+                </div>
+            `;
+
+            // Buy orders table
+            const buyOrdersTable = document.getElementById('buyOrdersTable');
+            if (buyData.orders && buyData.orders.length > 0) {
+                buyOrdersTable.innerHTML = buyData.orders.map(order => `
+                    <tr>
+                        <td class="px-4 py-2 text-sm font-medium">${order.symbol}</td>
+                        <td class="px-4 py-2 text-sm">${order.name}</td>
+                        <td class="px-4 py-2 text-sm text-right">${formatCurrency(order.price)}</td>
+                        <td class="px-4 py-2 text-sm text-right">${order.sharesToBuy.toLocaleString()}</td>
+                        <td class="px-4 py-2 text-sm text-right">${formatCurrency(order.investmentAmount)}</td>
+                        <td class="px-4 py-2 text-sm text-right">${order.targetPercent.toFixed(2)}%</td>
+                        <td class="px-4 py-2 text-sm text-right">${order.actualPercent.toFixed(2)}%</td>
+                    </tr>
+                `).join('');
+            } else {
+                buyOrdersTable.innerHTML = '<tr><td colspan="7" class="px-4 py-2 text-center text-gray-500">No buy orders generated</td></tr>';
+            }
+        }
+
+        function generateReportId() {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
+            const randomId = Math.random().toString(36).substr(2, 6).toUpperCase();
+            document.getElementById('reportId').textContent = `THR-${timestamp}-${randomId}`;
+        }
+
+        // Event listeners
+        document.getElementById('printBtn').addEventListener('click', () => {
+            window.print();
+        });
+
+        document.getElementById('exportPdfBtn').addEventListener('click', () => {
+            // For PDF export, we'll use the browser's print to PDF functionality
+            alert('To export as PDF:\n1. Click Print Report\n2. Select "Save as PDF" as the destination\n3. Click Save');
+            setTimeout(() => window.print(), 1000);
+        });
+
+        // Show notification if no data is available
+        if (!localStorage.getItem('taxHarvestingReport') && 
+            !localStorage.getItem('modelPortfolioReport') && 
+            !localStorage.getItem('buyOrdersReport')) {
+            
+            setTimeout(() => {
+                alert('No report data found. Please complete the tax harvesting and buy orders process first.');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

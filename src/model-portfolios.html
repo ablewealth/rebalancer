@@ -40,6 +40,7 @@
             <div class="mt-4 flex justify-center space-x-4">
                 <a href="index.html" class="text-blue-600 hover:text-blue-800 underline">← Tax Harvesting</a>
                 <a href="buy-orders.html" class="text-green-600 hover:text-green-800 underline">Buy Orders →</a>
+                <a href="report.html" class="text-orange-600 hover:text-orange-800 underline">📊 View Report</a>
             </div>
         </header>
 
@@ -667,6 +668,9 @@
                 return;
             }
             
+            // Save data for report
+            saveModelPortfolioReportData();
+            
             // Convert to the format expected by buy-orders page
             const portfolioForBuyOrders = currentPortfolio.map(holding => ({
                 symbol: holding.symbol,
@@ -684,6 +688,17 @@
             
             // Navigate to buy orders page
             window.location.href = 'buy-orders.html';
+        }
+
+        function saveModelPortfolioReportData() {
+            const reportData = {
+                name: portfolioName.value.trim() || 'Custom Portfolio',
+                holdings: currentPortfolio,
+                totalWeight: currentPortfolio.reduce((sum, holding) => sum + holding.weight, 0),
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('modelPortfolioReport', JSON.stringify(reportData));
         }
 
         function showNotification(message, type = 'info') {
