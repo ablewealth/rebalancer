@@ -272,6 +272,22 @@
         // Load model portfolios on page load
         window.addEventListener('load', refreshModelPortfolios);
 
+        // Check for centralized prices and show notification
+        window.addEventListener('load', () => {
+            const savedPrices = localStorage.getItem('centralizedPrices');
+            if (savedPrices) {
+                try {
+                    const pricesData = JSON.parse(savedPrices);
+                    const symbolCount = Object.keys(pricesData).length;
+                    if (symbolCount > 0) {
+                        showNotification(`Using centralized prices for ${symbolCount} symbols from Price Manager`, 'info');
+                    }
+                } catch (error) {
+                    console.warn('Error loading centralized prices:', error);
+                }
+            }
+        });
+
         // Dynamic model portfolios data - loaded from CSV files
         let modelPortfolios = {};
 
@@ -403,6 +419,22 @@
             reader.readAsText(file);
         }
 
+        // Function to get centralized price for a symbol
+        function getCentralizedPrice(symbol) {
+            const savedPrices = localStorage.getItem('centralizedPrices');
+            if (savedPrices) {
+                try {
+                    const pricesData = JSON.parse(savedPrices);
+                    if (pricesData[symbol] && pricesData[symbol].price > 0) {
+                        return pricesData[symbol].price;
+                    }
+                } catch (error) {
+                    console.warn('Error loading centralized prices:', error);
+                }
+            }
+            return null;
+        }
+
         function parsePortfolioCSV(csvText) {
             const lines = csvText.trim().split('\n');
             if (lines.length < 2) return [];
@@ -440,7 +472,15 @@
                 
                 if (!symbol || symbol === 'Symbol') return null;
                 
-                const price = parseFloat(priceStr) || 0;
+                let price = parseFloat(priceStr) || 0;
+                
+                // Use centralized price if available (overrides CSV price)
+                const centralizedPrice = getCentralizedPrice(symbol);
+                if (centralizedPrice !== null) {
+                    price = centralizedPrice;
+                    console.log(`Using centralized price for ${symbol}: $${price}`);
+                }
+                
                 const targetPercent = parseFloat(targetPercentStr) || 0;
                 
                 console.log('Parsed item:', { symbol, name, price, targetPercent });

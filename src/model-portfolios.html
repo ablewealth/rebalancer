@@ -337,6 +337,22 @@
             console.log('Final predefinedPortfolios:', predefinedPortfolios);
         }
 
+        // Function to get centralized price for a symbol
+        function getCentralizedPrice(symbol) {
+            const savedPrices = localStorage.getItem('centralizedPrices');
+            if (savedPrices) {
+                try {
+                    const pricesData = JSON.parse(savedPrices);
+                    if (pricesData[symbol] && pricesData[symbol].price > 0) {
+                        return pricesData[symbol].price;
+                    }
+                } catch (error) {
+                    console.warn('Error loading centralized prices:', error);
+                }
+            }
+            return null;
+        }
+
         // Function to parse CSV portfolio data
         function parseCSVPortfolio(csvText, filename) {
             const lines = csvText.trim().split('\n');
@@ -380,7 +396,14 @@
 
                 // Clean price string (remove $, spaces, etc.)
                 const cleanPrice = priceStr.replace(/[$\s,]/g, '');
-                const price = parseFloat(cleanPrice) || 0;
+                let price = parseFloat(cleanPrice) || 0;
+
+                // Use centralized price if available (overrides CSV price)
+                const centralizedPrice = getCentralizedPrice(symbol);
+                if (centralizedPrice !== null) {
+                    price = centralizedPrice;
+                    console.log(`Using centralized price for ${symbol}: $${price}`);
+                }
 
                 // Clean weight string (remove %, spaces, etc.)
                 const cleanWeight = weightStr.replace(/[%\s,]/g, '');
@@ -1130,6 +1153,20 @@
             // Initialize blending tool with 2 default selections after portfolios are loaded
             addBlendingPortfolio();
             addBlendingPortfolio();
+
+            // Check for centralized prices and show notification
+            const savedPrices = localStorage.getItem('centralizedPrices');
+            if (savedPrices) {
+                try {
+                    const pricesData = JSON.parse(savedPrices);
+                    const symbolCount = Object.keys(pricesData).length;
+                    if (symbolCount > 0) {
+                        showNotification(`Using centralized prices for ${symbolCount} symbols from Price Manager`, 'info');
+                    }
+                } catch (error) {
+                    console.warn('Error loading centralized prices:', error);
+                }
+            }
         }
         initializePortfolios();
     </script>
