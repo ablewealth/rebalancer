@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Portfolios Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .editable-cell {
+            background-color: #f9fafb;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .editable-cell:hover {
+            background-color: #f3f4f6;
+            border-color: #d1d5db;
+        }
+        .editable-cell:focus {
+            background-color: white;
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .weight-warning {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Model Portfolios Manager</h1>
+            <p class="text-md text-gray-600 mt-2">Create, edit, and manage your portfolio models for buy order generation.</p>
+            <div class="mt-4 flex justify-center space-x-4">
+                <a href="index.html" class="text-blue-600 hover:text-blue-800 underline">← Tax Harvesting</a>
+                <a href="buy-orders.html" class="text-green-600 hover:text-green-800 underline">Buy Orders →</a>
+            </div>
+        </header>
+
+        <!-- Portfolio Selection and Management -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Portfolio Selection -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-3">Select Portfolio</h2>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="portfolioSelect" class="block text-sm font-medium text-gray-700">Choose Existing Portfolio</label>
+                        <button id="refreshPortfoliosBtn" class="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200" title="Refresh portfolio list">
+                            <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                    <select id="portfolioSelect" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                        <option value="">-- Select Portfolio --</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <button id="loadPortfolioBtn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                        Load Portfolio
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <label for="portfolioFile" class="block text-sm font-medium text-gray-700 mb-2">Or Upload CSV File</label>
+                    <input type="file" id="portfolioFile" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+            </div>
+
+            <!-- Portfolio Info -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-3">Portfolio Info</h2>
+                
+                <div class="mb-4">
+                    <label for="portfolioName" class="block text-sm font-medium text-gray-700">Portfolio Name</label>
+                    <input type="text" id="portfolioName" placeholder="e.g., Conservative Growth" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">Total Weight:</span>
+                        <span id="totalWeight" class="text-lg font-bold text-gray-900">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div id="weightProgress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="weightStatus" class="text-xs text-gray-500 mt-1">Target: 100%</p>
+                </div>
+
+                <div class="text-sm text-gray-600">
+                    <p><span class="font-medium">Holdings:</span> <span id="holdingCount">0</span></p>
+                    <p><span class="font-medium">Last Updated:</span> <span id="lastUpdated">Never</span></p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-3">Actions</h2>
+                
+                <div class="space-y-3">
+                    <button id="addHoldingBtn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add New Holding
+                    </button>
+                    
+                    <button id="normalizeWeightsBtn" class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Normalize to 100%
+                    </button>
+                    
+                    <button id="savePortfolioBtn" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                        </svg>
+                        Save Portfolio
+                    </button>
+                    
+                    <button id="exportCsvBtn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Export CSV
+                    </button>
+
+                    <button id="useToBuyOrdersBtn" class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h10a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Use for Buy Orders
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Editor -->
+        <div id="portfolioEditor" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 hidden">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-3">Portfolio Holdings Editor</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price ($)</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (%)</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="holdingsTable" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="emptyState" class="text-center py-12 hidden">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No holdings</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by loading a portfolio or adding a new holding.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const portfolioSelect = document.getElementById('portfolioSelect');
+        const loadPortfolioBtn = document.getElementById('loadPortfolioBtn');
+        const portfolioFile = document.getElementById('portfolioFile');
+        const portfolioName = document.getElementById('portfolioName');
+        const refreshPortfoliosBtn = document.getElementById('refreshPortfoliosBtn');
+        const totalWeight = document.getElementById('totalWeight');
+        const weightProgress = document.getElementById('weightProgress');
+        const weightStatus = document.getElementById('weightStatus');
+        const holdingCount = document.getElementById('holdingCount');
+        const lastUpdated = document.getElementById('lastUpdated');
+        const addHoldingBtn = document.getElementById('addHoldingBtn');
+        const normalizeWeightsBtn = document.getElementById('normalizeWeightsBtn');
+        const savePortfolioBtn = document.getElementById('savePortfolioBtn');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const useToBuyOrdersBtn = document.getElementById('useToBuyOrdersBtn');
+        const portfolioEditor = document.getElementById('portfolioEditor');
+        const holdingsTable = document.getElementById('holdingsTable');
+        const emptyState = document.getElementById('emptyState');
+
+        let currentPortfolio = [];
+        let portfolioModified = false;
+
+        // Predefined portfolios
+        const predefinedPortfolios = {
+            '100-0': {
+                name: '100/0 - All Equity',
+                holdings: [
+                    { symbol: 'EFV', name: 'iShares:MSCI EAFE Val', price: 63.36, weight: 10 },
+                    { symbol: 'SPYG', name: 'SPDR Ptf S&P 500 Growth', price: 98.56, weight: 11 },
+                    { symbol: 'DYNF', name: 'BlackRock:US Eq Fc Rt Ac', price: 55.99, weight: 10 },
+                    { symbol: 'SPMO', name: 'Invesco S&P500 Momnt', price: 115.69, weight: 11 },
+                    { symbol: 'AUSF', name: 'Glbl X Adaptive US Fctr', price: 44.57, weight: 6 },
+                    { symbol: 'PVAL', name: 'Putnam Focused LC Value', price: 40.55, weight: 9 },
+                    { symbol: 'DBEF', name: 'Xtrackers MSCI EAFE Hdg', price: 44.35, weight: 2 },
+                    { symbol: 'EDIV', name: 'SPDR S&P Em Mkts Div', price: 37.98, weight: 5 },
+                    { symbol: 'IDMO', name: 'Invesco S&P Itl Dv M', price: 50.88, weight: 9 },
+                    { symbol: 'SMH', name: 'VanEck:Semiconductor', price: 288.78, weight: 4 },
+                    { symbol: 'JQUA', name: 'JPMorgan:US Quality Fact', price: 60.45, weight: 11 },
+                    { symbol: 'MOAT', name: 'VanEck:MS Wide Moat', price: 96.86, weight: 2 },
+                    { symbol: 'EQWL', name: 'Invesco S&P 100 Eq Wght', price: 109.79, weight: 10 }
+                ]
+            },
+            '80-20': {
+                name: '80/20 - Balanced',
+                holdings: [
+                    { symbol: 'BINC', name: 'iShares Flexible Income Active ETF', price: 52.74, weight: 2 },
+                    { symbol: 'CARY', name: 'Angel Oak Income ETF', price: 20.74, weight: 2 },
+                    { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF', price: 86.92, weight: 1.7 },
+                    { symbol: 'JBBB', name: 'Janus Henderson B-BBB CLO ETF', price: 48.46, weight: 1 },
+                    { symbol: 'ICVT', name: 'iShares Convertible Bond ETF', price: 92.61, weight: 1 },
+                    { symbol: 'GLDM', name: 'SPDR® Gold MiniShares', price: 65.15, weight: 0.3 },
+                    { symbol: 'XHLF', name: 'BondBloxx Bloomberg SixMthTrgDurUSTrsETF', price: 50.33, weight: 2.4 },
+                    { symbol: 'IGEB', name: 'iShares Investment Grade Systmtc Bd ETF', price: 45.28, weight: 1 },
+                    { symbol: 'HYEM', name: 'VanEck EM High Yield Bond ETF', price: 19.90, weight: 1 },
+                    { symbol: 'LQDH', name: 'iShares Interest Rate Hedged Corp Bd ETF', price: 93.05, weight: 2 },
+                    { symbol: 'IUSB', name: 'iShares Core Total USD Bond Market ETF', price: 45.99, weight: 4 },
+                    { symbol: 'XFIV', name: 'BondBloxx Bloomberg FiveYrTrgDurUSTrsETF', price: 49.01, weight: 1.6 },
+                    { symbol: 'EFV', name: 'iShares MSCI EAFE Value ETF', price: 63.33, weight: 8 },
+                    { symbol: 'SPYG', name: 'SPDR® Portfolio S&P 500 Growth ETF', price: 98.56, weight: 8 },
+                    { symbol: 'DYNF', name: 'iShares U.S. Equity Fac Rotation Act ETF', price: 55.99, weight: 8 },
+                    { symbol: 'SPMO', name: 'Invesco S&P 500® Momentum ETF', price: 115.69, weight: 8.8 },
+                    { symbol: 'AUSF', name: 'Global X Adaptive US Factor ETF', price: 44.57, weight: 4.8 },
+                    { symbol: 'PVAL', name: 'Putnam Focused Large Cap Value ETF', price: 40.55, weight: 7.2 },
+                    { symbol: 'DBEF', name: 'Xtrackers MSCI EAFE Hedged Equity ETF', price: 44.35, weight: 1.6 },
+                    { symbol: 'EDIV', name: 'SPDR® S&P Emerging Markets Dividend ETF', price: 37.98, weight: 4 },
+                    { symbol: 'IDMO', name: 'Invesco S&P International Dev Momt ETF', price: 50.88, weight: 7.2 },
+                    { symbol: 'SMH', name: 'VanEck Semiconductor ETF', price: 288.78, weight: 3.2 },
+                    { symbol: 'JQUA', name: 'JPMorgan US Quality Factor ETF', price: 60.45, weight: 8.8 },
+                    { symbol: 'MOAT', name: 'VanEck Morningstar Wide Moat ETF', price: 96.81, weight: 1.6 },
+                    { symbol: 'EQWL', name: 'Invesco S&P 100 Equal Weight ETF', price: 109.79, weight: 8 }
+                ]
+            },
+            'all-equity': {
+                name: 'All Equity',
+                holdings: [
+                    { symbol: 'EFV', name: 'iShares MSCI EAFE Value ETF', price: 63.33, weight: 10 },
+                    { symbol: 'SPYG', name: 'SPDR® Portfolio S&P 500 Growth ETF', price: 98.56, weight: 11 },
+                    { symbol: 'DYNF', name: 'iShares U.S. Equity Fac Rotation Act ETF', price: 55.99, weight: 10 },
+                    { symbol: 'SPMO', name: 'Invesco S&P 500® Momentum ETF', price: 115.69, weight: 11 },
+                    { symbol: 'AUSF', name: 'Global X Adaptive US Factor ETF', price: 44.57, weight: 6 },
+                    { symbol: 'PVAL', name: 'Putnam Focused Large Cap Value ETF', price: 40.55, weight: 9 },
+                    { symbol: 'DBEF', name: 'Xtrackers MSCI EAFE Hedged Equity ETF', price: 44.35, weight: 2 },
+                    { symbol: 'EDIV', name: 'SPDR® S&P Emerging Markets Dividend ETF', price: 37.98, weight: 5 },
+                    { symbol: 'IDMO', name: 'Invesco S&P International Dev Momt ETF', price: 50.88, weight: 9 },
+                    { symbol: 'SMH', name: 'VanEck Semiconductor ETF', price: 288.78, weight: 4 },
+                    { symbol: 'JQUA', name: 'JPMorgan US Quality Factor ETF', price: 60.45, weight: 11 },
+                    { symbol: 'MOAT', name: 'VanEck Morningstar Wide Moat ETF', price: 96.81, weight: 2 },
+                    { symbol: 'EQWL', name: 'Invesco S&P 100 Equal Weight ETF', price: 109.79, weight: 10 }
+                ]
+            },
+            'fixed-income': {
+                name: 'Fixed Income',
+                holdings: [
+                    { symbol: 'BINC', name: 'iShares Flexible Income Active ETF', price: 52.74, weight: 10 },
+                    { symbol: 'CARY', name: 'Angel Oak Income ETF', price: 20.74, weight: 10 },
+                    { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF', price: 86.92, weight: 8.5 },
+                    { symbol: 'JBBB', name: 'Janus Henderson B-BBB CLO ETF', price: 48.46, weight: 5 },
+                    { symbol: 'ICVT', name: 'iShares Convertible Bond ETF', price: 92.61, weight: 5 },
+                    { symbol: 'GLDM', name: 'SPDR® Gold MiniShares', price: 65.15, weight: 1.5 },
+                    { symbol: 'XHLF', name: 'BondBloxx Bloomberg SixMthTrgDurUSTrsETF', price: 50.33, weight: 12 },
+                    { symbol: 'IGEB', name: 'iShares Investment Grade Systmtc Bd ETF', price: 45.28, weight: 5 },
+                    { symbol: 'HYEM', name: 'VanEck EM High Yield Bond ETF', price: 19.9, weight: 5 },
+                    { symbol: 'LQDH', name: 'iShares Interest Rate Hedged Corp Bd ETF', price: 93.05, weight: 10 },
+                    { symbol: 'IUSB', name: 'iShares Core Total USD Bond Market ETF', price: 45.99, weight: 20 },
+                    { symbol: 'XFIV', name: 'BondBloxx Bloomberg FiveYrTrgDurUSTrsETF', price: 49.01, weight: 8 }
+                ]
+            },
+            'fixed-income-tax': {
+                name: 'Fixed Income (Tax Aware)',
+                holdings: [
+                    { symbol: 'BINC', name: 'iShares Flexible Income Active ETF', price: 52.74, weight: 25.5 },
+                    { symbol: 'MINO', name: 'PIMCO Muncpl Income Oppos Act Ex-Trd', price: 43.8, weight: 20 },
+                    { symbol: 'HYMB', name: 'SPDR Nuveen ICE High Yield Muncpl Bd ETF', price: 24.31, weight: 15 },
+                    { symbol: 'XSVN', name: 'BondBloxx Bloomberg SevenYrTrgDurUSTrETF', price: 47.46, weight: 10 },
+                    { symbol: 'GLDM', name: 'SPDR® Gold MiniShares', price: 65.15, weight: 1.5 },
+                    { symbol: 'BOXX', name: 'Alpha Architect 1-3 Month Box ETF', price: 113.04, weight: 13 },
+                    { symbol: 'JMST', name: 'JPMorgan Ultra-Short Municipal Inc ETF', price: 50.99, weight: 15 }
+                ]
+            },
+            'tactical-equity': {
+                name: 'Tactical Equity',
+                holdings: [
+                    { symbol: 'CBLS', name: 'Clough Hedged Equity ETF', price: 29.07, weight: 1.6 },
+                    { symbol: 'RSEE', name: 'Rareview Systematic Equity ETF', price: 30.59, weight: 1.6 },
+                    { symbol: 'QMNNX', name: 'AQR Equity Market Neutral N', price: 11, weight: 4 },
+                    { symbol: 'CTA', name: 'Simplify Managed Futures Strategy ETF', price: 27.47, weight: 3 },
+                    { symbol: 'ACIO', name: 'Aptus Collared Investment Opp ETF', price: 41.74, weight: 1 },
+                    { symbol: 'FTLS', name: 'First Trust Long/Short Equity ETF', price: 66.75, weight: 1.2 },
+                    { symbol: 'XHLF', name: 'BondBloxx Bloomberg SixMthTrgDurUSTrsETF', price: 50.33, weight: 2.4 },
+                    { symbol: 'BTAL', name: 'AGF U.S. Market Neutral Anti-Beta', price: 16.47, weight: 4 },
+                    { symbol: 'CLSE', name: 'Convergence Long/Short Equity ETF', price: 24.11, weight: 0.8 },
+                    { symbol: 'DBMF', name: 'iMGP DBi Managed Futures Strategy ETF', price: 25.61, weight: 0.4 },
+                    { symbol: 'EFV', name: 'iShares MSCI EAFE Value ETF', price: 63.33, weight: 8 },
+                    { symbol: 'SPYG', name: 'SPDR® Portfolio S&P 500 Growth ETF', price: 98.56, weight: 8.8 },
+                    { symbol: 'DYNF', name: 'iShares U.S. Equity Fac Rotation Act ETF', price: 55.99, weight: 8 },
+                    { symbol: 'SPMO', name: 'Invesco S&P 500® Momentum ETF', price: 115.69, weight: 8.8 },
+                    { symbol: 'AUSF', name: 'Global X Adaptive US Factor ETF', price: 44.57, weight: 4.8 },
+                    { symbol: 'PVAL', name: 'Putnam Focused Large Cap Value ETF', price: 40.55, weight: 7.2 },
+                    { symbol: 'DBEF', name: 'Xtrackers MSCI EAFE Hedged Equity ETF', price: 44.35, weight: 1.6 },
+                    { symbol: 'EDIV', name: 'SPDR® S&P Emerging Markets Dividend ETF', price: 37.98, weight: 4 },
+                    { symbol: 'IDMO', name: 'Invesco S&P International Dev Momt ETF', price: 50.88, weight: 7.2 },
+                    { symbol: 'SMH', name: 'VanEck Semiconductor ETF', price: 288.78, weight: 3.2 },
+                    { symbol: 'JQUA', name: 'JPMorgan US Quality Factor ETF', price: 60.45, weight: 8.8 },
+                    { symbol: 'MOAT', name: 'VanEck Morningstar Wide Moat ETF', price: 96.81, weight: 1.6 },
+                    { symbol: 'EQWL', name: 'Invesco S&P 100 Equal Weight ETF', price: 109.79, weight: 8 }
+                ]
+            }
+        };
+
+        // --- Event Listeners ---
+        loadPortfolioBtn.addEventListener('click', loadSelectedPortfolio);
+        portfolioFile.addEventListener('change', handleFileUpload);
+        addHoldingBtn.addEventListener('click', addNewHolding);
+        normalizeWeightsBtn.addEventListener('click', normalizeWeights);
+        savePortfolioBtn.addEventListener('click', savePortfolio);
+        exportCsvBtn.addEventListener('click', exportToCsv);
+        useToBuyOrdersBtn.addEventListener('click', useToBuyOrders);
+        holdingsTable.addEventListener('input', handleCellEdit);
+        holdingsTable.addEventListener('click', handleDeleteHolding);
+
+        // --- Functions ---
+        function loadSelectedPortfolio() {
+            const selectedKey = portfolioSelect.value;
+            if (!selectedKey) {
+                alert('Please select a portfolio to load.');
+                return;
+            }
+
+            console.log('Loading portfolio with key:', selectedKey);
+            console.log('Available portfolios:', Object.keys(predefinedPortfolios));
+
+            const portfolio = predefinedPortfolios[selectedKey];
+            if (portfolio) {
+                currentPortfolio = JSON.parse(JSON.stringify(portfolio.holdings));
+                portfolioName.value = portfolio.name;
+                renderPortfolio();
+                updatePortfolioStats();
+                portfolioModified = false;
+                showNotification(`Loaded portfolio: ${portfolio.name}`, 'success');
+            } else {
+                console.error('Portfolio not found:', selectedKey);
+                showNotification(`Error loading model portfolio: Portfolio "${selectedKey}" not found`, 'error');
+            }
+                        
+                        currentPortfolio = JSON.parse(JSON.stringify(holdings));
+                        portfolioName.value = portfolio.name;
+                        renderPortfolio();
+                        updatePortfolioStats();
+                        portfolioModified = false;
+                        showNotification(`Loaded portfolio: ${portfolio.name}`, 'success');
+        }
+
+
+
+        function populatePortfolioDropdown() {
+            // Clear existing options except the first one
+            portfolioSelect.innerHTML = '<option value="">-- Select Portfolio --</option>';
+            
+            // Add available portfolios
+            availablePortfolioFiles.forEach(portfolio => {
+                const option = document.createElement('option');
+                option.value = portfolio.key;
+                option.textContent = portfolio.name;
+                portfolioSelect.appendChild(option);
+            });
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const csvData = parsePortfolioCSV(e.target.result);
+                    if (csvData.length > 0) {
+                        currentPortfolio = csvData;
+                        portfolioName.value = file.name.replace('.csv', '');
+                        renderPortfolio();
+                        updatePortfolioStats();
+                        portfolioModified = false;
+                        showNotification(`Loaded ${csvData.length} holdings from ${file.name}`, 'success');
+                    }
+                } catch (error) {
+                    showNotification(`Error parsing CSV: ${error.message}`, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parsePortfolioCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) throw new Error('CSV file is empty or invalid');
+
+            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            // Find column indices (flexible header matching)
+            const symbolIndex = header.findIndex(h => h.toLowerCase().includes('symbol'));
+            const nameIndex = header.findIndex(h => h.toLowerCase().includes('name'));
+            const priceIndex = header.findIndex(h => h.toLowerCase().includes('price'));
+            const weightIndex = header.findIndex(h => 
+                h.toLowerCase().includes('weight') || 
+                h.toLowerCase().includes('target') || 
+                h.toLowerCase().includes('percent')
+            );
+
+            if (symbolIndex === -1 || priceIndex === -1 || weightIndex === -1) {
+                throw new Error('CSV must contain Symbol, Price, and Weight/Target columns');
+            }
+
+            return lines.slice(1).map(line => {
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const symbol = values[symbolIndex]?.trim().replace(/"/g, '');
+                const name = values[nameIndex]?.trim().replace(/"/g, '') || '';
+                const priceStr = values[priceIndex]?.trim().replace(/[$, "]/g, '');
+                const weightStr = values[weightIndex]?.trim().replace(/[%, "]/g, '');
+
+                if (!symbol) return null;
+
+                return {
+                    symbol: symbol,
+                    name: name,
+                    price: parseFloat(priceStr) || 0,
+                    weight: parseFloat(weightStr) || 0
+                };
+            }).filter(item => item && item.symbol);
+        }
+
+        function renderPortfolio() {
+            portfolioEditor.classList.remove('hidden');
+            holdingsTable.innerHTML = '';
+            
+            if (currentPortfolio.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            currentPortfolio.forEach((holding, index) => {
+                const row = createHoldingRow(holding, index);
+                holdingsTable.appendChild(row);
+            });
+        }
+
+        function createHoldingRow(holding, index) {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50';
+            row.dataset.index = index;
+            
+            const isWeightWarning = holding.weight > 15; // Warn if weight > 15%
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="text" value="${holding.symbol}" 
+                           class="editable-cell w-full px-2 py-1 text-sm font-medium text-gray-900 rounded border-0"
+                           data-field="symbol" data-index="${index}">
+                </td>
+                <td class="px-6 py-4">
+                    <input type="text" value="${holding.name}" 
+                           class="editable-cell w-full px-2 py-1 text-sm text-gray-500 rounded border-0"
+                           data-field="name" data-index="${index}">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                    <input type="number" value="${holding.price}" step="0.01" min="0"
+                           class="editable-cell w-20 px-2 py-1 text-sm text-gray-900 rounded border-0 text-right"
+                           data-field="price" data-index="${index}">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                    <input type="number" value="${holding.weight}" step="0.1" min="0"
+                           class="editable-cell w-20 px-2 py-1 text-sm text-gray-900 rounded border-0 text-right ${isWeightWarning ? 'weight-warning' : ''}"
+                           data-field="weight" data-index="${index}">
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <button class="delete-holding text-red-600 hover:text-red-900 p-1" data-index="${index}">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        function handleCellEdit(event) {
+            if (!event.target.classList.contains('editable-cell')) return;
+            
+            const index = parseInt(event.target.dataset.index);
+            const field = event.target.dataset.field;
+            const value = event.target.value;
+            
+            if (field === 'price' || field === 'weight') {
+                currentPortfolio[index][field] = parseFloat(value) || 0;
+            } else {
+                currentPortfolio[index][field] = value;
+            }
+            
+            portfolioModified = true;
+            updatePortfolioStats();
+            
+            // Update weight warning styling
+            if (field === 'weight') {
+                const isWarning = parseFloat(value) > 15;
+                event.target.classList.toggle('weight-warning', isWarning);
+            }
+        }
+
+        function handleDeleteHolding(event) {
+            if (!event.target.closest('.delete-holding')) return;
+            
+            const index = parseInt(event.target.closest('.delete-holding').dataset.index);
+            
+            if (confirm(`Delete ${currentPortfolio[index].symbol}?`)) {
+                currentPortfolio.splice(index, 1);
+                renderPortfolio();
+                updatePortfolioStats();
+                portfolioModified = true;
+                showNotification('Holding deleted', 'success');
+            }
+        }
+
+        function addNewHolding() {
+            const newHolding = {
+                symbol: '',
+                name: '',
+                price: 0,
+                weight: 0
+            };
+            
+            currentPortfolio.push(newHolding);
+            renderPortfolio();
+            updatePortfolioStats();
+            portfolioModified = true;
+            
+            // Focus on the new symbol input
+            const newRow = holdingsTable.lastElementChild;
+            const symbolInput = newRow.querySelector('[data-field="symbol"]');
+            symbolInput.focus();
+        }
+
+        function normalizeWeights() {
+            const totalCurrentWeight = currentPortfolio.reduce((sum, holding) => sum + holding.weight, 0);
+            
+            if (totalCurrentWeight === 0) {
+                showNotification('Cannot normalize: all weights are zero', 'error');
+                return;
+            }
+            
+            currentPortfolio.forEach(holding => {
+                holding.weight = (holding.weight / totalCurrentWeight) * 100;
+            });
+            
+            renderPortfolio();
+            updatePortfolioStats();
+            portfolioModified = true;
+            showNotification('Weights normalized to 100%', 'success');
+        }
+
+        function updatePortfolioStats() {
+            const total = currentPortfolio.reduce((sum, holding) => sum + holding.weight, 0);
+            const count = currentPortfolio.length;
+            
+            totalWeight.textContent = `${total.toFixed(1)}%`;
+            holdingCount.textContent = count;
+            lastUpdated.textContent = new Date().toLocaleString();
+            
+            // Update progress bar
+            const progressPercent = Math.min((total / 100) * 100, 100);
+            weightProgress.style.width = `${progressPercent}%`;
+            
+            // Update status color and message
+            if (Math.abs(total - 100) < 0.1) {
+                weightStatus.textContent = 'Perfect! Weights sum to 100%';
+                weightStatus.className = 'text-xs text-green-600 mt-1';
+                weightProgress.className = 'bg-green-600 h-2 rounded-full transition-all duration-300';
+            } else if (total > 100) {
+                weightStatus.textContent = `Over target by ${(total - 100).toFixed(1)}%`;
+                weightStatus.className = 'text-xs text-red-600 mt-1';
+                weightProgress.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
+            } else {
+                weightStatus.textContent = `Under target by ${(100 - total).toFixed(1)}%`;
+                weightStatus.className = 'text-xs text-yellow-600 mt-1';
+                weightProgress.className = 'bg-yellow-600 h-2 rounded-full transition-all duration-300';
+            }
+        }
+
+        function savePortfolio() {
+            if (!portfolioName.value.trim()) {
+                alert('Please enter a portfolio name');
+                return;
+            }
+            
+            if (currentPortfolio.length === 0) {
+                alert('Cannot save empty portfolio');
+                return;
+            }
+            
+            // Save to localStorage (in a real app, this would be saved to a server)
+            const portfolioData = {
+                name: portfolioName.value.trim(),
+                holdings: currentPortfolio,
+                lastModified: new Date().toISOString()
+            };
+            
+            localStorage.setItem(`portfolio_${Date.now()}`, JSON.stringify(portfolioData));
+            portfolioModified = false;
+            showNotification(`Portfolio "${portfolioData.name}" saved successfully`, 'success');
+        }
+
+        function exportToCsv() {
+            if (currentPortfolio.length === 0) {
+                alert('No portfolio data to export');
+                return;
+            }
+            
+            const headers = ['Model', 'Symbol', 'Name', 'Price', 'Target Percent'];
+            const modelName = portfolioName.value.trim() || 'Custom Portfolio';
+            
+            const rows = currentPortfolio.map(holding => [
+                `"${modelName}"`,
+                `"${holding.symbol}"`,
+                `"${holding.name}"`,
+                holding.price.toFixed(2),
+                holding.weight.toFixed(1)
+            ]);
+            
+            const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${modelName.replace(/[^a-z0-9]/gi, '_')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Portfolio exported to CSV', 'success');
+        }
+
+        function useToBuyOrders() {
+            if (currentPortfolio.length === 0) {
+                alert('No portfolio data to use for buy orders');
+                return;
+            }
+            
+            // Convert to the format expected by buy-orders page
+            const portfolioForBuyOrders = currentPortfolio.map(holding => ({
+                symbol: holding.symbol,
+                name: holding.name,
+                price: holding.price,
+                targetPercent: holding.weight
+            }));
+            
+            // Store in localStorage for transfer
+            localStorage.setItem('modelPortfolioTransfer', JSON.stringify({
+                portfolioName: portfolioName.value.trim() || 'Custom Portfolio',
+                portfolioData: portfolioForBuyOrders,
+                timestamp: new Date().toISOString()
+            }));
+            
+            // Navigate to buy orders page
+            window.location.href = 'buy-orders.html';
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
+                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' : 
+                'bg-blue-100 text-blue-800 border border-blue-200'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    ${message}
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Initialize empty portfolio editor
+        portfolioEditor.classList.remove('hidden');
+        emptyState.classList.remove('hidden');
+        updatePortfolioStats();
+        
+        // Initialize portfolio dropdown
+        populatePortfolioDropdown();
+    </script>
+</body>
+</html>

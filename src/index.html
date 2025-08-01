@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Tax Harvesting Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid #3498db;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .parent-row {
+            cursor: pointer;
+            background-color: #f9fafb;
+            /* gray-50 */
+        }
+
+        .parent-row:hover {
+            background-color: #f3f4f6;
+            /* gray-100 */
+        }
+
+        .child-row {
+            background-color: #ffffff;
+        }
+
+        .child-row td {
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .icon-rotate {
+            transform: rotate(90deg);
+        }
+
+        .excluded-row {
+            opacity: 0.6;
+            background-color: #fef2f2;
+        }
+
+        .excluded-row:hover {
+            background-color: #fecaca;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Advanced Tax Harvesting Optimization</h1>
+            <p class="text-md text-gray-600 mt-2">This tool uses an optimization algorithm to find trades that best meet
+                your tax goals.</p>
+            <div class="mt-4 flex justify-center space-x-4">
+                <a href="model-portfolios.html" class="text-purple-600 hover:text-purple-800 underline">Model Portfolios</a>
+                <a href="buy-orders.html" class="text-green-600 hover:text-green-800 underline">Generate Buy Orders →</a>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Input Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-3">1. Your Portfolio Data</h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="clientName" class="block text-sm font-medium text-gray-700">Client Name</label>
+                        <input type="text" id="clientName" placeholder="John Doe"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                    </div>
+                    <div>
+                        <label for="custodian" class="block text-sm font-medium text-gray-700">Custodian</label>
+                        <input type="text" id="custodian" placeholder="Fidelity"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="accountNumber" class="block text-sm font-medium text-gray-700">Account Number</label>
+                    <input type="text" id="accountNumber" placeholder="Enter Account Number"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                </div>
+
+                <div class="mb-4">
+                    <label for="costBasisFile" class="block text-sm font-medium text-gray-700 mb-2">A. Upload Cost Basis
+                        CSV (Current Holdings)</label>
+                    <input type="file" id="costBasisFile" accept=".csv"
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors duration-200 cursor-pointer">
+                    <p id="cost-basis-file-name" class="text-xs text-gray-500 mt-1"></p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="ytdFile" class="block text-sm font-medium text-gray-700 mb-2">B. Upload YTD Realized
+                        Gains CSV (Optional)</label>
+                    <input type="file" id="ytdFile" accept=".csv"
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors duration-200 cursor-pointer">
+                    <p id="ytd-file-name" class="text-xs text-gray-500 mt-1"></p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">Year-to-Date Realized Gains (Auto-filled or
+                        Manual)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="realizedST" class="block text-sm font-medium text-gray-700">Short-Term
+                                Gain/(Loss)</label>
+                            <input type="number" id="realizedST" placeholder="0.00"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                        </div>
+                        <div>
+                            <label for="realizedLT" class="block text-sm font-medium text-gray-700">Long-Term
+                                Gain/(Loss)</label>
+                            <input type="number" id="realizedLT" placeholder="0.00"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-3">2. Set Annual Targets</h2>
+                <p class="text-sm text-gray-600 mb-4">Define your desired total capital gain or loss for the year.</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="targetST" class="block text-sm font-medium text-gray-700">Target Short-Term
+                            Gain/(Loss)</label>
+                        <input type="number" id="targetST" placeholder="e.g., 2000"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    </div>
+                    <div>
+                        <label for="targetLT" class="block text-sm font-medium text-gray-700">Target Long-Term
+                            Gain/(Loss)</label>
+                        <input type="number" id="targetLT" placeholder="e.g., 5000"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    </div>
+                </div>
+
+                <div class="flex flex-col space-y-4">
+                    <button id="calculateBtn"
+                        class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 00-1 1v1a1 1 0 001 1h6a1 1 0 001-1V5a1 1 0 00-1-1H7zm6 6a1 1 0 01-1 1H8a1 1 0 110-2h4a1 1 0 011 1zm-3 4a1 1 0 100-2H8a1 1 0 100 2h2z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Generate Recommendations
+                    </button>
+                    <button id="exportBtn"
+                        class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md flex items-center justify-center hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path
+                                d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 5a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM10 18a1 1 0 01-1-1v-6a1 1 0 112 0v6a1 1 0 01-1-1z" />
+                            <path fill-rule="evenodd"
+                                d="M3.293 7.293a1 1 0 011.414 0L10 12.586l5.293-5.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Export to CSV
+                    </button>
+                    <button id="proceedToBuyBtn"
+                        class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200 shadow-md flex items-center justify-center hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Proceed to Buy Orders
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Portfolio Section -->
+        <div id="portfolio-container" class="mt-8 bg-white p-6 rounded-xl shadow-md border border-gray-200 hidden">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-3">Current Portfolio Holdings</h2>
+            <p class="text-sm text-gray-600 mb-4">Review your current holdings and uncheck any positions you want to
+                exclude from the selling algorithm.</p>
+
+            <div class="mb-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button id="selectAllBtn"
+                        class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">Select
+                        All</button>
+                    <button id="deselectAllBtn"
+                        class="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200">Deselect
+                        All</button>
+                </div>
+                <div class="text-sm text-gray-500">
+                    <span id="selected-count">0</span> of <span id="total-count">0</span> positions selected
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="selectAllCheckbox"
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Symbol</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Acquired</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Quantity</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Market Value</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Cost Basis</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Unrealized Gain/Loss</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Term</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolio-table" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-container" class="mt-8 bg-white p-6 rounded-xl shadow-md border border-gray-200 hidden"></div>
+        <div id="loader" class="flex justify-center items-center h-40 hidden">
+            <div class="loader"></div>
+            <p class="ml-4 text-gray-600">Finding optimal trades...</p>
+        </div>
+        <div id="recommendations">
+            <h2 class="text-2xl font-semibold mb-4 border-b pb-3">3. Recommended Trades</h2>
+            <div id="summary" class="mb-6 p-4 bg-gray-100 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Action</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Symbol</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Total Qty</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Acquired Date</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Market Value</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Est. Gain/(Loss)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recommendations-table" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+            <p id="no-trades-msg" class="text-center text-gray-500 py-8 hidden">No trades are needed to meet your
+                targets, or no suitable lots were found.</p>
+            <div id="wash-sale-warning" class="mt-6 p-4 border-l-4 border-yellow-400 bg-yellow-50 hidden">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            <strong>Wash Sale Rule Warning:</strong> Selling a security for a loss and buying the
+                            same or a "substantially identical" security within 30 days (before or after the sale)
+                            will result in a wash sale. The IRS disallows the loss deduction for wash sales. Please
+                            be mindful of your trading activity around the dates of these recommended sales.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const costBasisFileInput = document.getElementById('costBasisFile');
+        const ytdFileInput = document.getElementById('ytdFile');
+        const costBasisFileNameDisplay = document.getElementById('cost-basis-file-name');
+        const ytdFileNameDisplay = document.getElementById('ytd-file-name');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const proceedToBuyBtn = document.getElementById('proceedToBuyBtn');
+        const resultsContainer = document.getElementById('results-container');
+        const loader = document.getElementById('loader');
+        const recommendationsDiv = document.getElementById('recommendations');
+        const recommendationsTable = document.getElementById('recommendations-table');
+        const summaryDiv = document.getElementById('summary');
+        const noTradesMsg = document.getElementById('no-trades-msg');
+        const washSaleWarning = document.getElementById('wash-sale-warning');
+        const portfolioContainer = document.getElementById('portfolio-container');
+        const portfolioTable = document.getElementById('portfolio-table');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const deselectAllBtn = document.getElementById('deselectAllBtn');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const selectedCountSpan = document.getElementById('selected-count');
+        const totalCountSpan = document.getElementById('total-count');
+
+        let portfolioData = [];
+        let lastRecommendations = [];
+        let lastSummaryData = {};
+
+        // --- Event Listeners ---
+        costBasisFileInput.addEventListener('change', handleCostBasisFileUpload);
+        ytdFileInput.addEventListener('change', handleYtdFileUpload);
+        calculateBtn.addEventListener('click', handleCalculation);
+        exportBtn.addEventListener('click', handleExport);
+        proceedToBuyBtn.addEventListener('click', handleProceedToBuy);
+        recommendationsTable.addEventListener('click', handleRowToggle);
+        selectAllBtn.addEventListener('click', handleSelectAll);
+        deselectAllBtn.addEventListener('click', handleDeselectAll);
+        selectAllCheckbox.addEventListener('change', handleSelectAllCheckbox);
+        portfolioTable.addEventListener('change', handlePortfolioCheckboxChange);
+        portfolioTable.addEventListener('click', handlePortfolioRowToggle);
+
+        // --- Functions ---
+        function handleCostBasisFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                costBasisFileNameDisplay.textContent = '';
+                return;
+            }
+            costBasisFileNameDisplay.textContent = `Selected: ${file.name}`;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                portfolioData = parseCostBasisCSV(e.target.result);
+                console.log('Parsed Portfolio Data:', portfolioData);
+                if (portfolioData.length > 0) {
+                    displayPortfolioHoldings();
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function handleYtdFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                ytdFileNameDisplay.textContent = '';
+                return;
+            }
+            ytdFileNameDisplay.textContent = `Selected: ${file.name}`;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                parseYtdCSV(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        const cleanValue = (val) => {
+            if (typeof val !== 'string') return 0;
+            const cleaned = val.replace(/[$, "]/g, '');
+            if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+                return parseFloat(cleaned.replace(/[()]/g, '')) * -1;
+            }
+            return parseFloat(cleaned) || 0;
+        };
+
+        function findHeaderIndices(header, requiredCols) {
+            const indices = {};
+            const missingCols = [];
+            requiredCols.forEach(col => {
+                const index = header.findIndex(h => h.toLowerCase().includes(col.toLowerCase()));
+                if (index === -1) {
+                    missingCols.push(col);
+                }
+                indices[col.replace(/[^a-z0-9]/gi, '').toLowerCase()] = index;
+            });
+            if (missingCols.length > 0) {
+                throw new Error(`CSV is missing required columns: ${missingCols.join(', ')}`);
+            }
+            return indices;
+        }
+
+        function parseCostBasisCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return [];
+            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+
+            try {
+                const requiredCols = ['symbol', 'acquired', 'quantity', 'market value', 'cost basis', 'holding period'];
+                const indices = findHeaderIndices(header, requiredCols);
+
+                return lines.slice(1).map(line => {
+                    const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    const symbol = values[indices.symbol]?.trim();
+                    if (!symbol || symbol.toLowerCase().includes('total')) return null;
+
+                    const quantity = cleanValue(values[indices.quantity]);
+                    const marketValue = cleanValue(values[indices.marketvalue]);
+                    const costBasis = cleanValue(values[indices.costbasis]);
+
+                    return {
+                        symbol: symbol,
+                        acquired: values[indices.acquired]?.trim(),
+                        quantity: quantity,
+                        marketValue: marketValue,
+                        costBasis: costBasis,
+                        price: quantity > 0 ? marketValue / quantity : 0,
+                        costPerShare: quantity > 0 ? costBasis / quantity : 0,
+                        unrealizedGain: marketValue - costBasis,
+                        term: values[indices.holdingperiod]?.trim().toLowerCase().includes('long') ? 'Long' : 'Short',
+                    };
+                }).filter(lot => lot && !isNaN(lot.quantity));
+            } catch (error) {
+                alert(error.message);
+                costBasisFileInput.value = '';
+                costBasisFileNameDisplay.textContent = '';
+                return [];
+            }
+        }
+
+        function parseYtdCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return;
+            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+
+            try {
+                const requiredCols = ['Symbol', 'Short Term Realized Gain/(Loss)', 'Long Term Realized Gain/(Loss)'];
+                const indices = findHeaderIndices(header, requiredCols);
+
+                let totalST = 0;
+                let totalLT = 0;
+
+                lines.slice(1).forEach(line => {
+                    const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    const symbol = values[indices.symbol]?.trim();
+                    if (!symbol || symbol.toLowerCase().includes('total')) {
+                        return;
+                    }
+                    totalST += cleanValue(values[indices.shorttermrealizedgainloss]);
+                    totalLT += cleanValue(values[indices.longtermrealizedgainloss]);
+                });
+
+                document.getElementById('realizedST').value = totalST.toFixed(2);
+                document.getElementById('realizedLT').value = totalLT.toFixed(2);
+                console.log(`Auto-filled Realized Gains: ST=${totalST.toFixed(2)}, LT=${totalLT.toFixed(2)}`);
+            } catch (error) {
+                alert(error.message);
+                ytdFileInput.value = '';
+                ytdFileNameDisplay.textContent = '';
+            }
+        }
+
+
+        function displayPortfolioHoldings() {
+            portfolioContainer.classList.remove('hidden');
+            portfolioTable.innerHTML = '';
+
+            const formatCurrency = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+            // Add includedInSelling property to each lot (default true)
+            portfolioData.forEach((lot, index) => {
+                lot.includedInSelling = true;
+                lot.lotIndex = index;
+            });
+
+            // Group lots by symbol
+            const groupedBySymbol = portfolioData.reduce((acc, lot) => {
+                if (!acc[lot.symbol]) {
+                    acc[lot.symbol] = [];
+                }
+                acc[lot.symbol].push(lot);
+                return acc;
+            }, {});
+
+            // Display grouped positions
+            for (const symbol in groupedBySymbol) {
+                const lots = groupedBySymbol[symbol];
+                const totalQuantity = lots.reduce((sum, lot) => sum + lot.quantity, 0);
+                const totalMarketValue = lots.reduce((sum, lot) => sum + lot.marketValue, 0);
+                const totalCostBasis = lots.reduce((sum, lot) => sum + lot.costBasis, 0);
+                const totalUnrealizedGain = totalMarketValue - totalCostBasis;
+                const avgPrice = totalQuantity > 0 ? totalMarketValue / totalQuantity : 0;
+
+                // Determine if position has both long and short term lots
+                const hasLongTerm = lots.some(lot => lot.term === 'Long');
+                const hasShortTerm = lots.some(lot => lot.term === 'Short');
+                const termDisplay = hasLongTerm && hasShortTerm ? 'Mixed' : (hasLongTerm ? 'Long' : 'Short');
+
+                // Create parent row for symbol
+                const parentRow = document.createElement('tr');
+                parentRow.className = 'parent-row font-medium text-gray-800 cursor-pointer';
+                parentRow.dataset.symbol = symbol;
+
+                const gainLossClass = totalUnrealizedGain >= 0 ? 'text-green-600' : 'text-red-600';
+                const termClass = termDisplay === 'Mixed' ? 'bg-purple-100 text-purple-800' :
+                    termDisplay === 'Long' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800';
+
+                parentRow.innerHTML = `
+                    <td class="px-6 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <input type="checkbox" class="symbol-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2" 
+                                   data-symbol="${symbol}" checked>
+                            <svg class="h-5 w-5 text-gray-400 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm font-bold text-gray-900">${symbol}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">${lots.length} lots</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900">${totalQuantity.toLocaleString()}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900">${formatCurrency(totalMarketValue)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900">${formatCurrency(totalCostBasis)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right font-bold ${gainLossClass}">${formatCurrency(totalUnrealizedGain)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-center">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${termClass}">${termDisplay}</span>
+                    </td>
+                `;
+                portfolioTable.appendChild(parentRow);
+
+                // Create child rows for individual lots
+                lots.forEach((lot, lotIndex) => {
+                    const childRow = document.createElement('tr');
+                    childRow.className = 'child-row hidden';
+                    childRow.dataset.parentSymbol = symbol;
+
+                    const lotGainLossClass = lot.unrealizedGain >= 0 ? 'text-green-600' : 'text-red-600';
+                    const lotTermClass = lot.term === 'Long' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800';
+
+                    childRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap pl-12">
+                            <input type="checkbox" class="lot-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                                   data-lot-index="${lot.lotIndex}" data-symbol="${symbol}" checked>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 pl-8">${lot.symbol}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lot.acquired}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${lot.quantity.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${formatCurrency(lot.marketValue)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${formatCurrency(lot.costBasis)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${lotGainLossClass}">${formatCurrency(lot.unrealizedGain)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${lotTermClass}">${lot.term}</span>
+                        </td>
+                    `;
+                    portfolioTable.appendChild(childRow);
+                });
+            }
+
+            updateSelectionCount();
+        }
+
+        function handleSelectAll() {
+            const symbolCheckboxes = portfolioTable.querySelectorAll('.symbol-checkbox');
+            const lotCheckboxes = portfolioTable.querySelectorAll('.lot-checkbox');
+
+            symbolCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                const symbol = checkbox.dataset.symbol;
+                const symbolRow = checkbox.closest('tr');
+                symbolRow.classList.remove('excluded-row');
+            });
+
+            lotCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                const lotIndex = parseInt(checkbox.dataset.lotIndex);
+                portfolioData[lotIndex].includedInSelling = true;
+                const row = checkbox.closest('tr');
+                row.classList.remove('excluded-row');
+            });
+
+            selectAllCheckbox.checked = true;
+            updateSelectionCount();
+        }
+
+        function handleDeselectAll() {
+            const symbolCheckboxes = portfolioTable.querySelectorAll('.symbol-checkbox');
+            const lotCheckboxes = portfolioTable.querySelectorAll('.lot-checkbox');
+
+            symbolCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                const symbol = checkbox.dataset.symbol;
+                const symbolRow = checkbox.closest('tr');
+                symbolRow.classList.add('excluded-row');
+            });
+
+            lotCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                const lotIndex = parseInt(checkbox.dataset.lotIndex);
+                portfolioData[lotIndex].includedInSelling = false;
+                const row = checkbox.closest('tr');
+                row.classList.add('excluded-row');
+            });
+
+            selectAllCheckbox.checked = false;
+            updateSelectionCount();
+        }
+
+        function handleSelectAllCheckbox() {
+            const isChecked = selectAllCheckbox.checked;
+            const symbolCheckboxes = portfolioTable.querySelectorAll('.symbol-checkbox');
+            const lotCheckboxes = portfolioTable.querySelectorAll('.lot-checkbox');
+
+            symbolCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+                const symbolRow = checkbox.closest('tr');
+                if (isChecked) {
+                    symbolRow.classList.remove('excluded-row');
+                } else {
+                    symbolRow.classList.add('excluded-row');
+                }
+            });
+
+            lotCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+                const lotIndex = parseInt(checkbox.dataset.lotIndex);
+                portfolioData[lotIndex].includedInSelling = isChecked;
+                const row = checkbox.closest('tr');
+                if (isChecked) {
+                    row.classList.remove('excluded-row');
+                } else {
+                    row.classList.add('excluded-row');
+                }
+            });
+
+            updateSelectionCount();
+        }
+
+        function handlePortfolioCheckboxChange(event) {
+            if (event.target.classList.contains('symbol-checkbox')) {
+                const symbol = event.target.dataset.symbol;
+                const isChecked = event.target.checked;
+
+                // Update all lots for this symbol
+                const symbolLots = portfolioData.filter(lot => lot.symbol === symbol);
+                symbolLots.forEach(lot => {
+                    lot.includedInSelling = isChecked;
+                });
+
+                // Update all lot checkboxes for this symbol
+                const lotCheckboxes = portfolioTable.querySelectorAll(`.lot-checkbox[data-symbol="${symbol}"]`);
+                lotCheckboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                    const row = checkbox.closest('tr');
+                    if (isChecked) {
+                        row.classList.remove('excluded-row');
+                    } else {
+                        row.classList.add('excluded-row');
+                    }
+                });
+
+                // Update symbol row styling
+                const symbolRow = event.target.closest('tr');
+                if (isChecked) {
+                    symbolRow.classList.remove('excluded-row');
+                } else {
+                    symbolRow.classList.add('excluded-row');
+                }
+
+                updateMasterCheckboxState();
+                updateSelectionCount();
+            }
+            else if (event.target.classList.contains('lot-checkbox')) {
+                const lotIndex = parseInt(event.target.dataset.lotIndex);
+                const symbol = event.target.dataset.symbol;
+                portfolioData[lotIndex].includedInSelling = event.target.checked;
+
+                // Update row styling based on selection
+                const row = event.target.closest('tr');
+                if (event.target.checked) {
+                    row.classList.remove('excluded-row');
+                } else {
+                    row.classList.add('excluded-row');
+                }
+
+                // Update symbol checkbox state based on its lots
+                const symbolLotCheckboxes = portfolioTable.querySelectorAll(`.lot-checkbox[data-symbol="${symbol}"]`);
+                const checkedSymbolLots = Array.from(symbolLotCheckboxes).filter(cb => cb.checked).length;
+                const symbolCheckbox = portfolioTable.querySelector(`.symbol-checkbox[data-symbol="${symbol}"]`);
+
+                if (checkedSymbolLots === 0) {
+                    symbolCheckbox.checked = false;
+                    symbolCheckbox.indeterminate = false;
+                    symbolCheckbox.closest('tr').classList.add('excluded-row');
+                } else if (checkedSymbolLots === symbolLotCheckboxes.length) {
+                    symbolCheckbox.checked = true;
+                    symbolCheckbox.indeterminate = false;
+                    symbolCheckbox.closest('tr').classList.remove('excluded-row');
+                } else {
+                    symbolCheckbox.checked = false;
+                    symbolCheckbox.indeterminate = true;
+                    symbolCheckbox.closest('tr').classList.remove('excluded-row');
+                }
+
+                updateMasterCheckboxState();
+                updateSelectionCount();
+            }
+        }
+
+        function updateMasterCheckboxState() {
+            const allLotCheckboxes = portfolioTable.querySelectorAll('.lot-checkbox');
+            const checkedCount = Array.from(allLotCheckboxes).filter(cb => cb.checked).length;
+
+            if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === allLotCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+
+        function handlePortfolioRowToggle(event) {
+            const parentRow = event.target.closest('.parent-row');
+            if (!parentRow || event.target.type === 'checkbox') return;
+
+            const symbol = parentRow.dataset.symbol;
+            const childRows = portfolioTable.querySelectorAll(`tr[data-parent-symbol="${symbol}"]`);
+            const arrow = parentRow.querySelector('svg');
+
+            arrow.classList.toggle('icon-rotate');
+            childRows.forEach(row => row.classList.toggle('hidden'));
+        }
+
+        function updateSelectionCount() {
+            const lotCheckboxes = portfolioTable.querySelectorAll('.lot-checkbox');
+            const checkedCount = Array.from(lotCheckboxes).filter(cb => cb.checked).length;
+            selectedCountSpan.textContent = checkedCount;
+            totalCountSpan.textContent = lotCheckboxes.length;
+        }
+
+        function handleCalculation() {
+            if (portfolioData.length === 0) {
+                alert('Please upload your Cost Basis CSV file first.');
+                return;
+            }
+
+            // Check if any positions are selected for selling
+            const selectedPositions = portfolioData.filter(lot => lot.includedInSelling);
+            if (selectedPositions.length === 0) {
+                alert('Please select at least one position to include in the selling algorithm.');
+                return;
+            }
+            resultsContainer.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            recommendationsDiv.classList.add('hidden');
+            exportBtn.classList.add('hidden');
+
+            const realizedST = parseFloat(document.getElementById('realizedST').value) || 0;
+            const realizedLT = parseFloat(document.getElementById('realizedLT').value) || 0;
+            const targetST = parseFloat(document.getElementById('targetST').value);
+            const targetLT = parseFloat(document.getElementById('targetLT').value);
+
+            if (isNaN(targetST) || isNaN(targetLT)) {
+                alert('Please enter valid numerical targets for both Short-Term and Long-Term gains.');
+                loader.classList.add('hidden');
+                return;
+            }
+
+            const neededST = targetST - realizedST;
+            const neededLT = targetLT - realizedLT;
+
+            setTimeout(() => {
+                const excludedPositions = portfolioData.filter(lot => !lot.includedInSelling);
+                lastRecommendations = generateAdvancedRecommendations(neededST, neededLT);
+                displayResults(lastRecommendations, { realizedST, realizedLT, targetST, targetLT }, excludedPositions);
+                loader.classList.add('hidden');
+                recommendationsDiv.classList.remove('hidden');
+                if (lastRecommendations.length > 0) {
+                    exportBtn.classList.remove('hidden');
+                    proceedToBuyBtn.classList.remove('hidden');
+                }
+            }, 500);
+        }
+
+        function generateAdvancedRecommendations(neededST, neededLT) {
+            // Only include lots that are selected for selling
+            let lots = JSON.parse(JSON.stringify(portfolioData))
+                .filter(lot => lot.quantity >= 1 && lot.includedInSelling);
+            let recommendations = [];
+
+            const findBestCombination = (target, lotsPool) => {
+                if (target === 0 || lotsPool.length === 0) return [];
+
+                const seekingGain = target > 0;
+                const sortedLots = [...lotsPool].sort((a, b) => Math.abs(a.unrealizedGain) - Math.abs(b.unrealizedGain));
+
+                let chosenLots = [];
+                let currentTotal = 0;
+
+                for (const lot of sortedLots) {
+                    const lastTotal = currentTotal;
+                    const newTotal = currentTotal + lot.unrealizedGain;
+
+                    const crossedTarget = seekingGain ? (newTotal >= target) : (newTotal <= target);
+
+                    if (crossedTarget) {
+                        const diffWithLot = Math.abs(target - newTotal);
+                        const diffWithoutLot = Math.abs(target - lastTotal);
+
+                        if (diffWithLot < diffWithoutLot) {
+                            chosenLots.push(lot);
+                        }
+                        return chosenLots;
+                    } else {
+                        chosenLots.push(lot);
+                        currentTotal = newTotal;
+                    }
+                }
+                return chosenLots;
+            };
+
+            const stGains = lots.filter(l => l.term === 'Short' && l.unrealizedGain > 0);
+            const stLosses = lots.filter(l => l.term === 'Short' && l.unrealizedGain < 0);
+            const ltGains = lots.filter(l => l.term === 'Long' && l.unrealizedGain > 0);
+            const ltLosses = lots.filter(l => l.term === 'Long' && l.unrealizedGain < 0);
+
+            if (neededST > 0) recommendations.push(...findBestCombination(neededST, stGains));
+            else if (neededST < 0) recommendations.push(...findBestCombination(neededST, stLosses));
+
+            if (neededLT > 0) recommendations.push(...findBestCombination(neededLT, ltGains));
+            else if (neededLT < 0) recommendations.push(...findBestCombination(neededLT, ltLosses));
+
+            return recommendations;
+        }
+
+        function displayResults(recommendations, targets, excludedPositions = []) {
+            recommendationsTable.innerHTML = '';
+            noTradesMsg.classList.toggle('hidden', recommendations.length > 0);
+
+            const groupedBySymbol = recommendations.reduce((acc, lot) => {
+                acc[lot.symbol] = acc[lot.symbol] || [];
+                acc[lot.symbol].push(lot);
+                return acc;
+            }, {});
+
+            let totalGainFromTrades = 0, stGainFromTrades = 0, ltGainFromTrades = 0, totalMarketValueFromTrades = 0;
+            let hasLosses = false;
+
+            const formatCurrency = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+            for (const symbol in groupedBySymbol) {
+                const lots = groupedBySymbol[symbol];
+                const totalSymbolQty = lots.reduce((sum, l) => sum + l.quantity, 0);
+                const totalSymbolGain = lots.reduce((sum, l) => sum + l.unrealizedGain, 0);
+                const totalSymbolMarketValue = lots.reduce((sum, l) => sum + l.marketValue, 0);
+
+                totalMarketValueFromTrades += totalSymbolMarketValue;
+
+                const parentRow = document.createElement('tr');
+                parentRow.className = 'parent-row font-medium text-gray-800';
+                parentRow.dataset.symbol = symbol;
+                parentRow.innerHTML = `
+                    <td class="px-6 py-3 whitespace-nowrap"><span class="inline-flex items-center"><svg class="h-5 w-5 mr-2 text-gray-400 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${totalSymbolGain < 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">SELL GROUP</span></span></td>
+                    <td class="px-6 py-3 whitespace-nowrap">${symbol}</td>
+                    <td class="px-6 py-3 whitespace-nowrap">${totalSymbolQty.toLocaleString()}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">Multiple Lots</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right text-gray-600">${formatCurrency(totalSymbolMarketValue)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right ${totalSymbolGain < 0 ? 'text-red-600' : 'text-green-600'} font-semibold">${formatCurrency(totalSymbolGain)}</td>
+                `;
+                recommendationsTable.appendChild(parentRow);
+
+                lots.forEach(lot => {
+                    const gain = lot.unrealizedGain;
+                    if (gain < 0) hasLosses = true;
+                    totalGainFromTrades += gain;
+                    if (lot.term === 'Short') stGainFromTrades += gain; else ltGainFromTrades += gain;
+
+                    const childRow = document.createElement('tr');
+                    childRow.className = 'child-row hidden';
+                    childRow.dataset.parentSymbol = symbol;
+                    childRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lot.symbol}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lot.quantity.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lot.acquired}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${formatCurrency(lot.marketValue)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${gain < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(gain)}</td>
+                    `;
+                    recommendationsTable.appendChild(childRow);
+                });
+            }
+
+            washSaleWarning.classList.toggle('hidden', !hasLosses);
+
+            const finalST = targets.realizedST + stGainFromTrades;
+            const finalLT = targets.realizedLT + ltGainFromTrades;
+            const formatCurrencyWithSign = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD', signDisplay: 'auto' });
+
+            lastSummaryData = {
+                finalST, finalLT, totalGainFromTrades, totalMarketValueFromTrades,
+                targetST: targets.targetST,
+                targetLT: targets.targetLT,
+            };
+
+            let summaryHTML = `
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Projected Final ST Gain/Loss</p>
+                    <p class="text-xl font-bold ${finalST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalST)}</p>
+                    <p class="text-xs text-gray-500">(Target: ${formatCurrencyWithSign(targets.targetST)})</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Projected Final LT Gain/Loss</p>
+                    <p class="text-xl font-bold ${finalLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalLT)}</p>
+                    <p class="text-xs text-gray-500">(Target: ${formatCurrencyWithSign(targets.targetLT)})</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Total Gain/Loss from Trades</p>
+                    <p class="text-xl font-bold ${totalGainFromTrades < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(totalGainFromTrades)}</p>
+                    <p class="text-xs text-gray-500">(${recommendations.length} lots)</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Total Market Value of Trades</p>
+                    <p class="text-xl font-bold text-gray-800">${formatCurrency(totalMarketValueFromTrades)}</p>
+                    <p class="text-xs text-gray-400">&nbsp;</p> <!-- Placeholder for alignment -->
+                </div>
+            `;
+
+            // Add excluded positions summary if any
+            if (excludedPositions.length > 0) {
+                const excludedValue = excludedPositions.reduce((sum, pos) => sum + pos.marketValue, 0);
+                const excludedSymbols = [...new Set(excludedPositions.map(pos => pos.symbol))];
+
+                summaryHTML += `
+                    <div class="col-span-full mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <h4 class="text-sm font-medium text-yellow-800 mb-2">Excluded from Selling Algorithm:</h4>
+                        <div class="text-xs text-yellow-700">
+                            <p><span class="font-medium">${excludedPositions.length} lots</span> from <span class="font-medium">${excludedSymbols.length} symbols</span> (${excludedSymbols.join(', ')})</p>
+                            <p>Total excluded market value: <span class="font-medium">${formatCurrency(excludedValue)}</span></p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            summaryDiv.innerHTML = summaryHTML;
+        }
+
+        function handleRowToggle(event) {
+            const parentRow = event.target.closest('.parent-row');
+            if (!parentRow) return;
+            const symbol = parentRow.dataset.symbol;
+            const childRows = recommendationsTable.querySelectorAll(`tr[data-parent-symbol="${symbol}"]`);
+            parentRow.querySelector('svg').classList.toggle('icon-rotate');
+            childRows.forEach(row => row.classList.toggle('hidden'));
+        }
+
+        function handleExport() {
+            if (lastRecommendations.length === 0) {
+                alert("No recommendations to export.");
+                return;
+            }
+
+            const accountNumber = document.getElementById('accountNumber').value || 'N/A';
+            const headers = [
+                "Account Number", "Security Symbol", "Purchase Date", "Quantity Owned",
+                "Original Purchase Price", "Cost Per Share", "Cost Basis",
+                "Period (LT or ST)", "Share Quantity to Sell", "Action", "Price"
+            ];
+
+            const rows = lastRecommendations.map(lot => {
+                const row = [
+                    accountNumber,
+                    `"${lot.symbol}"`,
+                    lot.acquired,
+                    lot.quantity,
+                    lot.costPerShare.toFixed(2),
+                    lot.costPerShare.toFixed(2),
+                    lot.costBasis.toFixed(2),
+                    lot.term,
+                    lot.quantity, // Share Quantity to Sell is the full lot
+                    "Sell",
+                    lot.price.toFixed(2)
+                ];
+                return row.join(',');
+            });
+
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `trades_for_acct_${accountNumber}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function handleProceedToBuy() {
+            if (lastRecommendations.length === 0) {
+                alert("No recommendations available to proceed with buy orders.");
+                return;
+            }
+
+            // Calculate total market value from trades (cash generated from sales)
+            const totalCashFromSales = lastSummaryData.totalMarketValueFromTrades;
+
+            // Get client info to transfer
+            const clientName = document.getElementById('clientName').value;
+            const custodian = document.getElementById('custodian').value;
+            const accountNumber = document.getElementById('accountNumber').value;
+
+            // Store data in localStorage to transfer to buy-orders page
+            const transferData = {
+                cashFromSales: totalCashFromSales,
+                clientName: clientName,
+                custodian: custodian,
+                accountNumber: accountNumber,
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('taxHarvestingTransfer', JSON.stringify(transferData));
+
+            // Navigate to buy-orders page
+            window.location.href = 'buy-orders.html';
+        }
+    </script>
+</body>
+
+</html>

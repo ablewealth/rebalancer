@@ -1,0 +1,286 @@
+# Advanced Tax Harvesting & Portfolio Management Suite
+
+This comprehensive **Tax Harvesting & Portfolio Management Suite** is designed to help financial advisors make strategic decisions about portfolio optimization, tax harvesting, and rebalancing. The suite consists of three integrated tools that work seamlessly together to provide end-to-end portfolio management capabilities.
+
+## Suite Overview
+
+The suite includes three main components:
+1. **Tax Harvesting Optimization** - Analyze holdings and generate sell recommendations for tax optimization
+2. **Model Portfolio Manager** - Create, edit, and manage target portfolio allocations
+3. **Buy Order Generator** - Generate buy orders to invest cash from sales into target allocations
+
+All tools are designed to work together, allowing you to move seamlessly from tax harvesting through portfolio rebalancing with automatic data transfer between modules.
+
+## Key Features
+
+### 1. Tax Harvesting Optimization Tool
+
+#### Data Input & Management
+* **Client Information:** Input Client Name, Custodian, and Account Number for record-keeping and report generation
+* **Current Holdings (Cost Basis):** Upload CSV files containing all current portfolio positions with detailed tax lot information
+* **Interactive Portfolio Review:** View and selectively exclude positions from the selling algorithm with checkbox controls
+* **Hierarchical Position Display:** Holdings grouped by symbol with expandable lot-level detail
+* **Year-to-Date (YTD) Realized Gains:** Either upload a CSV file of completed trades or manually enter realized gains/losses
+* **Flexible Data Formats:** Supports multiple CSV formats from different brokerages and custodians
+
+#### Intelligent Goal Setting
+* **Annual Targets:** Set precise short-term and long-term capital gain or loss targets for the year
+* **Strategic Planning:** Plan for tax loss harvesting, gain realization, or tax bracket management
+* **Real-time Calculations:** Automatically calculates needed gains/losses based on YTD performance
+
+#### Advanced Recommendation Engine
+* **Multi-Objective Optimization:** Simultaneously optimizes for both short-term and long-term targets
+* **Precision Matching:** Uses advanced algorithms to find combinations that get as close as possible to exact targets
+* **Selective Processing:** Only considers positions selected by the user, respecting exclusions
+* **Efficiency Focus:** Minimizes the number of trades while maximizing tax efficiency
+* **Smart Lot Selection:** Considers lot size, holding period, and gain/loss magnitude for optimal results
+
+#### Comprehensive Outputs & Reports
+* **Interactive Results Table:** Expandable view showing trades grouped by symbol with detailed lot information
+* **Exclusion Summary:** Clear reporting of positions excluded from the algorithm
+* **Precision Indicators:** Shows exactly how close recommendations get to your targets
+* **Professional Reports:** Generate print-ready compliance reports with client information and trade details
+* **Export Functionality:** Download trade recommendations as CSV files formatted for trading desks
+* **Wash Sale Warnings:** Automatic alerts for potential wash sale rule violations
+* **Seamless Integration:** Direct transfer of sale proceeds to Buy Order Generator
+
+### 2. Model Portfolio Manager
+
+#### Portfolio Creation & Management
+* **Pre-built Models:** Access to professional portfolio models (100/0, 80/20, All Equity, Fixed Income, Tax Aware, Tactical Equity)
+* **Dynamic Loading:** Refresh button to load new CSV files added to the model portfolios folder
+* **Custom Portfolio Creation:** Build portfolios from scratch with intuitive editing interface
+* **CSV Import/Export:** Import existing portfolios or export custom models
+* **Real-time Editing:** Click-to-edit interface for symbols, names, prices, and weights
+
+#### Advanced Portfolio Tools
+* **Weight Management:** Real-time weight tracking with visual progress indicators
+* **Normalization:** One-click weight normalization to 100%
+* **Validation:** Automatic validation and warnings for weight allocations
+* **Portfolio Statistics:** Holdings count, total weights, and last modified tracking
+* **Professional Models:** Access to sophisticated strategies including hedged equity and market neutral funds
+
+#### Integration Features
+* **Direct Transfer:** Send portfolios directly to Buy Order Generator
+* **Flexible Formats:** Support for various CSV column naming conventions
+* **Caching System:** Improved performance with portfolio caching
+* **Error Handling:** Robust error handling with user-friendly messages
+
+### 3. Buy Order Generator
+
+#### Cash Management
+* **Automatic Transfer:** Receive cash amounts directly from Tax Harvesting tool
+* **Portfolio Cash Allocation:** Required percentage allocation to cash position
+* **Additional Reserves:** Optional fixed dollar amount reserves
+* **Smart Calculation:** Separate calculation of percentage and fixed reserves
+* **Utilization Tracking:** Clear display of cash utilization and remaining balances
+
+#### Order Generation
+* **Whole Share Optimization:** Generates only whole share quantities for practical execution
+* **Target Allocation:** Calculates orders based on target portfolio percentages
+* **Multi-pass Algorithm:** Maximizes cash utilization through multiple allocation passes
+* **Priority Ordering:** Prioritizes larger allocations first for better execution
+
+#### Professional Output
+* **Detailed Reports:** Comprehensive CSV exports with all order details
+* **Reserve Breakdown:** Clear reporting of cash reserves and allocations
+* **Integration Data:** Includes client information transferred from other tools
+* **Execution Ready:** Orders formatted for immediate trading desk execution
+
+## CSV File Format Requirements
+
+The suite supports multiple CSV formats for different purposes. All tools include flexible parsing to handle various column naming conventions.
+
+### Tax Harvesting - Current Holdings (Cost Basis) CSV Format
+
+**Required Columns:**
+- `Symbol` - Security symbol (e.g., AAPL, MSFT)
+- `Acquired` or `Acquired/Opened` - Purchase date (MM/DD/YYYY format)
+- `Quantity` - Number of shares owned
+- `Market Value` - Current market value of the position
+- `Cost Basis` - Original purchase cost of the position
+- `Holding Period` - "Long Term" or "Short Term" (or will be calculated from acquisition date)
+
+**Example Format:**
+```
+Symbol,Acquired/Opened,Quantity,Market Value,Cost Basis,Holding Period
+AAPL,1/15/2023,100,"$18,500.00","$15,000.00",Long Term
+MSFT,8/10/2024,50,"$21,000.00","$19,500.00",Short Term
+GOOGL,3/22/2022,25,"$3,750.00","$4,200.00",Long Term
+```
+
+### Tax Harvesting - YTD Realized Gains CSV Format (Optional)
+
+**Required Columns:**
+- `Symbol` - Security symbol
+- `Short Term Realized Gain/(Loss)` - YTD short-term gains/losses for this symbol
+- `Long Term Realized Gain/(Loss)` - YTD long-term gains/losses for this symbol
+
+**Example Format:**
+```
+Symbol,Short Term Realized Gain/(Loss),Long Term Realized Gain/(Loss)
+AAPL,$1,250.00,"($500.00)"
+MSFT,"($750.00)",$2,100.00
+GOOGL,$0.00,$850.00
+```
+
+### Model Portfolio CSV Format
+
+**Required Columns:**
+- `Symbol` - Security symbol (e.g., EFV, SPYG)
+- `Name` - Full security name
+- `Price` - Current price per share
+- `Target Percent` or `Weight` - Target allocation percentage
+
+**Example Format:**
+```
+Model,Symbol,Name,Price,Target Percent
+All Equity,EFV,iShares MSCI EAFE Value ETF,63.33,10
+All Equity,SPYG,SPDR Portfolio S&P 500 Growth ETF,98.56,11
+All Equity,DYNF,iShares U.S. Equity Factor Rotation ETF,55.99,10
+```
+
+**Flexible Column Support:**
+- Weight columns: "Weight", "Target Percent", "Target", "Percent"
+- Price columns: "Price" (with or without currency symbols)
+- Name columns: "Name", "Security Name", "Description"
+
+### Data Preparation Tips
+
+1. **Export from Your Brokerage:** Most major brokerages (Fidelity, Schwab, Vanguard, etc.) can export position data in CSV format
+2. **Clean Your Data:** Remove any header text, footnotes, or summary rows that aren't actual position data
+3. **Check Date Formats:** Ensure all dates are in MM/DD/YYYY format
+4. **Verify Numbers:** Make sure all monetary values are properly formatted (the tool handles various currency formats)
+5. **Test with Small Files:** Start with a small sample to ensure your format works before uploading large files
+
+### Common Issues & Solutions
+
+**"CSV is missing required columns" Error:**
+- Check that your column headers exactly match the required names
+- Remove any extra spaces or special characters from column headers
+- Ensure you have all required columns present
+
+**"No valid portfolio data found" Error:**
+- Remove any "Total" or summary rows from your CSV
+- Ensure quantity values are numbers, not text
+- Check that you have actual position data, not just headers
+
+**Incorrect Holding Period Classification:**
+- If "Holding Period" column is missing, the tool will calculate based on acquisition date
+- Ensure acquisition dates are properly formatted
+- Manually verify that positions acquired >365 days ago are classified as "Long Term"
+
+## How to Use the Suite
+
+### Complete Workflow: Tax Harvesting → Portfolio Management → Buy Orders
+
+#### Phase 1: Tax Harvesting Optimization
+1. **Prepare Your Data:** Export current holdings and YTD realized gains CSV files
+2. **Input Client Information:** Fill in client name, custodian, and account details
+3. **Upload Files:** Upload your current holdings CSV and optionally your YTD realized gains CSV
+4. **Review Holdings:** Use the interactive portfolio display to exclude any positions you don't want to sell
+5. **Set Targets:** Enter your desired short-term and long-term gain/loss targets for the year
+6. **Generate Recommendations:** Click "Generate Recommendations" to run the optimization
+7. **Review Results:** Examine the recommended trades, excluded positions, and projected outcomes
+8. **Export or Proceed:** Either export sell orders or proceed directly to buy order generation
+
+#### Phase 2: Model Portfolio Management (Optional)
+1. **Access Portfolio Manager:** Navigate to the Model Portfolio Manager
+2. **Select or Create:** Choose from pre-built models or create custom portfolios
+3. **Edit as Needed:** Use the interactive editor to adjust symbols, names, prices, and weights
+4. **Validate Weights:** Use normalization tools to ensure weights sum to 100%
+5. **Save or Export:** Save portfolios for future use or export as CSV files
+6. **Transfer to Buy Orders:** Send portfolio directly to Buy Order Generator
+
+#### Phase 3: Buy Order Generation
+1. **Receive Cash:** Cash amounts are automatically transferred from tax harvesting
+2. **Set Cash Reserves:** Configure required portfolio cash allocation percentage and optional fixed reserves
+3. **Load Target Portfolio:** Upload CSV or receive portfolio from Model Portfolio Manager
+4. **Generate Orders:** System calculates whole share quantities based on available cash and target allocations
+5. **Review Results:** Examine buy orders, cash utilization, and remaining balances
+6. **Export Orders:** Download execution-ready CSV files for trading desks
+
+### Individual Tool Usage
+
+Each tool can also be used independently:
+
+#### Tax Harvesting Only
+- Upload holdings, set targets, generate sell recommendations
+- Export CSV files for manual execution
+- Use for tax planning and loss harvesting strategies
+
+#### Model Portfolio Manager Only
+- Create and manage portfolio models
+- Edit existing portfolios or build from scratch
+- Export portfolios for use in other systems
+
+#### Buy Order Generator Only
+- Input cash amounts manually
+- Upload target portfolio CSV files
+- Generate buy orders for rebalancing or new investments
+
+## Advanced Features
+
+### Integration Capabilities
+- **Seamless Data Transfer:** Automatic transfer of client information and cash amounts between tools
+- **Cross-Tool Navigation:** Easy movement between all three applications
+- **Consistent Interface:** Unified design and user experience across all tools
+- **Real-time Notifications:** Success messages and error handling throughout the workflow
+
+### Portfolio Management Features
+- **Dynamic Portfolio Loading:** Refresh functionality to load new CSV files from the model portfolios folder
+- **Hierarchical Display:** Symbol-level grouping with expandable lot details
+- **Selective Processing:** Checkbox controls to exclude specific positions or entire symbols
+- **Visual Feedback:** Color-coded gains/losses, term indicators, and progress bars
+
+### Cash Management
+- **Dual Reserve System:** Separate percentage-based and fixed dollar reserves
+- **Utilization Optimization:** Multi-pass algorithms to maximize cash deployment
+- **Whole Share Focus:** Practical order generation with whole share quantities only
+- **Comprehensive Reporting:** Detailed breakdown of cash allocation and remaining balances
+
+## Best Practices
+
+### Tax Harvesting
+- **Regular Updates:** Update your holdings data regularly as market values change
+- **Selective Exclusions:** Use position exclusion features to protect core holdings
+- **Consider Wash Sales:** Be mindful of the 30-day wash sale rule when implementing loss harvesting recommendations
+- **Review Excluded Positions:** Always review the excluded positions summary in results
+
+### Portfolio Management
+- **Weight Validation:** Use normalization tools to ensure portfolio weights sum to 100%
+- **Regular Refresh:** Use the refresh button when adding new model portfolios
+- **Backup Models:** Export custom portfolios as CSV files for backup
+- **Professional Models:** Leverage pre-built professional portfolio models as starting points
+
+### Buy Order Generation
+- **Cash Reserve Planning:** Set appropriate cash reserves based on client needs and market conditions
+- **Utilization Review:** Monitor cash utilization percentages to ensure efficient deployment
+- **Order Validation:** Review generated orders for reasonableness before execution
+- **Integration Benefits:** Use automatic transfer features to reduce manual data entry errors
+
+### General
+- **Professional Consultation:** Always consult with tax professionals before making significant trading decisions
+- **Record Keeping:** Maintain detailed records of all trades for tax reporting purposes
+- **Client Communication:** Use the comprehensive reporting features to keep clients informed
+- **Regular Monitoring:** Periodically review and update portfolio models and tax strategies
+
+## Technical Notes
+
+### System Capabilities
+- **Fractional Share Support:** Tax harvesting tool supports positions with fractional shares
+- **Real-time Calculations:** All calculations are performed in real-time with current data
+- **Advanced Algorithms:** Multi-objective optimization considering lot size, holding period, and tax efficiency
+- **Precision Indicators:** Results displayed with precision indicators showing how close recommendations come to exact targets
+
+### Data Handling
+- **Flexible Parsing:** Robust CSV parsing handles various formats and column naming conventions
+- **Error Recovery:** Comprehensive error handling with user-friendly messages
+- **Data Validation:** Automatic validation of inputs with helpful guidance
+- **Caching System:** Performance optimization through intelligent data caching
+
+### Browser Compatibility
+- **Modern Browsers:** Optimized for Chrome, Firefox, Safari, and Edge
+- **Responsive Design:** Works on desktop, tablet, and mobile devices
+- **Local Storage:** Uses browser local storage for data transfer between tools
+- **No Server Required:** Fully client-side application for enhanced security and privacy

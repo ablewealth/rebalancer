@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Tax Harvesting Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid #3498db;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .parent-row {
+            cursor: pointer;
+            background-color: #f9fafb;
+        }
+        .parent-row:hover {
+            background-color: #f3f4f6;
+        }
+        .child-row {
+            background-color: #ffffff;
+        }
+        .child-row td {
+            padding-left: 2.5rem;
+        }
+        .icon-rotate {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Advanced Tax Harvesting Optimization</h1>
+            <p class="text-md text-gray-600 mt-2">This tool uses an optimization algorithm to find trades that best meet your tax goals.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Input Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-3">1. Your Portfolio Data</h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="clientName" class="block text-sm font-medium text-gray-700">Client Name</label>
+                        <input type="text" id="clientName" placeholder="John Doe" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                    </div>
+                    <div>
+                        <label for="custodian" class="block text-sm font-medium text-gray-700">Custodian</label>
+                        <input type="text" id="custodian" placeholder="Fidelity" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                    </div>
+                </div>
+
+                 <div class="mb-4">
+                    <label for="accountNumber" class="block text-sm font-medium text-gray-700">Account Number</label>
+                    <input type="text" id="accountNumber" placeholder="Enter Account Number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                </div>
+
+                <div class="mb-4">
+                    <label for="costBasisFile" class="block text-sm font-medium text-gray-700 mb-2">A. Upload Cost Basis CSV (Current Holdings)</label>
+                    <input type="file" id="costBasisFile" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors duration-200 cursor-pointer">
+                    <p id="cost-basis-file-name" class="text-xs text-gray-500 mt-1"></p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="ytdFile" class="block text-sm font-medium text-gray-700 mb-2">B. Upload YTD Realized Gains CSV (Optional)</label>
+                    <input type="file" id="ytdFile" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors duration-200 cursor-pointer">
+                    <p id="ytd-file-name" class="text-xs text-gray-500 mt-1"></p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">Year-to-Date Realized Gains (Auto-filled or Manual)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="realizedST" class="block text-sm font-medium text-gray-700">Short-Term Gain/(Loss)</label>
+                            <input type="number" id="realizedST" placeholder="0.00" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                        </div>
+                        <div>
+                            <label for="realizedLT" class="block text-sm font-medium text-gray-700">Long-Term Gain/(Loss)</label>
+                            <input type="number" id="realizedLT" placeholder="0.00" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-3">2. Set Annual Targets</h2>
+                <p class="text-sm text-gray-600 mb-4">Define your desired total capital gain or loss for the year.</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="targetST" class="block text-sm font-medium text-gray-700">Target Short-Term Gain/(Loss)</label>
+                        <input type="number" id="targetST" placeholder="e.g., -3000" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    </div>
+                    <div>
+                        <label for="targetLT" class="block text-sm font-medium text-gray-700">Target Long-Term Gain/(Loss)</label>
+                        <input type="number" id="targetLT" placeholder="e.g., 5000" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    </div>
+                </div>
+                
+                <div class="flex flex-col space-y-4">
+                    <button id="calculateBtn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 00-1 1v1a1 1 0 001 1h6a1 1 0 001-1V5a1 1 0 00-1-1H7zm6 6a1 1 0 01-1 1H8a1 1 0 110-2h4a1 1 0 011 1zm-3 4a1 1 0 100-2H8a1 1 0 100 2h2z" clip-rule="evenodd" /></svg>
+                        Generate Recommendations
+                    </button>
+                    <div id="action-buttons" class="flex space-x-4 hidden">
+                        <button id="printBtn" class="w-full bg-gray-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" /></svg>
+                            Print Report
+                        </button>
+                        <button id="exportBtn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 5a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM10 18a1 1 0 01-1-1v-6a1 1 0 112 0v6a1 1 0 01-1-1z" /><path fill-rule="evenodd" d="M3.293 7.293a1 1 0 011.414 0L10 12.586l5.293-5.293a1 1 0 111.414 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            Export to CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-container" class="mt-8 bg-white p-6 rounded-xl shadow-md border border-gray-200 hidden">
+            <div id="loader" class="flex justify-center items-center h-40 hidden">
+                <div class="loader"></div>
+                <p class="ml-4 text-gray-600">Finding optimal trades...</p>
+            </div>
+            <div id="recommendations">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-3">3. Recommended Trades</h2>
+                <div id="summary" class="mb-6 p-4 bg-gray-100 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acquired Date</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Market Value</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Est. Gain/(Loss)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recommendations-table" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+                 <p id="no-trades-msg" class="text-center text-gray-500 py-8 hidden">No trades are needed to meet your targets, or no suitable lots were found.</p>
+                 <div id="wash-sale-warning" class="mt-6 p-4 border-l-4 border-yellow-400 bg-yellow-50 hidden">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                <strong>Wash Sale Rule Warning:</strong> Selling a security for a loss and buying the same or a "substantially identical" security within 30 days (before or after the sale) will result in a wash sale. The IRS disallows the loss deduction for wash sales. Please be mindful of your trading activity around the dates of these recommended sales.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div id="concentration-warning" class="mt-4 p-4 border-l-4 border-blue-400 bg-blue-50 hidden">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p id="concentration-warning-text" class="text-sm text-blue-700">
+                                <strong>Portfolio Concentration Notice:</strong> Some recommendations involve significant positions in individual securities. Consider the impact on your overall portfolio diversification.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const costBasisFileInput = document.getElementById('costBasisFile');
+        const ytdFileInput = document.getElementById('ytdFile');
+        const costBasisFileNameDisplay = document.getElementById('cost-basis-file-name');
+        const ytdFileNameDisplay = document.getElementById('ytd-file-name');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const actionButtonsContainer = document.getElementById('action-buttons');
+        const printBtn = document.getElementById('printBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const resultsContainer = document.getElementById('results-container');
+        const loader = document.getElementById('loader');
+        const recommendationsDiv = document.getElementById('recommendations');
+        const recommendationsTable = document.getElementById('recommendations-table');
+        const summaryDiv = document.getElementById('summary');
+        const noTradesMsg = document.getElementById('no-trades-msg');
+        const washSaleWarning = document.getElementById('wash-sale-warning');
+
+        let portfolioData = [];
+        let lastRecommendations = [];
+        let lastSummaryData = {};
+
+        // Enhanced wash sale analysis
+        function analyzeWashSaleRisks(recommendations) {
+            const washSaleRisks = [];
+            const lossPositions = recommendations.filter(lot => lot.unrealizedGain < 0);
+            
+            lossPositions.forEach(lot => {
+                // Check if there are other positions in the same symbol
+                const sameSymbolPositions = portfolioData.filter(p => 
+                    p.symbol === lot.symbol && p !== lot
+                );
+                
+                let riskLevel = 'Low';
+                if (sameSymbolPositions.length > 0) {
+                    riskLevel = 'Medium';
+                    
+                    // Check for recent acquisitions (simplified - would need actual trade history)
+                    const recentPositions = sameSymbolPositions.filter(p => {
+                        const acquiredDate = new Date(p.acquired);
+                        const daysSince = (new Date() - acquiredDate) / (1000 * 60 * 60 * 24);
+                        return daysSince < 60; // Within 60 days
+                    });
+                    
+                    if (recentPositions.length > 0) {
+                        riskLevel = 'High';
+                    }
+                }
+                
+                if (riskLevel !== 'Low') {
+                    washSaleRisks.push({
+                        symbol: lot.symbol,
+                        riskLevel: riskLevel,
+                        lot: lot
+                    });
+                }
+            });
+            
+            return washSaleRisks;
+        }
+
+        // Portfolio concentration analysis
+        function analyzeConcentration(recommendations) {
+            const symbolCounts = {};
+            const symbolValues = {};
+            
+            recommendations.forEach(lot => {
+                symbolCounts[lot.symbol] = (symbolCounts[lot.symbol] || 0) + 1;
+                symbolValues[lot.symbol] = (symbolValues[lot.symbol] || 0) + lot.marketValue;
+            });
+            
+            const totalValue = recommendations.reduce((sum, lot) => sum + lot.marketValue, 0);
+            const concentrationWarnings = [];
+            
+            Object.entries(symbolValues).forEach(([symbol, value]) => {
+                const concentration = value / totalValue;
+                if (concentration > 0.15) { // More than 15% in one symbol
+                    concentrationWarnings.push({
+                        symbol: symbol,
+                        concentration: concentration,
+                        value: value,
+                        lots: symbolCounts[symbol]
+                    });
+                }
+            });
+            
+            return concentrationWarnings;
+        }
+
+        // --- Event Listeners ---
+        costBasisFileInput.addEventListener('change', handleCostBasisFileUpload);
+        ytdFileInput.addEventListener('change', handleYtdFileUpload);
+        calculateBtn.addEventListener('click', handleCalculation);
+        printBtn.addEventListener('click', handlePrintReport);
+        exportBtn.addEventListener('click', handleExport);
+        recommendationsTable.addEventListener('click', handleRowToggle);
+
+        // --- Functions ---
+        function handleCostBasisFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                costBasisFileNameDisplay.textContent = '';
+                return;
+            }
+            costBasisFileNameDisplay.textContent = `Selected: ${file.name}`;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    portfolioData = parseCostBasisCSV(e.target.result);
+                    console.log('Parsed Portfolio Data:', portfolioData);
+                    if (portfolioData.length === 0) {
+                        alert('No valid portfolio data found in the CSV file. Please check the file format.');
+                    } else {
+                        console.log(`Successfully loaded ${portfolioData.length} portfolio positions`);
+                    }
+                } catch (error) {
+                    console.error('Error parsing cost basis CSV:', error);
+                    alert('Error parsing the CSV file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function handleYtdFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                ytdFileNameDisplay.textContent = '';
+                return;
+            }
+            ytdFileNameDisplay.textContent = `Selected: ${file.name}`;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    parseYtdCSV(e.target.result);
+                } catch (error) {
+                    console.error('Error parsing YTD CSV:', error);
+                    alert('Error parsing the YTD CSV file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        const cleanValue = (val) => {
+            if (typeof val !== 'string') return 0;
+            if (!val || val.trim() === '') return 0;
+            
+            // Remove quotes, dollar signs, commas, and spaces
+            let cleaned = val.trim().replace(/["$, ]/g, '');
+            
+            // Handle parentheses for negative values
+            if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+                cleaned = cleaned.replace(/[()]/g, '');
+                return -(parseFloat(cleaned) || 0);
+            }
+            
+            return parseFloat(cleaned) || 0;
+        };
+        
+        function findHeaderIndices(header, requiredCols) {
+            const indices = {};
+            const missingCols = [];
+            requiredCols.forEach(col => {
+                let index = -1;
+                // Try exact match first
+                index = header.findIndex(h => h.toLowerCase().trim() === col.toLowerCase());
+                // If not found, try partial match
+                if (index === -1) {
+                    index = header.findIndex(h => h.toLowerCase().includes(col.toLowerCase()));
+                }
+                if (index === -1) {
+                    missingCols.push(col);
+                }
+                indices[col.replace(/[^a-z0-9]/gi, '').toLowerCase()] = index;
+            });
+            if (missingCols.length > 0) {
+                throw new Error(`CSV is missing required columns: ${missingCols.join(', ')}`);
+            }
+            return indices;
+        }
+
+        function parseCostBasisCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return [];
+            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            try {
+                // Try both column name variations
+                const requiredCols = ['symbol', 'acquired', 'quantity', 'market value', 'cost basis', 'holding period'];
+                const altRequiredCols = ['symbol', 'acquired/opened', 'quantity', 'market value', 'cost basis', 'holding period'];
+                
+                let indices;
+                try {
+                    indices = findHeaderIndices(header, requiredCols);
+                } catch (error) {
+                    // Try alternative column names
+                    indices = findHeaderIndices(header, altRequiredCols);
+                }
+
+                return lines.slice(1).map(line => {
+                    const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    const symbol = values[indices.symbol]?.trim().replace(/"/g, '');
+                    if (!symbol || symbol.toLowerCase().includes('total')) return null;
+
+                    const quantity = cleanValue(values[indices.quantity]);
+                    const marketValue = cleanValue(values[indices.marketvalue]);
+                    const costBasis = cleanValue(values[indices.costbasis]);
+                    const acquired = values[indices.acquired || indices.acquiredopened]?.trim().replace(/"/g, '');
+                    const holdingPeriod = values[indices.holdingperiod]?.trim().replace(/"/g, '');
+                    
+                    // Enhanced term determination
+                    let term = 'Short';
+                    if (holdingPeriod && holdingPeriod.toLowerCase().includes('long')) {
+                        term = 'Long';
+                    } else if (acquired) {
+                        // Parse date more robustly
+                        const acquiredDate = new Date(acquired);
+                        if (!isNaN(acquiredDate.getTime())) {
+                            const today = new Date();
+                            const daysDiff = (today - acquiredDate) / (1000 * 60 * 60 * 24);
+                            term = daysDiff > 365 ? 'Long' : 'Short';
+                        }
+                    }
+                    
+                    return {
+                        symbol: symbol,
+                        acquired: acquired,
+                        quantity: quantity,
+                        marketValue: marketValue,
+                        costBasis: costBasis,
+                        price: quantity > 0 ? marketValue / quantity : 0,
+                        costPerShare: quantity > 0 ? costBasis / quantity : 0,
+                        unrealizedGain: marketValue - costBasis,
+                        term: term,
+                    };
+                }).filter(lot => lot && !isNaN(lot.quantity) && lot.quantity > 0);
+            } catch (error) {
+                alert(error.message);
+                costBasisFileInput.value = '';
+                costBasisFileNameDisplay.textContent = '';
+                return [];
+            }
+        }
+
+        function parseYtdCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return;
+            const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            try {
+                const requiredCols = ['Symbol', 'Short Term Realized Gain/(Loss)', 'Long Term Realized Gain/(Loss)'];
+                const indices = findHeaderIndices(header, requiredCols);
+                
+                let totalST = 0;
+                let totalLT = 0;
+
+                lines.slice(1).forEach(line => {
+                    const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    const symbol = values[indices.symbol]?.trim().replace(/"/g, '');
+                    if (!symbol || symbol.toLowerCase().includes('total')) {
+                        return;
+                    }
+                    totalST += cleanValue(values[indices.shorttermrealizedgainloss]);
+                    totalLT += cleanValue(values[indices.longtermrealizedgainloss]);
+                });
+                
+                document.getElementById('realizedST').value = totalST.toFixed(2);
+                document.getElementById('realizedLT').value = totalLT.toFixed(2);
+                console.log(`Auto-filled Realized Gains: ST=${totalST.toFixed(2)}, LT=${totalLT.toFixed(2)}`);
+            } catch (error) {
+                alert(error.message);
+                ytdFileInput.value = '';
+                ytdFileNameDisplay.textContent = '';
+            }
+        }
+
+        function handleCalculation() {
+            if (portfolioData.length === 0) {
+                alert('Please upload your Cost Basis CSV file first.');
+                return;
+            }
+            
+            resultsContainer.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            recommendationsDiv.classList.add('hidden');
+            actionButtonsContainer.classList.add('hidden');
+
+            const realizedST = parseFloat(document.getElementById('realizedST').value) || 0;
+            const realizedLT = parseFloat(document.getElementById('realizedLT').value) || 0;
+            const targetST = parseFloat(document.getElementById('targetST').value);
+            const targetLT = parseFloat(document.getElementById('targetLT').value);
+
+            if (isNaN(targetST) || isNaN(targetLT)) {
+                alert('Please enter valid numerical targets for both Short-Term and Long-Term gains.');
+                loader.classList.add('hidden');
+                return;
+            }
+
+            const neededST = targetST - realizedST;
+            const neededLT = targetLT - realizedLT;
+
+            console.log(`Calculation inputs:
+                Realized ST: ${realizedST}
+                Realized LT: ${realizedLT}
+                Target ST: ${targetST}
+                Target LT: ${targetLT}
+                Needed ST: ${neededST}
+                Needed LT: ${neededLT}
+                Portfolio positions: ${portfolioData.length}`);
+
+            setTimeout(() => {
+                try {
+                    lastRecommendations = generateAdvancedRecommendations(neededST, neededLT);
+                    displayResults(lastRecommendations, { realizedST, realizedLT, targetST, targetLT, neededST, neededLT });
+                    loader.classList.add('hidden');
+                    recommendationsDiv.classList.remove('hidden');
+                    if(lastRecommendations.length > 0) {
+                        actionButtonsContainer.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Error generating recommendations:', error);
+                    alert('Error generating recommendations: ' + error.message);
+                    loader.classList.add('hidden');
+                }
+            }, 500);
+        }
+
+        // Enhanced Optimization Constraints
+        class OptimizationConstraints {
+            constructor() {
+                this.maxTransactions = 15;
+                this.maxConcentrationPerSecurity = 0.10; // 10% max in any position
+                this.minLotSize = 50; // Minimum dollar amount per transaction
+                this.washSaleBuffer = 30; // Days
+                this.maxSectorConcentration = 0.25; // 25% max per sector
+            }
+            
+            isValidCombination(lots, portfolio) {
+                return this.checkConcentration(lots, portfolio) &&
+                       this.checkTransactionLimits(lots) &&
+                       this.checkMinimumSizes(lots);
+            }
+            
+            checkConcentration(lots, portfolio) {
+                const symbolCounts = {};
+                lots.forEach(lot => {
+                    symbolCounts[lot.symbol] = (symbolCounts[lot.symbol] || 0) + 1;
+                });
+                
+                // Don't allow more than 3 lots from same symbol
+                return Object.values(symbolCounts).every(count => count <= 3);
+            }
+            
+            checkTransactionLimits(lots) {
+                return lots.length <= this.maxTransactions;
+            }
+            
+            checkMinimumSizes(lots) {
+                return lots.every(lot => Math.abs(lot.marketValue) >= this.minLotSize);
+            }
+        }
+
+        // Multi-Criteria Scoring System
+        function calculateLotScore(lot, target, allLots) {
+            const proximityScore = 1 / (1 + Math.abs(target - lot.unrealizedGain));
+            const efficiencyScore = Math.abs(lot.unrealizedGain) / 1000;
+            const sizeBonus = Math.min(lot.marketValue / 10000, 1); // Prefer larger positions
+            const concentrationPenalty = getConcentrationPenalty(lot, allLots);
+            
+            return {
+                total: proximityScore * 0.4 + efficiencyScore * 0.3 + sizeBonus * 0.2 - concentrationPenalty * 0.1,
+                proximity: proximityScore,
+                efficiency: efficiencyScore,
+                size: sizeBonus,
+                concentration: concentrationPenalty
+            };
+        }
+        
+        function getConcentrationPenalty(lot, allLots) {
+            const sameSymbolLots = allLots.filter(l => l.symbol === lot.symbol);
+            return sameSymbolLots.length > 2 ? 0.5 : 0;
+        }
+
+        // Enhanced Dynamic Programming Approach
+        function findOptimalCombinationDP(target, lots, maxLots = 8) {
+            if (Math.abs(target) < 0.01 || lots.length === 0) return [];
+            
+            const memo = new Map();
+            const constraints = new OptimizationConstraints();
+            
+            // Sort lots by multi-criteria score
+            const scoredLots = lots.map(lot => ({
+                ...lot,
+                score: calculateLotScore(lot, target, lots)
+            })).sort((a, b) => b.score.total - a.score.total);
+            
+            function dp(remaining, index, currentCombination, depth) {
+                if (depth > maxLots || index >= scoredLots.length) {
+                    return { combination: currentCombination, difference: Math.abs(remaining) };
+                }
+                
+                const key = `${remaining.toFixed(2)}-${index}-${depth}`;
+                if (memo.has(key)) return memo.get(key);
+                
+                // Option 1: Don't include current lot
+                const skipResult = dp(remaining, index + 1, currentCombination, depth);
+                
+                // Option 2: Include current lot
+                const lot = scoredLots[index];
+                const newRemaining = remaining - lot.unrealizedGain;
+                const newCombination = [...currentCombination, lot];
+                
+                let includeResult = { combination: currentCombination, difference: Math.abs(remaining) };
+                
+                if (constraints.isValidCombination(newCombination, lots)) {
+                    if (Math.abs(newRemaining) < 0.01) {
+                        // Perfect match found
+                        includeResult = { combination: newCombination, difference: 0 };
+                    } else {
+                        includeResult = dp(newRemaining, index + 1, newCombination, depth + 1);
+                    }
+                }
+                
+                // Choose better option
+                const result = includeResult.difference < skipResult.difference ? includeResult : skipResult;
+                memo.set(key, result);
+                return result;
+            }
+            
+            const result = dp(target, 0, [], 0);
+            return result.combination;
+        }
+
+        // Two-Phase Optimization
+        function findBestCombinationTwoPhase(target, lotsPool) {
+            if (Math.abs(target) < 0.01 || lotsPool.length === 0) return [];
+            
+            // Phase 1: Coarse optimization - find rough target area
+            const coarseResult = findCoarseOptimization(target, lotsPool);
+            
+            // Phase 2: Fine optimization - refine around best coarse result
+            if (coarseResult.length > 0) {
+                const fineResult = findFineOptimization(target, lotsPool, coarseResult);
+                return fineResult.length > 0 ? fineResult : coarseResult;
+            }
+            
+            return coarseResult;
+        }
+        
+        function findCoarseOptimization(target, lots) {
+            // Use dynamic programming for initial solution
+            return findOptimalCombinationDP(target, lots, 6);
+        }
+        
+        function findFineOptimization(target, lots, baseline) {
+            const baselineTotal = baseline.reduce((sum, lot) => sum + lot.unrealizedGain, 0);
+            const baselineDiff = Math.abs(target - baselineTotal);
+            
+            // Try local improvements around baseline
+            const availableLots = lots.filter(lot => !baseline.includes(lot));
+            let bestCombination = baseline;
+            let bestDifference = baselineDiff;
+            
+            // Try swapping lots for better precision
+            for (const baselineLot of baseline) {
+                for (const availableLot of availableLots.slice(0, 10)) {
+                    const testCombination = baseline.map(lot => 
+                        lot === baselineLot ? availableLot : lot
+                    );
+                    
+                    const testTotal = testCombination.reduce((sum, lot) => sum + lot.unrealizedGain, 0);
+                    const testDifference = Math.abs(target - testTotal);
+                    
+                    if (testDifference < bestDifference) {
+                        bestCombination = testCombination;
+                        bestDifference = testDifference;
+                    }
+                }
+            }
+            
+            return bestCombination;
+        }
+
+        // Transaction Cost Calculation
+        function calculateTransactionCost(lot) {
+            // Simple cost model: $0.005 per share + $1 base fee
+            const perShareCost = 0.005;
+            const baseFee = 1.0;
+            return (lot.quantity * perShareCost) + baseFee;
+        }
+        
+        function calculateNetBenefit(combination, targetBenefit) {
+            const transactionCosts = combination.reduce((total, lot) => {
+                return total + calculateTransactionCost(lot);
+            }, 0);
+            
+            const realizationValue = Math.abs(combination.reduce((sum, lot) => sum + lot.unrealizedGain, 0));
+            const taxBenefit = realizationValue * 0.25; // Assume 25% tax benefit
+            
+            return taxBenefit - transactionCosts;
+        }
+
+        // Enhanced Main Algorithm
+        function generateAdvancedRecommendations(neededST, neededLT) {
+            let lots = JSON.parse(JSON.stringify(portfolioData)).filter(lot => lot.quantity >= 1);
+            let recommendations = [];
+            
+            console.log(`Starting enhanced optimization:
+                Available lots: ${lots.length}
+                Needed ST: ${neededST}
+                Needed LT: ${neededLT}`);
+
+            const findBestCombination = (target, lotsPool) => {
+                if (Math.abs(target) < 0.01 || lotsPool.length === 0) return [];
+                
+                console.log(`Optimizing for target: ${target}, Pool size: ${lotsPool.length}`);
+                
+                // Use two-phase optimization for better results
+                const result = findBestCombinationTwoPhase(target, lotsPool);
+                
+                // Validate result with cost-benefit analysis
+                if (result.length > 0) {
+                    const netBenefit = calculateNetBenefit(result, Math.abs(target));
+                    console.log(`Found combination: ${result.length} lots, Net benefit: $${netBenefit.toFixed(2)}`);
+                    
+                    // Only return if net benefit is positive
+                    if (netBenefit > 0) {
+                        return result;
+                    }
+                }
+                
+                return [];
+            };
+
+            // Enhanced lot categorization with better filtering
+            const stGains = lots.filter(l => l.term === 'Short' && l.unrealizedGain > 0 && l.marketValue >= 50);
+            const stLosses = lots.filter(l => l.term === 'Short' && l.unrealizedGain < 0 && l.marketValue >= 50);
+            const ltGains = lots.filter(l => l.term === 'Long' && l.unrealizedGain > 0 && l.marketValue >= 50);
+            const ltLosses = lots.filter(l => l.term === 'Long' && l.unrealizedGain < 0 && l.marketValue >= 50);
+
+            console.log(`Lot pools: ST Gains: ${stGains.length}, ST Losses: ${stLosses.length}, LT Gains: ${ltGains.length}, LT Losses: ${ltLosses.length}`);
+
+            // Apply optimization with enhanced logic
+            if (neededST > 0) recommendations.push(...findBestCombination(neededST, stGains));
+            else if (neededST < 0) recommendations.push(...findBestCombination(neededST, stLosses));
+
+            if (neededLT > 0) recommendations.push(...findBestCombination(neededLT, ltGains));
+            else if (neededLT < 0) recommendations.push(...findBestCombination(neededLT, ltLosses));
+            
+            console.log(`Final recommendations: ${recommendations.length} lots`);
+            return recommendations;
+        }
+
+        function displayResults(recommendations, targets) {
+            recommendationsTable.innerHTML = '';
+            
+            // Check if no trades are needed
+            const neededST = targets.neededST || (targets.targetST - targets.realizedST);
+            const neededLT = targets.neededLT || (targets.targetLT - targets.realizedLT);
+            const noTradesNeeded = Math.abs(neededST) < 0.01 && Math.abs(neededLT) < 0.01;
+            
+            if (noTradesNeeded) {
+                noTradesMsg.innerHTML = 'No trades are needed - you are already at your target gains/losses!';
+                noTradesMsg.classList.remove('hidden');
+                return;
+            } else if (recommendations.length === 0) {
+                noTradesMsg.innerHTML = 'No suitable trades found to meet your targets with the available positions.';
+                noTradesMsg.classList.remove('hidden');
+                return;
+            } else {
+                noTradesMsg.classList.add('hidden');
+            }
+
+            const groupedBySymbol = recommendations.reduce((acc, lot) => {
+                acc[lot.symbol] = acc[lot.symbol] || [];
+                acc[lot.symbol].push(lot);
+                return acc;
+            }, {});
+
+            let totalGainFromTrades = 0, stGainFromTrades = 0, ltGainFromTrades = 0, totalMarketValueFromTrades = 0;
+            let hasLosses = false;
+
+            const formatCurrency = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+            for (const symbol in groupedBySymbol) {
+                const lots = groupedBySymbol[symbol];
+                const totalSymbolQty = lots.reduce((sum, l) => sum + l.quantity, 0);
+                const totalSymbolGain = lots.reduce((sum, l) => sum + l.unrealizedGain, 0);
+                const totalSymbolMarketValue = lots.reduce((sum, l) => sum + l.marketValue, 0);
+                
+                totalMarketValueFromTrades += totalSymbolMarketValue;
+
+                const parentRow = document.createElement('tr');
+                parentRow.className = 'parent-row font-medium text-gray-800';
+                parentRow.dataset.symbol = symbol;
+                parentRow.innerHTML = `
+                    <td class="px-6 py-3 whitespace-nowrap"><span class="inline-flex items-center"><svg class="h-5 w-5 mr-2 text-gray-400 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${totalSymbolGain < 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">SELL GROUP</span></span></td>
+                    <td class="px-6 py-3 whitespace-nowrap">${symbol}</td>
+                    <td class="px-6 py-3 whitespace-nowrap">${totalSymbolQty.toLocaleString()}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">Multiple Lots</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right text-gray-600">${formatCurrency(totalSymbolMarketValue)}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-sm text-right ${totalSymbolGain < 0 ? 'text-red-600' : 'text-green-600'} font-semibold">${formatCurrency(totalSymbolGain)}</td>
+                `;
+                recommendationsTable.appendChild(parentRow);
+
+                lots.forEach(lot => {
+                    const gain = lot.unrealizedGain;
+                    if (gain < 0) hasLosses = true;
+                    totalGainFromTrades += gain;
+                    if (lot.term === 'Short') stGainFromTrades += gain; else ltGainFromTrades += gain;
+
+                    const childRow = document.createElement('tr');
+                    childRow.className = 'child-row hidden';
+                    childRow.dataset.parentSymbol = symbol;
+                    childRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lot.symbol}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lot.quantity.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lot.acquired}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${formatCurrency(lot.marketValue)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right ${gain < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(gain)}</td>
+                    `;
+                    recommendationsTable.appendChild(childRow);
+                });
+            }
+            
+            // Enhanced wash sale analysis
+            const washSaleRisks = analyzeWashSaleRisks(recommendations);
+            const hasWashSaleRisk = washSaleRisks.length > 0;
+            
+            washSaleWarning.classList.toggle('hidden', !hasWashSaleRisk);
+            
+            if (hasWashSaleRisk) {
+                const riskDetails = washSaleRisks.map(risk => 
+                    `${risk.symbol}: ${risk.riskLevel} risk`
+                ).join(', ');
+                
+                washSaleWarning.querySelector('p').innerHTML = `
+                    <strong>Wash Sale Rule Warning:</strong> ${washSaleRisks.length} position(s) may trigger wash sale rules: ${riskDetails}. 
+                    Selling securities for a loss and repurchasing the same or substantially identical securities within 30 days 
+                    (before or after the sale) will disallow the loss deduction. Consider timing or alternative securities.
+                `;
+            }
+
+            // Concentration analysis and warning
+            const concentrationWarnings = analyzeConcentration(recommendations);
+            const concentrationWarningDiv = document.getElementById('concentration-warning');
+            const hasConcentrationRisk = concentrationWarnings.length > 0;
+            
+            concentrationWarningDiv.classList.toggle('hidden', !hasConcentrationRisk);
+            
+            if (hasConcentrationRisk) {
+                const concentrationDetails = concentrationWarnings.map(warn => 
+                    `${warn.symbol}: ${(warn.concentration * 100).toFixed(1)}% of trades`
+                ).join(', ');
+                
+                document.getElementById('concentration-warning-text').innerHTML = `
+                    <strong>Portfolio Concentration Notice:</strong> ${concentrationWarnings.length} security(ies) represent significant portions of recommended trades: ${concentrationDetails}. 
+                    Consider the impact on your overall portfolio diversification and whether to spread trades across more positions.
+                `;
+            }
+
+            const finalST = targets.realizedST + stGainFromTrades;
+            const finalLT = targets.realizedLT + ltGainFromTrades;
+            const formatCurrencyWithSign = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD', signDisplay: 'auto' });
+            
+            lastSummaryData = {
+                finalST, finalLT, totalGainFromTrades, totalMarketValueFromTrades,
+                targetST: targets.targetST,
+                targetLT: targets.targetLT,
+            };
+
+            const stDifference = finalST - targets.targetST;
+            const ltDifference = targets.targetLT - finalLT;
+            
+            // Calculate enhanced metrics
+            const totalTransactionCosts = recommendations.reduce((total, lot) => {
+                return total + ((lot.quantity * 0.005) + 1.0);
+            }, 0);
+            
+            const estimatedTaxBenefit = Math.abs(totalGainFromTrades) * 0.25; // Assume 25% tax rate
+            const netBenefit = estimatedTaxBenefit - totalTransactionCosts;
+            
+            const precisionScore = Math.max(0, 100 - (Math.abs(stDifference) + Math.abs(ltDifference)) / 100);
+            const efficiencyScore = recommendations.length > 0 ? Math.abs(totalGainFromTrades) / recommendations.length : 0;
+            
+            summaryDiv.innerHTML = `
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Projected Final ST Gain/Loss</p>
+                    <p class="text-xl font-bold ${finalST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalST)}</p>
+                    <p class="text-xs text-gray-500">Target: ${formatCurrencyWithSign(targets.targetST)}</p>
+                    <p class="text-xs ${Math.abs(stDifference) < 100 ? 'text-green-600' : Math.abs(stDifference) < 500 ? 'text-orange-600' : 'text-red-600'}">
+                        ${Math.abs(stDifference) < 0.01 ? 'Perfect match!' : `Off by ${formatCurrencyWithSign(stDifference)}`}
+                    </p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Projected Final LT Gain/Loss</p>
+                    <p class="text-xl font-bold ${finalLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalLT)}</p>
+                    <p class="text-xs text-gray-500">Target: ${formatCurrencyWithSign(targets.targetLT)}</p>
+                    <p class="text-xs ${Math.abs(ltDifference) < 100 ? 'text-green-600' : Math.abs(ltDifference) < 500 ? 'text-orange-600' : 'text-red-600'}">
+                        ${Math.abs(ltDifference) < 0.01 ? 'Perfect match!' : `Off by ${formatCurrencyWithSign(ltDifference)}`}
+                    </p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Optimization Quality</p>
+                    <p class="text-xl font-bold ${precisionScore > 80 ? 'text-green-700' : precisionScore > 60 ? 'text-orange-600' : 'text-red-600'}">${precisionScore.toFixed(0)}%</p>
+                    <p class="text-xs text-gray-500">Precision Score</p>
+                    <p class="text-xs text-gray-400">
+                        ${precisionScore > 90 ? 'Excellent' : precisionScore > 70 ? 'Good' : precisionScore > 50 ? 'Fair' : 'Suboptimal'}
+                    </p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Net Tax Benefit</p>
+                    <p class="text-xl font-bold ${netBenefit > 0 ? 'text-green-700' : 'text-red-600'}">${formatCurrency(netBenefit)}</p>
+                    <p class="text-xs text-gray-500">After Transaction Costs</p>
+                    <p class="text-xs text-gray-400">
+                        Est. costs: ${formatCurrency(totalTransactionCosts)}
+                    </p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Trade Efficiency</p>
+                    <p class="text-xl font-bold text-gray-800">${formatCurrency(efficiencyScore)}</p>
+                    <p class="text-xs text-gray-500">Avg per Transaction</p>
+                    <p class="text-xs text-gray-400">
+                        ${recommendations.length} total trades
+                    </p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Total Market Value</p>
+                    <p class="text-xl font-bold text-gray-800">${formatCurrency(totalMarketValueFromTrades)}</p>
+                    <p class="text-xs text-gray-500">Securities to Sell</p>
+                    <p class="text-xs text-gray-400">
+                        ${Object.keys(recommendations.reduce((acc, lot) => { acc[lot.symbol] = true; return acc; }, {})).length} unique symbols
+                    </p>
+                </div>
+            `;
+        }
+
+        function handleRowToggle(event) {
+            const parentRow = event.target.closest('.parent-row');
+            if (!parentRow) return;
+            const symbol = parentRow.dataset.symbol;
+            const childRows = recommendationsTable.querySelectorAll(`tr[data-parent-symbol="${symbol}"]`);
+            parentRow.querySelector('svg').classList.toggle('icon-rotate');
+            childRows.forEach(row => row.classList.toggle('hidden'));
+        }
+
+        function handleExport() {
+            if (lastRecommendations.length === 0) {
+                alert("No recommendations to export.");
+                return;
+            }
+
+            const accountNumber = document.getElementById('accountNumber').value || 'N/A';
+            const headers = [
+                "Account Number", "Security Symbol", "Purchase Date", "Quantity Owned", 
+                "Original Purchase Price", "Cost Per Share", "Cost Basis", 
+                "Period (LT or ST)", "Share Quantity to Sell", "Action", "Price",
+                "Est. Transaction Cost", "Wash Sale Risk", "Concentration Risk"
+            ];
+
+            const washSaleRisks = analyzeWashSaleRisks(lastRecommendations);
+            const concentrationWarnings = analyzeConcentration(lastRecommendations);
+
+            const rows = lastRecommendations.map(lot => {
+                const transactionCost = calculateTransactionCost(lot);
+                const washSaleRisk = washSaleRisks.find(risk => risk.symbol === lot.symbol);
+                const concentrationRisk = concentrationWarnings.find(warn => warn.symbol === lot.symbol);
+                
+                const row = [
+                    accountNumber,
+                    `"${lot.symbol}"`,
+                    lot.acquired,
+                    lot.quantity,
+                    lot.costPerShare.toFixed(2),
+                    lot.costPerShare.toFixed(2),
+                    lot.costBasis.toFixed(2),
+                    lot.term,
+                    lot.quantity,
+                    "Sell",
+                    lot.price.toFixed(2),
+                    transactionCost.toFixed(2),
+                    washSaleRisk ? washSaleRisk.riskLevel : 'Low',
+                    concentrationRisk ? `${(concentrationRisk.concentration * 100).toFixed(1)}%` : 'Low'
+                ];
+                return row.join(',');
+            });
+
+            // Add summary information at the top
+            const summaryRows = [
+                `"Export Date","${new Date().toLocaleDateString()}"`,
+                `"Total Trades","${lastRecommendations.length}"`,
+                `"Total Market Value","${lastRecommendations.reduce((sum, lot) => sum + lot.marketValue, 0).toFixed(2)}"`,
+                `"Total Est. Gain/Loss","${lastRecommendations.reduce((sum, lot) => sum + lot.unrealizedGain, 0).toFixed(2)}"`,
+                `"Total Est. Transaction Costs","${lastRecommendations.reduce((sum, lot) => sum + calculateTransactionCost(lot), 0).toFixed(2)}"`,
+                `"Wash Sale Warnings","${washSaleRisks.length}"`,
+                `"Concentration Warnings","${concentrationWarnings.length}"`,
+                '""', // Empty row separator
+            ];
+
+            const csvContent = [...summaryRows, headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `enhanced_trades_for_acct_${accountNumber}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function handlePrintReport() {
+            const clientName = document.getElementById('clientName').value || 'N/A';
+            const custodian = document.getElementById('custodian').value || 'N/A';
+            const accountNumber = document.getElementById('accountNumber').value || 'N/A';
+            const reportDate = new Date().toLocaleDateString();
+
+            const formatCurrency = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+            const formatCurrencyWithSign = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD', signDisplay: 'auto' });
+
+            let reportHtml = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Tax Harvesting Report for ${clientName}</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <style>
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; }
+                            .no-print { display: none; }
+                        }
+                        body { font-family: 'Inter', sans-serif; }
+                        .header-info { display: flex; justify-content: space-between; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem; }
+                        .header-info div { display: flex; flex-direction: column; }
+                        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; background-color: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; }
+                        .summary-item { text-align: center; }
+                        .summary-item p:first-child { font-size: 0.875rem; color: #6b7280; }
+                        .summary-item p:last-child { font-size: 1.25rem; font-weight: 700; }
+                        .table-container { page-break-inside: auto; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
+                        th { background-color: #f9fafb; font-size: 0.75rem; text-transform: uppercase; color: #6b7280; }
+                        .text-red { color: #dc2626; }
+                        .text-green { color: #16a34a; }
+                    </style>
+                </head>
+                <body class="p-8">
+                    <button onclick="window.print()" class="no-print bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4">Print Report</button>
+                    <h1 class="text-3xl font-bold text-center mb-4">Tax Harvesting Recommendation Report</h1>
+                    <div class="header-info">
+                        <div><span class="font-bold">Client:</span> ${clientName}</div>
+                        <div><span class="font-bold">Custodian:</span> ${custodian}</div>
+                        <div><span class="font-bold">Account:</span> ${accountNumber}</div>
+                        <div><span class="font-bold">Date:</span> ${reportDate}</div>
+                    </div>
+
+                    <h2 class="text-xl font-bold mb-2">Projected Tax Impact</h2>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <p>Projected Final ST Gain/Loss</p>
+                            <p class="${lastSummaryData.finalST < 0 ? 'text-red' : 'text-green'}">${formatCurrencyWithSign(lastSummaryData.finalST)}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p>Projected Final LT Gain/Loss</p>
+                            <p class="${lastSummaryData.finalLT < 0 ? 'text-red' : 'text-green'}">${formatCurrencyWithSign(lastSummaryData.finalLT)}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p>Total Gain/Loss from Trades</p>
+                            <p class="${lastSummaryData.totalGainFromTrades < 0 ? 'text-red' : 'text-green'}">${formatCurrencyWithSign(lastSummaryData.totalGainFromTrades)}</p>
+                        </div>
+                        <div class="summary-item">
+                            <p>Total Market Value of Trades</p>
+                            <p>${formatCurrency(lastSummaryData.totalMarketValueFromTrades)}</p>
+                        </div>
+                    </div>
+
+                    <h2 class="text-xl font-bold mb-2 mt-6">Recommended Trades</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Quantity</th>
+                                    <th>Acquired</th>
+                                    <th>Term</th>
+                                    <th style="text-align: right;">Market Value</th>
+                                    <th style="text-align: right;">Est. Gain/Loss</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            
+            lastRecommendations.forEach(lot => {
+                reportHtml += `
+                    <tr>
+                        <td>${lot.symbol}</td>
+                        <td>${lot.quantity.toLocaleString()}</td>
+                        <td>${lot.acquired}</td>
+                        <td>${lot.term}</td>
+                        <td style="text-align: right;">${formatCurrency(lot.marketValue)}</td>
+                        <td style="text-align: right;" class="${lot.unrealizedGain < 0 ? 'text-red' : 'text-green'}">${formatCurrency(lot.unrealizedGain)}</td>
+                    </tr>
+                `;
+            });
+
+            reportHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-8 text-xs text-gray-500">
+                        <p>This report is for informational purposes only and does not constitute tax or investment advice. The calculations are based on the data provided and may not reflect all factors that could affect your tax liability. Consult with a qualified professional before making any investment decisions.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const reportWindow = window.open('', '_blank');
+            reportWindow.document.write(reportHtml);
+            reportWindow.document.close();
+        }
+
+    </script>
+</body>
+</html>
