@@ -490,7 +490,7 @@
                 
                 const csvText = await response.text();
                 console.log(`CSV content for ${selectedFile}:`, csvText.substring(0, 200) + '...');
-                portfolioData = parsePortfolioCSV(csvText);
+                portfolioData = parsePortfolioCSVWithLogging(csvText);
                 
                 // Clear file input and update display
                 portfolioFileInput.value = '';
@@ -562,7 +562,11 @@
             console.log('Column indices:', { symbolIndex, nameIndex, priceIndex, targetPercentIndex });
             
             if (symbolIndex === -1 || priceIndex === -1 || targetPercentIndex === -1) {
-                alert('CSV must contain Symbol, Price, and Target Percent/Weight columns');
+                console.error('CSV parsing failed - missing required columns:', {
+                    symbolIndex, nameIndex, priceIndex, targetPercentIndex,
+                    headers: header
+                });
+                alert('CSV must contain Symbol, Price, and Target Percent/Weight columns. Check console for details.');
                 return [];
             }
 
@@ -597,7 +601,30 @@
                     price: price,
                     targetPercent: targetPercent
                 };
-            }).filter(item => item && item.price > 0 && item.targetPercent > 0);
+            }).filter(item => {
+                if (!item) return false;
+                
+                // Allow items with valid symbols and prices, even if target percent is 0
+                const isValid = item.symbol && item.symbol !== '' && item.price >= 0;
+                
+                if (!isValid) {
+                    console.warn('Filtered out invalid item:', item);
+                }
+                
+                if (item.targetPercent === 0) {
+                    console.warn('Warning: Item has 0% target allocation:', item.symbol);
+                }
+                
+                return isValid;
+            });
+        }
+
+        // Add final logging to parsePortfolioCSV
+        function parsePortfolioCSVWithLogging(csvText) {
+            const result = parsePortfolioCSV(csvText);
+            console.log('Final parsed portfolio data:', result);
+            console.log('Number of valid holdings:', result.length);
+            return result;
         }
 
         function handleTransferredData() {
@@ -710,9 +737,20 @@
             }
             
             if (portfolioData.length === 0) {
-                alert('Please select a model portfolio or upload a custom portfolio CSV file first.');
+                console.error('Portfolio data is empty:', portfolioData);
+                console.error('Selected portfolio:', portfolioSelect.value);
+                alert('The selected model portfolio appears to be empty or invalid. This may be because all target percentages are 0%. Please check the CSV file or upload a custom portfolio with valid target percentages.');
                 return;
             }
+            
+            // Check if all target percentages are zero
+            const hasValidTargets = portfolioData.some(item => item.targetPercent > 0);
+            if (!hasValidTargets) {
+                alert('Warning: All target percentages in the selected portfolio are 0%. This will not generate any buy orders. Please select a different portfolio or upload a custom CSV with valid target percentages.');
+                return;
+            }
+            
+            console.log('Portfolio data loaded successfully:', portfolioData.length, 'holdings');
             
             // Calculate cash reserves
             const reserves = calculateCashReserves(totalCash);
