@@ -44,8 +44,33 @@
             </div>
         </header>
 
+        <!-- Portfolio Blending Tool -->
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-8" id="blendingTool">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-3">Portfolio Blending Tool</h2>
+            <p class="text-sm text-gray-600 mb-4">Create a new blended portfolio by combining 2-5 existing model portfolios with custom weightings.</p>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Portfolios to Blend</label>
+                <div id="blendingSelections" class="space-y-3">
+                    <!-- Blending selections will be populated here -->
+                </div>
+                <button id="addBlendPortfolioBtn" class="mt-2 text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">
+                    + Add Portfolio
+                </button>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button id="blendPortfoliosBtn" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200 disabled:opacity-50" disabled>
+                    Create Blended Portfolio
+                </button>
+                <button id="clearBlendingBtn" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-all duration-200">
+                    Clear All
+                </button>
+            </div>
+        </div>
+
         <!-- Portfolio Selection and Management -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8"></div>
             <!-- Portfolio Selection -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
                 <h2 class="text-xl font-semibold mb-4 border-b pb-3">Select Portfolio</h2>
@@ -135,6 +160,13 @@
                         </svg>
                         Export CSV
                     </button>
+                    
+                    <button id="saveToModelsBtn" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Save to Models
+                    </button>
 
                     <button id="useToBuyOrdersBtn" class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition-all duration-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -193,13 +225,21 @@
         const normalizeWeightsBtn = document.getElementById('normalizeWeightsBtn');
         const savePortfolioBtn = document.getElementById('savePortfolioBtn');
         const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const saveToModelsBtn = document.getElementById('saveToModelsBtn');
         const useToBuyOrdersBtn = document.getElementById('useToBuyOrdersBtn');
         const portfolioEditor = document.getElementById('portfolioEditor');
         const holdingsTable = document.getElementById('holdingsTable');
         const emptyState = document.getElementById('emptyState');
+        
+        // Blending tool elements
+        const blendingSelections = document.getElementById('blendingSelections');
+        const addBlendPortfolioBtn = document.getElementById('addBlendPortfolioBtn');
+        const blendPortfoliosBtn = document.getElementById('blendPortfoliosBtn');
+        const clearBlendingBtn = document.getElementById('clearBlendingBtn');
 
         let currentPortfolio = [];
         let portfolioModified = false;
+        let blendingPortfolios = [];
 
         // Predefined portfolios
         const predefinedPortfolios = {
@@ -335,9 +375,17 @@
         normalizeWeightsBtn.addEventListener('click', normalizeWeights);
         savePortfolioBtn.addEventListener('click', savePortfolio);
         exportCsvBtn.addEventListener('click', exportToCsv);
+        saveToModelsBtn.addEventListener('click', saveToModels);
         useToBuyOrdersBtn.addEventListener('click', useToBuyOrders);
         holdingsTable.addEventListener('input', handleCellEdit);
         holdingsTable.addEventListener('click', handleDeleteHolding);
+        
+        // Blending tool event listeners
+        addBlendPortfolioBtn.addEventListener('click', addBlendingPortfolio);
+        blendPortfoliosBtn.addEventListener('click', createBlendedPortfolio);
+        clearBlendingBtn.addEventListener('click', clearBlending);
+        blendingSelections.addEventListener('change', updateBlendingWeights);
+        blendingSelections.addEventListener('click', removeBlendingPortfolio);
 
         // --- Functions ---
         function loadSelectedPortfolio() {
@@ -659,7 +707,67 @@
             link.click();
             document.body.removeChild(link);
             
-            showNotification('Portfolio exported to CSV', 'success');
+            showNotification('Portfolio exported to CSV - Save to data/models/ folder to make available in Buy Orders', 'success');
+        }
+
+        function saveToModels() {
+            if (currentPortfolio.length === 0) {
+                alert('No portfolio data to save');
+                return;
+            }
+            
+            const modelName = portfolioName.value.trim();
+            if (!modelName) {
+                alert('Please enter a portfolio name before saving to models');
+                return;
+            }
+            
+            const headers = ['Model', 'Symbol', 'Name', 'Price', 'Target Percent'];
+            const rows = currentPortfolio.map(holding => [
+                `"${modelName}"`,
+                `"${holding.symbol}"`,
+                `"${holding.name}"`,
+                holding.price.toFixed(2),
+                holding.weight.toFixed(1)
+            ]);
+            
+            const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+            
+            // Create download with specific filename for models folder
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const filename = `${modelName.replace(/[^a-z0-9]/gi, '_')}.csv`;
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Show detailed instructions
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 p-4 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg shadow-lg z-50 max-w-md';
+            notification.innerHTML = `
+                <div class="flex">
+                    <svg class="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    <div>
+                        <p class="font-medium">Portfolio Ready for Models Folder</p>
+                        <p class="text-sm mt-1">
+                            1. Save the downloaded file "${filename}" to your <strong>data/models/</strong> folder<br>
+                            2. It will then be available in the Buy Orders "Select Model Portfolio" dropdown<br>
+                            3. Use the Refresh button in Buy Orders to load new models
+                        </p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 8000);
         }
 
         function useToBuyOrders() {
@@ -723,6 +831,171 @@
             }, 5000);
         }
 
+        // --- Blending Functions ---
+        function addBlendingPortfolio() {
+            if (blendingPortfolios.length >= 5) {
+                showNotification('Maximum 5 portfolios can be blended', 'error');
+                return;
+            }
+            
+            const blendingDiv = document.createElement('div');
+            blendingDiv.className = 'flex items-center space-x-3 p-3 bg-gray-50 rounded-lg';
+            blendingDiv.dataset.index = blendingPortfolios.length;
+            
+            blendingDiv.innerHTML = `
+                <select class="portfolio-select flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2">
+                    <option value="">Select Portfolio...</option>
+                    ${Object.keys(predefinedPortfolios).map(key => 
+                        `<option value="${key}">${predefinedPortfolios[key].name}</option>`
+                    ).join('')}
+                </select>
+                <div class="flex items-center space-x-2">
+                    <input type="number" class="weight-input w-16 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2 text-right" 
+                           placeholder="%" min="0" max="100" step="1" value="20">
+                    <span class="text-sm text-gray-500">%</span>
+                </div>
+                <button class="remove-blend text-red-600 hover:text-red-800 p-1" title="Remove">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            `;
+            
+            blendingSelections.appendChild(blendingDiv);
+            blendingPortfolios.push({ portfolio: '', weight: 20 });
+            updateBlendingState();
+        }
+        
+        function removeBlendingPortfolio(event) {
+            if (!event.target.closest('.remove-blend')) return;
+            
+            const blendingDiv = event.target.closest('[data-index]');
+            const index = parseInt(blendingDiv.dataset.index);
+            
+            blendingDiv.remove();
+            blendingPortfolios.splice(index, 1);
+            
+            // Re-index remaining elements
+            const remainingDivs = blendingSelections.querySelectorAll('[data-index]');
+            remainingDivs.forEach((div, newIndex) => {
+                div.dataset.index = newIndex;
+            });
+            
+            updateBlendingState();
+        }
+        
+        function updateBlendingWeights(event) {
+            if (!event.target.classList.contains('portfolio-select') && !event.target.classList.contains('weight-input')) return;
+            
+            const blendingDiv = event.target.closest('[data-index]');
+            const index = parseInt(blendingDiv.dataset.index);
+            
+            if (event.target.classList.contains('portfolio-select')) {
+                blendingPortfolios[index].portfolio = event.target.value;
+            } else if (event.target.classList.contains('weight-input')) {
+                blendingPortfolios[index].weight = parseFloat(event.target.value) || 0;
+            }
+            
+            updateBlendingState();
+        }
+        
+        function updateBlendingState() {
+            const totalWeight = blendingPortfolios.reduce((sum, p) => sum + p.weight, 0);
+            const validPortfolios = blendingPortfolios.filter(p => p.portfolio && p.weight > 0);
+            
+            // Update button state
+            blendPortfoliosBtn.disabled = validPortfolios.length < 2 || totalWeight === 0;
+            
+            // Update weight display
+            const weightDisplay = document.createElement('div');
+            if (totalWeight !== 100 && validPortfolios.length > 0) {
+                weightDisplay.className = 'text-xs mt-2 ' + (totalWeight > 100 ? 'text-red-600' : 'text-yellow-600');
+                weightDisplay.textContent = `Total weight: ${totalWeight}% ${totalWeight !== 100 ? '(will be normalized to 100%)' : ''}`;
+                
+                // Remove existing weight display
+                const existing = blendingSelections.parentNode.querySelector('.weight-display');
+                if (existing) existing.remove();
+                
+                weightDisplay.className += ' weight-display';
+                blendingSelections.parentNode.appendChild(weightDisplay);
+            }
+        }
+        
+        function createBlendedPortfolio() {
+            const validPortfolios = blendingPortfolios.filter(p => p.portfolio && p.weight > 0);
+            
+            if (validPortfolios.length < 2) {
+                showNotification('Please select at least 2 portfolios to blend', 'error');
+                return;
+            }
+            
+            // Normalize weights to 100%
+            const totalWeight = validPortfolios.reduce((sum, p) => sum + p.weight, 0);
+            const normalizedPortfolios = validPortfolios.map(p => ({
+                ...p,
+                weight: (p.weight / totalWeight) * 100
+            }));
+            
+            // Create blended holdings
+            const blendedHoldings = new Map();
+            
+            normalizedPortfolios.forEach(({ portfolio, weight }) => {
+                const portfolioData = predefinedPortfolios[portfolio];
+                if (!portfolioData) return;
+                
+                portfolioData.holdings.forEach(holding => {
+                    const key = holding.symbol;
+                    const adjustedWeight = (holding.weight * weight) / 100;
+                    
+                    if (blendedHoldings.has(key)) {
+                        const existing = blendedHoldings.get(key);
+                        existing.weight += adjustedWeight;
+                        // Use the most recent price
+                        existing.price = holding.price;
+                    } else {
+                        blendedHoldings.set(key, {
+                            symbol: holding.symbol,
+                            name: holding.name,
+                            price: holding.price,
+                            weight: adjustedWeight
+                        });
+                    }
+                });
+            });
+            
+            // Convert to array and sort by weight descending
+            const blendedArray = Array.from(blendedHoldings.values())
+                .sort((a, b) => b.weight - a.weight);
+            
+            // Generate portfolio name
+            const portfolioNames = normalizedPortfolios.map(p => predefinedPortfolios[p.portfolio].name);
+            const blendedName = `Blended: ${portfolioNames.join(' + ')}`;
+            
+            // Set as current portfolio
+            currentPortfolio = blendedArray;
+            portfolioName.value = blendedName;
+            
+            // Update display
+            renderPortfolio();
+            updatePortfolioStats();
+            portfolioModified = true;
+            
+            showNotification(`Created blended portfolio with ${blendedArray.length} holdings`, 'success');
+            
+            // Clear blending tool
+            clearBlending();
+        }
+        
+        function clearBlending() {
+            blendingSelections.innerHTML = '';
+            blendingPortfolios = [];
+            updateBlendingState();
+            
+            // Remove weight display
+            const existing = blendingSelections.parentNode.querySelector('.weight-display');
+            if (existing) existing.remove();
+        }
+
         // Initialize empty portfolio editor
         portfolioEditor.classList.remove('hidden');
         emptyState.classList.remove('hidden');
@@ -730,6 +1003,10 @@
         
         // Initialize portfolio dropdown
         populatePortfolioDropdown();
+        
+        // Initialize blending tool with 2 default selections
+        addBlendingPortfolio();
+        addBlendingPortfolio();
     </script>
 </body>
 </html>
