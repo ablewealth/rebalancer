@@ -376,10 +376,11 @@
             // Clear existing options except the first one
             portfolioSelect.innerHTML = '<option value="">-- Select Portfolio --</option>';
             
-            // Add available portfolios
-            availablePortfolioFiles.forEach(portfolio => {
+            // Add available portfolios from predefinedPortfolios
+            Object.keys(predefinedPortfolios).forEach(key => {
+                const portfolio = predefinedPortfolios[key];
                 const option = document.createElement('option');
-                option.value = portfolio.key;
+                option.value = key;
                 option.textContent = portfolio.name;
                 portfolioSelect.appendChild(option);
             });
