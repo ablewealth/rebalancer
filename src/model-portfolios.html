@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,33 +11,39 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
         .editable-cell {
             background-color: #f9fafb;
             border: 1px solid transparent;
             transition: all 0.2s;
         }
+
         .editable-cell:hover {
             background-color: #f3f4f6;
             border-color: #d1d5db;
         }
+
         .editable-cell:focus {
             background-color: white;
             border-color: #3b82f6;
             outline: none;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
+
         .weight-warning {
             background-color: #fef3c7;
             border-color: #f59e0b;
         }
     </style>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Model Portfolios Manager</h1>
-            <p class="text-md text-gray-600 mt-2">Create, edit, and manage your portfolio models for buy order generation.</p>
+            <p class="text-md text-gray-600 mt-2">Create, edit, and manage your portfolio models for buy order
+                generation.</p>
             <div class="mt-4 flex justify-center space-x-4">
                 <a href="index.html" class="text-blue-600 hover:text-blue-800 underline">← Tax Harvesting</a>
                 <a href="buy-orders.html" class="text-green-600 hover:text-green-800 underline">Buy Orders →</a>
@@ -47,23 +54,28 @@
         <!-- Portfolio Blending Tool -->
         <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-8" id="blendingTool">
             <h2 class="text-xl font-semibold mb-4 border-b pb-3">Portfolio Blending Tool</h2>
-            <p class="text-sm text-gray-600 mb-4">Create a new blended portfolio by combining 2-5 existing model portfolios with custom weightings.</p>
-            
+            <p class="text-sm text-gray-600 mb-4">Create a new blended portfolio by combining 2-5 existing model
+                portfolios with custom weightings.</p>
+
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Select Portfolios to Blend</label>
                 <div id="blendingSelections" class="space-y-3">
                     <!-- Blending selections will be populated here -->
                 </div>
-                <button id="addBlendPortfolioBtn" class="mt-2 text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">
+                <button id="addBlendPortfolioBtn"
+                    class="mt-2 text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">
                     + Add Portfolio
                 </button>
             </div>
-            
+
             <div class="flex space-x-3">
-                <button id="blendPortfoliosBtn" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200 disabled:opacity-50" disabled>
+                <button id="blendPortfoliosBtn"
+                    class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200 disabled:opacity-50"
+                    disabled>
                     Create Blended Portfolio
                 </button>
-                <button id="clearBlendingBtn" class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-all duration-200">
+                <button id="clearBlendingBtn"
+                    class="bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-all duration-200">
                     Clear All
                 </button>
             </div>
@@ -71,142 +83,187 @@
 
         <!-- Portfolio Selection and Management -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8"></div>
-            <!-- Portfolio Selection -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-3">Select Portfolio</h2>
-                
-                <div class="mb-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <label for="portfolioSelect" class="block text-sm font-medium text-gray-700">Choose Existing Portfolio</label>
-                        <button id="refreshPortfoliosBtn" class="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200" title="Refresh portfolio list">
-                            <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Refresh
-                        </button>
-                    </div>
-                    <select id="portfolioSelect" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
-                        <option value="">-- Select Portfolio --</option>
-                    </select>
-                </div>
+        <!-- Portfolio Selection -->
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-3">Select Portfolio</h2>
 
-                <div class="mb-4">
-                    <button id="loadPortfolioBtn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200">
-                        Load Portfolio
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label for="portfolioSelect" class="block text-sm font-medium text-gray-700">Choose Existing
+                        Portfolio</label>
+                    <button id="refreshPortfoliosBtn"
+                        class="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200"
+                        title="Refresh portfolio list">
+                        <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh
                     </button>
                 </div>
-
-                <div class="mb-4">
-                    <label for="portfolioFile" class="block text-sm font-medium text-gray-700 mb-2">Or Upload CSV File</label>
-                    <input type="file" id="portfolioFile" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                </div>
+                <select id="portfolioSelect"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
+                    <option value="">-- Select Portfolio --</option>
+                </select>
             </div>
 
-            <!-- Portfolio Info -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-3">Portfolio Info</h2>
-                
-                <div class="mb-4">
-                    <label for="portfolioName" class="block text-sm font-medium text-gray-700">Portfolio Name</label>
-                    <input type="text" id="portfolioName" placeholder="e.g., Conservative Growth" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
-                </div>
-
-                <div class="mb-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-gray-700">Total Weight:</span>
-                        <span id="totalWeight" class="text-lg font-bold text-gray-900">0%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div id="weightProgress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
-                    <p id="weightStatus" class="text-xs text-gray-500 mt-1">Target: 100%</p>
-                </div>
-
-                <div class="text-sm text-gray-600">
-                    <p><span class="font-medium">Holdings:</span> <span id="holdingCount">0</span></p>
-                    <p><span class="font-medium">Last Updated:</span> <span id="lastUpdated">Never</span></p>
-                </div>
+            <div class="mb-4">
+                <button id="loadPortfolioBtn"
+                    class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                    Load Portfolio
+                </button>
             </div>
 
-            <!-- Actions -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-3">Actions</h2>
-                
-                <div class="space-y-3">
-                    <button id="addHoldingBtn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                        Add New Holding
-                    </button>
-                    
-                    <button id="normalizeWeightsBtn" class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-700 transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        Normalize to 100%
-                    </button>
-                    
-                    <button id="savePortfolioBtn" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
-                        </svg>
-                        Save Portfolio
-                    </button>
-                    
-                    <button id="exportCsvBtn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                        Export CSV
-                    </button>
-                    
-                    <button id="saveToModelsBtn" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 01-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        Save to Models
-                    </button>
-
-                    <button id="useToBuyOrdersBtn" class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                            <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h10a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        Use for Buy Orders
-                    </button>
-                </div>
+            <div class="mb-4">
+                <label for="portfolioFile" class="block text-sm font-medium text-gray-700 mb-2">Or Upload CSV
+                    File</label>
+                <input type="file" id="portfolioFile" accept=".csv"
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
             </div>
         </div>
 
-        <!-- Portfolio Editor -->
-        <div id="portfolioEditor" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 hidden">
-            <h2 class="text-2xl font-semibold mb-4 border-b pb-3">Portfolio Holdings Editor</h2>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price ($)</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (%)</th>
-                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="holdingsTable" class="bg-white divide-y divide-gray-200">
-                    </tbody>
-                </table>
+        <!-- Portfolio Info -->
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-3">Portfolio Info</h2>
+
+            <div class="mb-4">
+                <label for="portfolioName" class="block text-sm font-medium text-gray-700">Portfolio Name</label>
+                <input type="text" id="portfolioName" placeholder="e.g., Conservative Growth"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
             </div>
-            
-            <div id="emptyState" class="text-center py-12 hidden">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">No holdings</h3>
-                <p class="mt-1 text-sm text-gray-500">Get started by loading a portfolio or adding a new holding.</p>
+
+            <div class="mb-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-700">Total Weight:</span>
+                    <span id="totalWeight" class="text-lg font-bold text-gray-900">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div id="weightProgress" class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style="width: 0%"></div>
+                </div>
+                <p id="weightStatus" class="text-xs text-gray-500 mt-1">Target: 100%</p>
+            </div>
+
+            <div class="text-sm text-gray-600">
+                <p><span class="font-medium">Holdings:</span> <span id="holdingCount">0</span></p>
+                <p><span class="font-medium">Last Updated:</span> <span id="lastUpdated">Never</span></p>
             </div>
         </div>
+
+        <!-- Actions -->
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-3">Actions</h2>
+
+            <div class="space-y-3">
+                <button id="addHoldingBtn"
+                    class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Add New Holding
+                </button>
+
+                <button id="normalizeWeightsBtn"
+                    class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-700 transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Normalize to 100%
+                </button>
+
+                <button id="savePortfolioBtn"
+                    class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path
+                            d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                    </svg>
+                    Save Portfolio
+                </button>
+
+                <button id="exportCsvBtn"
+                    class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Export CSV
+                </button>
+
+                <button id="saveToModelsBtn"
+                    class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 01-1-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Save to Models
+                </button>
+
+                <button id="useToBuyOrdersBtn"
+                    class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition-all duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
+                            clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h10a1 1 0 110 2H4a1 1 0 01-1-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Use for Buy Orders
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Editor -->
+    <div id="portfolioEditor" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 hidden">
+        <h2 class="text-2xl font-semibold mb-4 border-b pb-3">Portfolio Holdings Editor</h2>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Symbol</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Price ($)</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Weight (%)</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="holdingsTable" class="bg-white divide-y divide-gray-200">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="emptyState" class="text-center py-12 hidden">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No holdings</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by loading a portfolio or adding a new holding.</p>
+        </div>
+    </div>
     </div>
 
     <script>
@@ -230,7 +287,7 @@
         const portfolioEditor = document.getElementById('portfolioEditor');
         const holdingsTable = document.getElementById('holdingsTable');
         const emptyState = document.getElementById('emptyState');
-        
+
         // Blending tool elements
         const blendingSelections = document.getElementById('blendingSelections');
         const addBlendPortfolioBtn = document.getElementById('addBlendPortfolioBtn');
@@ -379,7 +436,7 @@
         useToBuyOrdersBtn.addEventListener('click', useToBuyOrders);
         holdingsTable.addEventListener('input', handleCellEdit);
         holdingsTable.addEventListener('click', handleDeleteHolding);
-        
+
         // Blending tool event listeners
         addBlendPortfolioBtn.addEventListener('click', addBlendingPortfolio);
         blendPortfoliosBtn.addEventListener('click', createBlendedPortfolio);
@@ -396,43 +453,101 @@
             }
 
             console.log('Loading portfolio with key:', selectedKey);
-            console.log('Available portfolios:', Object.keys(predefinedPortfolios));
 
-            const portfolio = predefinedPortfolios[selectedKey];
-            if (portfolio) {
-                currentPortfolio = JSON.parse(JSON.stringify(portfolio.holdings));
-                portfolioName.value = portfolio.name;
+            let portfolio = null;
+            let portfolioName_value = '';
+            let holdings = [];
+
+            // Check if it's a saved portfolio
+            if (selectedKey.startsWith('saved_')) {
+                const storageKey = selectedKey.replace('saved_', '');
+                try {
+                    const savedData = JSON.parse(localStorage.getItem(storageKey));
+                    if (savedData) {
+                        portfolio = savedData;
+                        portfolioName_value = savedData.name;
+                        holdings = savedData.holdings;
+                        console.log('Loaded saved portfolio:', savedData.name);
+                    }
+                } catch (e) {
+                    console.error('Error loading saved portfolio:', e);
+                    showNotification('Error loading saved portfolio', 'error');
+                    return;
+                }
+            } else {
+                // Load from predefined portfolios
+                portfolio = predefinedPortfolios[selectedKey];
+                if (portfolio) {
+                    portfolioName_value = portfolio.name;
+                    holdings = portfolio.holdings;
+                    console.log('Loaded predefined portfolio:', portfolio.name);
+                }
+            }
+
+            if (portfolio && holdings) {
+                currentPortfolio = JSON.parse(JSON.stringify(holdings));
+                portfolioName.value = portfolioName_value;
                 renderPortfolio();
                 updatePortfolioStats();
                 portfolioModified = false;
-                showNotification(`Loaded portfolio: ${portfolio.name}`, 'success');
+                showNotification(`Loaded portfolio: ${portfolioName_value}`, 'success');
             } else {
                 console.error('Portfolio not found:', selectedKey);
-                showNotification(`Error loading model portfolio: Portfolio "${selectedKey}" not found`, 'error');
+                showNotification(`Error loading portfolio: Portfolio "${selectedKey}" not found`, 'error');
             }
-                        
-                        currentPortfolio = JSON.parse(JSON.stringify(holdings));
-                        portfolioName.value = portfolio.name;
-                        renderPortfolio();
-                        updatePortfolioStats();
-                        portfolioModified = false;
-                        showNotification(`Loaded portfolio: ${portfolio.name}`, 'success');
         }
 
 
+
+        function getSavedPortfolios() {
+            const saved = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('portfolio_')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        saved.push({
+                            key: key,
+                            name: data.name,
+                            data: data
+                        });
+                    } catch (e) {
+                        console.error('Error parsing saved portfolio:', key, e);
+                    }
+                }
+            }
+            return saved.sort((a, b) => new Date(b.data.lastModified) - new Date(a.data.lastModified));
+        }
 
         function populatePortfolioDropdown() {
             // Clear existing options except the first one
             portfolioSelect.innerHTML = '<option value="">-- Select Portfolio --</option>';
             
-            // Add available portfolios from predefinedPortfolios
+            // Add saved portfolios first
+            const savedPortfolios = getSavedPortfolios();
+            if (savedPortfolios.length > 0) {
+                const savedGroup = document.createElement('optgroup');
+                savedGroup.label = 'Saved Portfolios';
+                savedPortfolios.forEach(portfolio => {
+                    const option = document.createElement('option');
+                    option.value = `saved_${portfolio.key}`;
+                    option.textContent = `${portfolio.name} (Saved)`;
+                    savedGroup.appendChild(option);
+                });
+                portfolioSelect.appendChild(savedGroup);
+            }
+            
+            // Add predefined portfolios
+            const predefinedGroup = document.createElement('optgroup');
+            predefinedGroup.label = 'Model Portfolios';
             Object.keys(predefinedPortfolios).forEach(key => {
                 const portfolio = predefinedPortfolios[key];
                 const option = document.createElement('option');
                 option.value = key;
                 option.textContent = portfolio.name;
-                portfolioSelect.appendChild(option);
+                predefinedGroup.appendChild(option);
             });
+            portfolioSelect.appendChild(predefinedGroup);
         }
 
         function handleFileUpload(event) {
@@ -463,14 +578,14 @@
             if (lines.length < 2) throw new Error('CSV file is empty or invalid');
 
             const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-            
+
             // Find column indices (flexible header matching)
             const symbolIndex = header.findIndex(h => h.toLowerCase().includes('symbol'));
             const nameIndex = header.findIndex(h => h.toLowerCase().includes('name'));
             const priceIndex = header.findIndex(h => h.toLowerCase().includes('price'));
-            const weightIndex = header.findIndex(h => 
-                h.toLowerCase().includes('weight') || 
-                h.toLowerCase().includes('target') || 
+            const weightIndex = header.findIndex(h =>
+                h.toLowerCase().includes('weight') ||
+                h.toLowerCase().includes('target') ||
                 h.toLowerCase().includes('percent')
             );
 
@@ -499,14 +614,14 @@
         function renderPortfolio() {
             portfolioEditor.classList.remove('hidden');
             holdingsTable.innerHTML = '';
-            
+
             if (currentPortfolio.length === 0) {
                 emptyState.classList.remove('hidden');
                 return;
             }
-            
+
             emptyState.classList.add('hidden');
-            
+
             currentPortfolio.forEach((holding, index) => {
                 const row = createHoldingRow(holding, index);
                 holdingsTable.appendChild(row);
@@ -517,9 +632,9 @@
             const row = document.createElement('tr');
             row.className = 'hover:bg-gray-50';
             row.dataset.index = index;
-            
+
             const isWeightWarning = holding.weight > 15; // Warn if weight > 15%
-            
+
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap">
                     <input type="text" value="${holding.symbol}" 
@@ -549,26 +664,26 @@
                     </button>
                 </td>
             `;
-            
+
             return row;
         }
 
         function handleCellEdit(event) {
             if (!event.target.classList.contains('editable-cell')) return;
-            
+
             const index = parseInt(event.target.dataset.index);
             const field = event.target.dataset.field;
             const value = event.target.value;
-            
+
             if (field === 'price' || field === 'weight') {
                 currentPortfolio[index][field] = parseFloat(value) || 0;
             } else {
                 currentPortfolio[index][field] = value;
             }
-            
+
             portfolioModified = true;
             updatePortfolioStats();
-            
+
             // Update weight warning styling
             if (field === 'weight') {
                 const isWarning = parseFloat(value) > 15;
@@ -578,9 +693,9 @@
 
         function handleDeleteHolding(event) {
             if (!event.target.closest('.delete-holding')) return;
-            
+
             const index = parseInt(event.target.closest('.delete-holding').dataset.index);
-            
+
             if (confirm(`Delete ${currentPortfolio[index].symbol}?`)) {
                 currentPortfolio.splice(index, 1);
                 renderPortfolio();
@@ -597,12 +712,12 @@
                 price: 0,
                 weight: 0
             };
-            
+
             currentPortfolio.push(newHolding);
             renderPortfolio();
             updatePortfolioStats();
             portfolioModified = true;
-            
+
             // Focus on the new symbol input
             const newRow = holdingsTable.lastElementChild;
             const symbolInput = newRow.querySelector('[data-field="symbol"]');
@@ -611,16 +726,16 @@
 
         function normalizeWeights() {
             const totalCurrentWeight = currentPortfolio.reduce((sum, holding) => sum + holding.weight, 0);
-            
+
             if (totalCurrentWeight === 0) {
                 showNotification('Cannot normalize: all weights are zero', 'error');
                 return;
             }
-            
+
             currentPortfolio.forEach(holding => {
                 holding.weight = (holding.weight / totalCurrentWeight) * 100;
             });
-            
+
             renderPortfolio();
             updatePortfolioStats();
             portfolioModified = true;
@@ -630,15 +745,15 @@
         function updatePortfolioStats() {
             const total = currentPortfolio.reduce((sum, holding) => sum + holding.weight, 0);
             const count = currentPortfolio.length;
-            
+
             totalWeight.textContent = `${total.toFixed(1)}%`;
             holdingCount.textContent = count;
             lastUpdated.textContent = new Date().toLocaleString();
-            
+
             // Update progress bar
             const progressPercent = Math.min((total / 100) * 100, 100);
             weightProgress.style.width = `${progressPercent}%`;
-            
+
             // Update status color and message
             if (Math.abs(total - 100) < 0.1) {
                 weightStatus.textContent = 'Perfect! Weights sum to 100%';
@@ -660,22 +775,30 @@
                 alert('Please enter a portfolio name');
                 return;
             }
-            
+
             if (currentPortfolio.length === 0) {
                 alert('Cannot save empty portfolio');
                 return;
             }
-            
+
             // Save to localStorage (in a real app, this would be saved to a server)
             const portfolioData = {
                 name: portfolioName.value.trim(),
                 holdings: currentPortfolio,
                 lastModified: new Date().toISOString()
             };
+
+            // Create a more user-friendly key based on the portfolio name
+            const nameKey = portfolioName.value.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const storageKey = `portfolio_${nameKey}_${Date.now()}`;
             
-            localStorage.setItem(`portfolio_${Date.now()}`, JSON.stringify(portfolioData));
+            localStorage.setItem(storageKey, JSON.stringify(portfolioData));
             portfolioModified = false;
-            showNotification(`Portfolio "${portfolioData.name}" saved successfully`, 'success');
+            
+            // Refresh the dropdown to show the newly saved portfolio
+            populatePortfolioDropdown();
+            
+            showNotification(`Portfolio "${portfolioData.name}" saved successfully - now available in dropdown`, 'success');
         }
 
         function exportToCsv() {
@@ -683,10 +806,10 @@
                 alert('No portfolio data to export');
                 return;
             }
-            
+
             const headers = ['Model', 'Symbol', 'Name', 'Price', 'Target Percent'];
             const modelName = portfolioName.value.trim() || 'Custom Portfolio';
-            
+
             const rows = currentPortfolio.map(holding => [
                 `"${modelName}"`,
                 `"${holding.symbol}"`,
@@ -694,9 +817,9 @@
                 holding.price.toFixed(2),
                 holding.weight.toFixed(1)
             ]);
-            
+
             const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
-            
+
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
@@ -706,7 +829,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             showNotification('Portfolio exported to CSV - Save to data/models/ folder to make available in Buy Orders', 'success');
         }
 
@@ -715,13 +838,13 @@
                 alert('No portfolio data to save');
                 return;
             }
-            
+
             const modelName = portfolioName.value.trim();
             if (!modelName) {
                 alert('Please enter a portfolio name before saving to models');
                 return;
             }
-            
+
             const headers = ['Model', 'Symbol', 'Name', 'Price', 'Target Percent'];
             const rows = currentPortfolio.map(holding => [
                 `"${modelName}"`,
@@ -730,9 +853,9 @@
                 holding.price.toFixed(2),
                 holding.weight.toFixed(1)
             ]);
-            
+
             const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
-            
+
             // Create download with specific filename for models folder
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
@@ -744,7 +867,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             // Show detailed instructions
             const notification = document.createElement('div');
             notification.className = 'fixed top-4 right-4 p-4 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg shadow-lg z-50 max-w-md';
@@ -764,7 +887,7 @@
                 </div>
             `;
             document.body.appendChild(notification);
-            
+
             setTimeout(() => {
                 notification.remove();
             }, 8000);
@@ -775,10 +898,10 @@
                 alert('No portfolio data to use for buy orders');
                 return;
             }
-            
+
             // Save data for report
             saveModelPortfolioReportData();
-            
+
             // Convert to the format expected by buy-orders page
             const portfolioForBuyOrders = currentPortfolio.map(holding => ({
                 symbol: holding.symbol,
@@ -786,14 +909,14 @@
                 price: holding.price,
                 targetPercent: holding.weight
             }));
-            
+
             // Store in localStorage for transfer
             localStorage.setItem('modelPortfolioTransfer', JSON.stringify({
                 portfolioName: portfolioName.value.trim() || 'Custom Portfolio',
                 portfolioData: portfolioForBuyOrders,
                 timestamp: new Date().toISOString()
             }));
-            
+
             // Navigate to buy orders page
             window.location.href = 'buy-orders.html';
         }
@@ -811,11 +934,10 @@
 
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
-                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' : 
-                'bg-blue-100 text-blue-800 border border-blue-200'
-            }`;
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+                    'bg-blue-100 text-blue-800 border border-blue-200'
+                }`;
             notification.innerHTML = `
                 <div class="flex items-center">
                     <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -825,7 +947,7 @@
                 </div>
             `;
             document.body.appendChild(notification);
-            
+
             setTimeout(() => {
                 notification.remove();
             }, 5000);
@@ -837,17 +959,17 @@
                 showNotification('Maximum 5 portfolios can be blended', 'error');
                 return;
             }
-            
+
             const blendingDiv = document.createElement('div');
             blendingDiv.className = 'flex items-center space-x-3 p-3 bg-gray-50 rounded-lg';
             blendingDiv.dataset.index = blendingPortfolios.length;
-            
+
             blendingDiv.innerHTML = `
                 <select class="portfolio-select flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2">
                     <option value="">Select Portfolio...</option>
-                    ${Object.keys(predefinedPortfolios).map(key => 
-                        `<option value="${key}">${predefinedPortfolios[key].name}</option>`
-                    ).join('')}
+                    ${Object.keys(predefinedPortfolios).map(key =>
+                `<option value="${key}">${predefinedPortfolios[key].name}</option>`
+            ).join('')}
                 </select>
                 <div class="flex items-center space-x-2">
                     <input type="number" class="weight-input w-16 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2 text-right" 
@@ -860,93 +982,93 @@
                     </svg>
                 </button>
             `;
-            
+
             blendingSelections.appendChild(blendingDiv);
             blendingPortfolios.push({ portfolio: '', weight: 20 });
             updateBlendingState();
         }
-        
+
         function removeBlendingPortfolio(event) {
             if (!event.target.closest('.remove-blend')) return;
-            
+
             const blendingDiv = event.target.closest('[data-index]');
             const index = parseInt(blendingDiv.dataset.index);
-            
+
             blendingDiv.remove();
             blendingPortfolios.splice(index, 1);
-            
+
             // Re-index remaining elements
             const remainingDivs = blendingSelections.querySelectorAll('[data-index]');
             remainingDivs.forEach((div, newIndex) => {
                 div.dataset.index = newIndex;
             });
-            
+
             updateBlendingState();
         }
-        
+
         function updateBlendingWeights(event) {
             if (!event.target.classList.contains('portfolio-select') && !event.target.classList.contains('weight-input')) return;
-            
+
             const blendingDiv = event.target.closest('[data-index]');
             const index = parseInt(blendingDiv.dataset.index);
-            
+
             if (event.target.classList.contains('portfolio-select')) {
                 blendingPortfolios[index].portfolio = event.target.value;
             } else if (event.target.classList.contains('weight-input')) {
                 blendingPortfolios[index].weight = parseFloat(event.target.value) || 0;
             }
-            
+
             updateBlendingState();
         }
-        
+
         function updateBlendingState() {
             const totalWeight = blendingPortfolios.reduce((sum, p) => sum + p.weight, 0);
             const validPortfolios = blendingPortfolios.filter(p => p.portfolio && p.weight > 0);
-            
+
             // Update button state
             blendPortfoliosBtn.disabled = validPortfolios.length < 2 || totalWeight === 0;
-            
+
             // Update weight display
             const weightDisplay = document.createElement('div');
             if (totalWeight !== 100 && validPortfolios.length > 0) {
                 weightDisplay.className = 'text-xs mt-2 ' + (totalWeight > 100 ? 'text-red-600' : 'text-yellow-600');
                 weightDisplay.textContent = `Total weight: ${totalWeight}% ${totalWeight !== 100 ? '(will be normalized to 100%)' : ''}`;
-                
+
                 // Remove existing weight display
                 const existing = blendingSelections.parentNode.querySelector('.weight-display');
                 if (existing) existing.remove();
-                
+
                 weightDisplay.className += ' weight-display';
                 blendingSelections.parentNode.appendChild(weightDisplay);
             }
         }
-        
+
         function createBlendedPortfolio() {
             const validPortfolios = blendingPortfolios.filter(p => p.portfolio && p.weight > 0);
-            
+
             if (validPortfolios.length < 2) {
                 showNotification('Please select at least 2 portfolios to blend', 'error');
                 return;
             }
-            
+
             // Normalize weights to 100%
             const totalWeight = validPortfolios.reduce((sum, p) => sum + p.weight, 0);
             const normalizedPortfolios = validPortfolios.map(p => ({
                 ...p,
                 weight: (p.weight / totalWeight) * 100
             }));
-            
+
             // Create blended holdings
             const blendedHoldings = new Map();
-            
+
             normalizedPortfolios.forEach(({ portfolio, weight }) => {
                 const portfolioData = predefinedPortfolios[portfolio];
                 if (!portfolioData) return;
-                
+
                 portfolioData.holdings.forEach(holding => {
                     const key = holding.symbol;
                     const adjustedWeight = (holding.weight * weight) / 100;
-                    
+
                     if (blendedHoldings.has(key)) {
                         const existing = blendedHoldings.get(key);
                         existing.weight += adjustedWeight;
@@ -962,35 +1084,35 @@
                     }
                 });
             });
-            
+
             // Convert to array and sort by weight descending
             const blendedArray = Array.from(blendedHoldings.values())
                 .sort((a, b) => b.weight - a.weight);
-            
+
             // Generate portfolio name
             const portfolioNames = normalizedPortfolios.map(p => predefinedPortfolios[p.portfolio].name);
             const blendedName = `Blended: ${portfolioNames.join(' + ')}`;
-            
+
             // Set as current portfolio
             currentPortfolio = blendedArray;
             portfolioName.value = blendedName;
-            
+
             // Update display
             renderPortfolio();
             updatePortfolioStats();
             portfolioModified = true;
-            
+
             showNotification(`Created blended portfolio with ${blendedArray.length} holdings`, 'success');
-            
+
             // Clear blending tool
             clearBlending();
         }
-        
+
         function clearBlending() {
             blendingSelections.innerHTML = '';
             blendingPortfolios = [];
             updateBlendingState();
-            
+
             // Remove weight display
             const existing = blendingSelections.parentNode.querySelector('.weight-display');
             if (existing) existing.remove();
@@ -1000,13 +1122,14 @@
         portfolioEditor.classList.remove('hidden');
         emptyState.classList.remove('hidden');
         updatePortfolioStats();
-        
+
         // Initialize portfolio dropdown
         populatePortfolioDropdown();
-        
+
         // Initialize blending tool with 2 default selections
         addBlendingPortfolio();
         addBlendingPortfolio();
     </script>
 </body>
+
 </html>
