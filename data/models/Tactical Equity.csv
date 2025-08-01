@@ -1,24 +1,24 @@
-﻿Model,Symbol,Name,Price,Target Percent
-Tactical Equity,CBLS,Clough Hedged Equity ETF,29.07,1.6
-Tactical Equity,RSEE,Rareview Systematic Equity ETF,30.59,1.6
-Tactical Equity,QMNNX,AQR Equity Market Neutral N,11,4
-Tactical Equity,CTA,Simplify Managed Futures Strategy ETF,27.47,3
-Tactical Equity,ACIO,Aptus Collared Investment Opp ETF,41.74,1
-Tactical Equity,FTLS,First Trust Long/Short Equity ETF,66.75,1.2
-Tactical Equity,XHLF,BondBloxx Bloomberg SixMthTrgDurUSTrsETF,50.33,2.4
-Tactical Equity,BTAL,AGF U.S. Market Neutral Anti-Beta,16.47,4
-Tactical Equity,CLSE,Convergence Long/Short Equity ETF,24.11,0.8
-Tactical Equity,DBMF,iMGP DBi Managed Futures Strategy ETF,25.61,0.4
-Tactical Equity,EFV,iShares MSCI EAFE Value ETF,63.33,8
-Tactical Equity,SPYG,SPDR® Portfolio S&P 500 Growth ETF,98.56,8.8
-Tactical Equity,DYNF,iShares U.S. Equity Fac Rotation Act ETF,55.99,8
-Tactical Equity,SPMO,Invesco S&P 500® Momentum ETF,115.69,8.8
-Tactical Equity,AUSF,Global X Adaptive US Factor ETF,44.57,4.8
-Tactical Equity,PVAL,Putnam Focused Large Cap Value ETF,40.55,7.2
-Tactical Equity,DBEF,Xtrackers MSCI EAFE Hedged Equity ETF,44.35,1.6
-Tactical Equity,EDIV,SPDR® S&P Emerging Markets Dividend ETF,37.98,4
-Tactical Equity,IDMO,Invesco S&P International Dev Momt ETF,50.88,7.2
-Tactical Equity,SMH,VanEck Semiconductor ETF,288.78,3.2
-Tactical Equity,JQUA,JPMorgan US Quality Factor ETF,60.45,8.8
-Tactical Equity,MOAT,VanEck Morningstar Wide Moat ETF,96.81,1.6
-Tactical Equity,EQWL,Invesco S&P 100 Equal Weight ETF,109.79,8
+Model,Symbol,Name,Price,Target Percent
+"Tactical Equity","CBLS","Clough Hedged Equity ETF",28.72,0.0
+"Tactical Equity","RSEE","Rareview Systematic Equity ETF",30.11,0.0
+"Tactical Equity","QMNNX","AQR Equity Market Neutral N",11.00,0.0
+"Tactical Equity","CTA","Simplify Managed Futures Strategy ETF",26.52,0.0
+"Tactical Equity","ACIO","Aptus Collared Investment Opp ETF",41.26,0.0
+"Tactical Equity","FTLS","First Trust Long/Short Equity ETF",66.16,0.0
+"Tactical Equity","XHLF","BondBloxx Bloomberg SixMthTrgDurUSTrsETF",50.23,0.0
+"Tactical Equity","BTAL","AGF U.S. Market Neutral Anti-Beta",16.85,0.0
+"Tactical Equity","CLSE","Convergence Long/Short Equity ETF",23.79,0.0
+"Tactical Equity","DBMF","iMGP DBi Managed Futures Strategy ETF",25.43,0.0
+"Tactical Equity","EFV","iShares MSCI EAFE Value ETF",63.26,0.0
+"Tactical Equity","SPYG","SPDR® Portfolio S&P 500 Growth ETF",96.76,0.0
+"Tactical Equity","DYNF","iShares U.S. Equity Fac Rotation Act ETF",55.01,0.0
+"Tactical Equity","SPMO","Invesco S&P 500® Momentum ETF",113.23,0.0
+"Tactical Equity","AUSF","Global X Adaptive US Factor ETF",44.16,0.0
+"Tactical Equity","PVAL","Putnam Focused Large Cap Value ETF",39.93,0.0
+"Tactical Equity","DBEF","Xtrackers MSCI EAFE Hedged Equity ETF",43.78,0.0
+"Tactical Equity","EDIV","SPDR® S&P Emerging Markets Dividend ETF",38.04,0.0
+"Tactical Equity","IDMO","Invesco S&P International Dev Momt ETF",50.60,0.0
+"Tactical Equity","SMH","VanEck Semiconductor ETF",283.95,0.0
+"Tactical Equity","JQUA","JPMorgan US Quality Factor ETF",59.81,0.0
+"Tactical Equity","MOAT","VanEck Morningstar Wide Moat ETF",95.85,0.0
+"Tactical Equity","EQWL","Invesco S&P 100 Equal Weight ETF",108.47,0.0

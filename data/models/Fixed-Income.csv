@@ -1,13 +1,13 @@
-﻿Model,Symbol,Name,Price,Target Percent
-Fixed (D),BINC,iShares Flexible Income Active ETF,52.74,10
-Fixed (D),CARY,Angel Oak Income ETF,20.74,10
-Fixed (D),TLT,iShares 20+ Year Treasury Bond ETF,86.92,8.5
-Fixed (D),JBBB,Janus Henderson B-BBB CLO ETF,48.46,5
-Fixed (D),ICVT,iShares Convertible Bond ETF,92.61,5
-Fixed (D),GLDM,SPDR® Gold MiniShares,65.15,1.5
-Fixed (D),XHLF,BondBloxx Bloomberg SixMthTrgDurUSTrsETF,50.33,12
-Fixed (D),IGEB,iShares Investment Grade Systmtc Bd ETF,45.28,5
-Fixed (D),HYEM,VanEck EM High Yield Bond ETF,19.9,5
-Fixed (D),LQDH,iShares Interest Rate Hedged Corp Bd ETF,93.05,10
-Fixed (D),IUSB,iShares Core Total USD Bond Market ETF,45.99,20
-Fixed (D),XFIV,BondBloxx Bloomberg FiveYrTrgDurUSTrsETF,49.01,8
+Model,Symbol,Name,Price,Target Percent
+"Fixed-Income","BINC","iShares Flexible Income Active ETF",52.63,0.0
+"Fixed-Income","CARY","Angel Oak Income ETF",20.80,0.0
+"Fixed-Income","TLT","iShares 20+ Year Treasury Bond ETF",87.82,0.0
+"Fixed-Income","JBBB","Janus Henderson B-BBB CLO ETF",48.16,0.0
+"Fixed-Income","ICVT","iShares Convertible Bond ETF",91.36,0.0
+"Fixed-Income","GLDM","SPDR® Gold MiniShares",66.47,0.0
+"Fixed-Income","XHLF","BondBloxx Bloomberg SixMthTrgDurUSTrsETF",50.23,0.0
+"Fixed-Income","IGEB","iShares Investment Grade Systmtc Bd ETF",45.45,0.0
+"Fixed-Income","HYEM","VanEck EM High Yield Bond ETF",19.85,0.0
+"Fixed-Income","LQDH","iShares Interest Rate Hedged Corp Bd ETF",92.86,0.0
+"Fixed-Income","IUSB","iShares Core Total USD Bond Market ETF",46.18,0.0
+"Fixed-Income","XFIV","BondBloxx Bloomberg FiveYrTrgDurUSTrsETF",49.34,0.0

@@ -1,26 +1,26 @@
-﻿Model,Symbol,Name,Price,Target Percent
-80/20,BINC,iShares Flexible Income Active ETF, $52.74 ,2
-80/20,CARY,Angel Oak Income ETF, $20.74 ,2
-80/20,TLT,iShares 20+ Year Treasury Bond ETF, $86.92 ,1.7
-80/20,JBBB,Janus Henderson B-BBB CLO ETF, $48.46 ,1
-80/20,ICVT,iShares Convertible Bond ETF, $92.61 ,1
-80/20,GLDM,SPDR® Gold MiniShares, $65.15 ,0.3
-80/20,XHLF,BondBloxx Bloomberg SixMthTrgDurUSTrsETF, $50.33 ,2.4
-80/20,IGEB,iShares Investment Grade Systmtc Bd ETF, $45.28 ,1
-80/20,HYEM,VanEck EM High Yield Bond ETF, $19.90 ,1
-80/20,LQDH,iShares Interest Rate Hedged Corp Bd ETF, $93.05 ,2
-80/20,IUSB,iShares Core Total USD Bond Market ETF, $45.99 ,4
-80/20,XFIV,BondBloxx Bloomberg FiveYrTrgDurUSTrsETF, $49.01 ,1.6
-80/20,EFV,iShares MSCI EAFE Value ETF, $63.33 ,8
-80/20,SPYG,SPDR® Portfolio S&P 500 Growth ETF, $98.56 ,8
-80/20,DYNF,iShares U.S. Equity Fac Rotation Act ETF, $55.99 ,8
-80/20,SPMO,Invesco S&P 500® Momentum ETF, $115.69 ,8.8
-80/20,AUSF,Global X Adaptive US Factor ETF, $44.57 ,4.8
-80/20,PVAL,Putnam Focused Large Cap Value ETF, $40.55 ,7.2
-80/20,DBEF,Xtrackers MSCI EAFE Hedged Equity ETF, $44.35 ,1.6
-80/20,EDIV,SPDR® S&P Emerging Markets Dividend ETF, $37.98 ,4
-80/20,IDMO,Invesco S&P International Dev Momt ETF, $50.88 ,7.2
-80/20,SMH,VanEck Semiconductor ETF, $288.78 ,3.2
-80/20,JQUA,JPMorgan US Quality Factor ETF, $60.45 ,8.8
-80/20,MOAT,VanEck Morningstar Wide Moat ETF, $96.81 ,1.6
-80/20,EQWL,Invesco S&P 100 Equal Weight ETF, $109.79 ,8
+Model,Symbol,Name,Price,Target Percent
+"80-20","BINC","iShares Flexible Income Active ETF",52.63,0.0
+"80-20","CARY","Angel Oak Income ETF",20.80,0.0
+"80-20","TLT","iShares 20+ Year Treasury Bond ETF",87.82,0.0
+"80-20","JBBB","Janus Henderson B-BBB CLO ETF",48.16,0.0
+"80-20","ICVT","iShares Convertible Bond ETF",91.36,0.0
+"80-20","GLDM","SPDR® Gold MiniShares",66.47,0.0
+"80-20","XHLF","BondBloxx Bloomberg SixMthTrgDurUSTrsETF",50.23,0.0
+"80-20","IGEB","iShares Investment Grade Systmtc Bd ETF",45.45,0.0
+"80-20","HYEM","VanEck EM High Yield Bond ETF",19.85,0.0
+"80-20","LQDH","iShares Interest Rate Hedged Corp Bd ETF",92.86,0.0
+"80-20","IUSB","iShares Core Total USD Bond Market ETF",46.18,0.0
+"80-20","XFIV","BondBloxx Bloomberg FiveYrTrgDurUSTrsETF",49.34,0.0
+"80-20","EFV","iShares MSCI EAFE Value ETF",63.26,0.0
+"80-20","SPYG","SPDR® Portfolio S&P 500 Growth ETF",96.76,0.0
+"80-20","DYNF","iShares U.S. Equity Fac Rotation Act ETF",55.01,0.0
+"80-20","SPMO","Invesco S&P 500® Momentum ETF",113.23,0.0
+"80-20","AUSF","Global X Adaptive US Factor ETF",44.16,0.0
+"80-20","PVAL","Putnam Focused Large Cap Value ETF",39.93,0.0
+"80-20","DBEF","Xtrackers MSCI EAFE Hedged Equity ETF",43.78,0.0
+"80-20","EDIV","SPDR® S&P Emerging Markets Dividend ETF",38.04,0.0
+"80-20","IDMO","Invesco S&P International Dev Momt ETF",50.60,0.0
+"80-20","SMH","VanEck Semiconductor ETF",283.95,0.0
+"80-20","JQUA","JPMorgan US Quality Factor ETF",59.81,0.0
+"80-20","MOAT","VanEck Morningstar Wide Moat ETF",95.85,0.0
+"80-20","EQWL","Invesco S&P 100 Equal Weight ETF",108.47,0.0

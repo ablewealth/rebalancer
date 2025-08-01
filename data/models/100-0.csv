@@ -1,14 +1,14 @@
 Model,Symbol,Name,Price,Target Percent
-100/0,EFV,iShares:MSCI EAFE Val, $63.36 ,10
-100/0,SPYG,SPDR Ptf S&P 500 Growth, $98.56 ,11
-100/0,DYNF,BlackRock:US Eq Fc Rt Ac, $55.99 ,10
-100/0,SPMO,Invesco S&P500 Momnt, $115.69 ,11
-100/0,AUSF,Glbl X Adaptive US Fctr, $44.57 ,6
-100/0,PVAL,Putnam Focused LC Value, $40.55 ,9
-100/0,DBEF,Xtrackers MSCI EAFE Hdg, $44.35 ,2
-100/0,EDIV,SPDR S&P Em Mkts Div, $37.98 ,5
-100/0,IDMO,Invesco S&P Itl Dv M, $50.88 ,9
-100/0,SMH,VanEck:Semiconductor, $288.78 ,4
-100/0,JQUA,JPMorgan:US Quality Fact, $60.45 ,11
-100/0,MOAT,VanEck:MS Wide Moat, $96.86 ,2
-100/0,EQWL,Invesco S&P 100 Eq Wght, $109.79 ,10
+"100-0","EFV","iShares:MSCI EAFE Val",63.26,0.0
+"100-0","SPYG","SPDR Ptf S&P 500 Growth",96.76,0.0
+"100-0","DYNF","BlackRock:US Eq Fc Rt Ac",55.01,0.0
+"100-0","SPMO","Invesco S&P500 Momnt",113.23,0.0
+"100-0","AUSF","Glbl X Adaptive US Fctr",44.16,0.0
+"100-0","PVAL","Putnam Focused LC Value",39.93,0.0
+"100-0","DBEF","Xtrackers MSCI EAFE Hdg",43.78,0.0
+"100-0","EDIV","SPDR S&P Em Mkts Div",38.04,0.0
+"100-0","IDMO","Invesco S&P Itl Dv M",50.60,0.0
+"100-0","SMH","VanEck:Semiconductor",283.95,0.0
+"100-0","JQUA","JPMorgan:US Quality Fact",59.81,0.0
+"100-0","MOAT","VanEck:MS Wide Moat",95.85,0.0
+"100-0","EQWL","Invesco S&P 100 Eq Wght",108.47,0.0
