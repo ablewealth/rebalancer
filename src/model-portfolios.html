@@ -315,19 +315,25 @@
 
             for (const filename of modelFiles) {
                 try {
-                    const response = await fetch(`data/models/${filename}`);
+                    console.log(`Attempting to load: ../data/models/${filename}`);
+                    const response = await fetch(`../data/models/${filename}`);
+                    console.log(`Response for ${filename}:`, response.status, response.ok);
                     if (response.ok) {
                         const csvText = await response.text();
                         const portfolio = parseCSVPortfolio(csvText, filename);
                         if (portfolio) {
                             const key = filename.replace('.csv', '');
                             predefinedPortfolios[key] = portfolio;
+                            console.log(`Successfully loaded portfolio: ${key}`, portfolio);
                         }
+                    } else {
+                        console.warn(`Failed to load ${filename}: ${response.status} ${response.statusText}`);
                     }
                 } catch (error) {
                     console.warn(`Could not load model portfolio: ${filename}`, error);
                 }
             }
+            console.log('Final predefinedPortfolios:', predefinedPortfolios);
         }
 
         // Function to parse CSV portfolio data

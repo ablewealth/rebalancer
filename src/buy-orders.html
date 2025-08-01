@@ -327,12 +327,15 @@
 
             try {
                 // Load the selected model portfolio
+                console.log(`Attempting to load: ../data/models/${selectedFile}`);
                 const response = await fetch(`../data/models/${selectedFile}`);
+                console.log(`Response for ${selectedFile}:`, response.status, response.ok);
                 if (!response.ok) {
-                    throw new Error(`Failed to load ${selectedFile}`);
+                    throw new Error(`Failed to load ${selectedFile}: ${response.status} ${response.statusText}`);
                 }
                 
                 const csvText = await response.text();
+                console.log(`CSV content for ${selectedFile}:`, csvText.substring(0, 200) + '...');
                 portfolioData = parsePortfolioCSV(csvText);
                 
                 // Clear file input and update display
