@@ -298,132 +298,90 @@
         let portfolioModified = false;
         let blendingPortfolios = [];
 
-        // Predefined portfolios
-        const predefinedPortfolios = {
-            '100-0': {
-                name: '100/0 - All Equity',
-                holdings: [
-                    { symbol: 'EFV', name: 'iShares:MSCI EAFE Val', price: 63.36, weight: 10 },
-                    { symbol: 'SPYG', name: 'SPDR Ptf S&P 500 Growth', price: 98.56, weight: 11 },
-                    { symbol: 'DYNF', name: 'BlackRock:US Eq Fc Rt Ac', price: 55.99, weight: 10 },
-                    { symbol: 'SPMO', name: 'Invesco S&P500 Momnt', price: 115.69, weight: 11 },
-                    { symbol: 'AUSF', name: 'Glbl X Adaptive US Fctr', price: 44.57, weight: 6 },
-                    { symbol: 'PVAL', name: 'Putnam Focused LC Value', price: 40.55, weight: 9 },
-                    { symbol: 'DBEF', name: 'Xtrackers MSCI EAFE Hdg', price: 44.35, weight: 2 },
-                    { symbol: 'EDIV', name: 'SPDR S&P Em Mkts Div', price: 37.98, weight: 5 },
-                    { symbol: 'IDMO', name: 'Invesco S&P Itl Dv M', price: 50.88, weight: 9 },
-                    { symbol: 'SMH', name: 'VanEck:Semiconductor', price: 288.78, weight: 4 },
-                    { symbol: 'JQUA', name: 'JPMorgan:US Quality Fact', price: 60.45, weight: 11 },
-                    { symbol: 'MOAT', name: 'VanEck:MS Wide Moat', price: 96.86, weight: 2 },
-                    { symbol: 'EQWL', name: 'Invesco S&P 100 Eq Wght', price: 109.79, weight: 10 }
-                ]
-            },
-            '80-20': {
-                name: '80/20 - Balanced',
-                holdings: [
-                    { symbol: 'BINC', name: 'iShares Flexible Income Active ETF', price: 52.74, weight: 2 },
-                    { symbol: 'CARY', name: 'Angel Oak Income ETF', price: 20.74, weight: 2 },
-                    { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF', price: 86.92, weight: 1.7 },
-                    { symbol: 'JBBB', name: 'Janus Henderson B-BBB CLO ETF', price: 48.46, weight: 1 },
-                    { symbol: 'ICVT', name: 'iShares Convertible Bond ETF', price: 92.61, weight: 1 },
-                    { symbol: 'GLDM', name: 'SPDR® Gold MiniShares', price: 65.15, weight: 0.3 },
-                    { symbol: 'XHLF', name: 'BondBloxx Bloomberg SixMthTrgDurUSTrsETF', price: 50.33, weight: 2.4 },
-                    { symbol: 'IGEB', name: 'iShares Investment Grade Systmtc Bd ETF', price: 45.28, weight: 1 },
-                    { symbol: 'HYEM', name: 'VanEck EM High Yield Bond ETF', price: 19.90, weight: 1 },
-                    { symbol: 'LQDH', name: 'iShares Interest Rate Hedged Corp Bd ETF', price: 93.05, weight: 2 },
-                    { symbol: 'IUSB', name: 'iShares Core Total USD Bond Market ETF', price: 45.99, weight: 4 },
-                    { symbol: 'XFIV', name: 'BondBloxx Bloomberg FiveYrTrgDurUSTrsETF', price: 49.01, weight: 1.6 },
-                    { symbol: 'EFV', name: 'iShares MSCI EAFE Value ETF', price: 63.33, weight: 8 },
-                    { symbol: 'SPYG', name: 'SPDR® Portfolio S&P 500 Growth ETF', price: 98.56, weight: 8 },
-                    { symbol: 'DYNF', name: 'iShares U.S. Equity Fac Rotation Act ETF', price: 55.99, weight: 8 },
-                    { symbol: 'SPMO', name: 'Invesco S&P 500® Momentum ETF', price: 115.69, weight: 8.8 },
-                    { symbol: 'AUSF', name: 'Global X Adaptive US Factor ETF', price: 44.57, weight: 4.8 },
-                    { symbol: 'PVAL', name: 'Putnam Focused Large Cap Value ETF', price: 40.55, weight: 7.2 },
-                    { symbol: 'DBEF', name: 'Xtrackers MSCI EAFE Hedged Equity ETF', price: 44.35, weight: 1.6 },
-                    { symbol: 'EDIV', name: 'SPDR® S&P Emerging Markets Dividend ETF', price: 37.98, weight: 4 },
-                    { symbol: 'IDMO', name: 'Invesco S&P International Dev Momt ETF', price: 50.88, weight: 7.2 },
-                    { symbol: 'SMH', name: 'VanEck Semiconductor ETF', price: 288.78, weight: 3.2 },
-                    { symbol: 'JQUA', name: 'JPMorgan US Quality Factor ETF', price: 60.45, weight: 8.8 },
-                    { symbol: 'MOAT', name: 'VanEck Morningstar Wide Moat ETF', price: 96.81, weight: 1.6 },
-                    { symbol: 'EQWL', name: 'Invesco S&P 100 Equal Weight ETF', price: 109.79, weight: 8 }
-                ]
-            },
-            'all-equity': {
-                name: 'All Equity',
-                holdings: [
-                    { symbol: 'EFV', name: 'iShares MSCI EAFE Value ETF', price: 63.33, weight: 10 },
-                    { symbol: 'SPYG', name: 'SPDR® Portfolio S&P 500 Growth ETF', price: 98.56, weight: 11 },
-                    { symbol: 'DYNF', name: 'iShares U.S. Equity Fac Rotation Act ETF', price: 55.99, weight: 10 },
-                    { symbol: 'SPMO', name: 'Invesco S&P 500® Momentum ETF', price: 115.69, weight: 11 },
-                    { symbol: 'AUSF', name: 'Global X Adaptive US Factor ETF', price: 44.57, weight: 6 },
-                    { symbol: 'PVAL', name: 'Putnam Focused Large Cap Value ETF', price: 40.55, weight: 9 },
-                    { symbol: 'DBEF', name: 'Xtrackers MSCI EAFE Hedged Equity ETF', price: 44.35, weight: 2 },
-                    { symbol: 'EDIV', name: 'SPDR® S&P Emerging Markets Dividend ETF', price: 37.98, weight: 5 },
-                    { symbol: 'IDMO', name: 'Invesco S&P International Dev Momt ETF', price: 50.88, weight: 9 },
-                    { symbol: 'SMH', name: 'VanEck Semiconductor ETF', price: 288.78, weight: 4 },
-                    { symbol: 'JQUA', name: 'JPMorgan US Quality Factor ETF', price: 60.45, weight: 11 },
-                    { symbol: 'MOAT', name: 'VanEck Morningstar Wide Moat ETF', price: 96.81, weight: 2 },
-                    { symbol: 'EQWL', name: 'Invesco S&P 100 Equal Weight ETF', price: 109.79, weight: 10 }
-                ]
-            },
-            'fixed-income': {
-                name: 'Fixed Income',
-                holdings: [
-                    { symbol: 'BINC', name: 'iShares Flexible Income Active ETF', price: 52.74, weight: 10 },
-                    { symbol: 'CARY', name: 'Angel Oak Income ETF', price: 20.74, weight: 10 },
-                    { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF', price: 86.92, weight: 8.5 },
-                    { symbol: 'JBBB', name: 'Janus Henderson B-BBB CLO ETF', price: 48.46, weight: 5 },
-                    { symbol: 'ICVT', name: 'iShares Convertible Bond ETF', price: 92.61, weight: 5 },
-                    { symbol: 'GLDM', name: 'SPDR® Gold MiniShares', price: 65.15, weight: 1.5 },
-                    { symbol: 'XHLF', name: 'BondBloxx Bloomberg SixMthTrgDurUSTrsETF', price: 50.33, weight: 12 },
-                    { symbol: 'IGEB', name: 'iShares Investment Grade Systmtc Bd ETF', price: 45.28, weight: 5 },
-                    { symbol: 'HYEM', name: 'VanEck EM High Yield Bond ETF', price: 19.9, weight: 5 },
-                    { symbol: 'LQDH', name: 'iShares Interest Rate Hedged Corp Bd ETF', price: 93.05, weight: 10 },
-                    { symbol: 'IUSB', name: 'iShares Core Total USD Bond Market ETF', price: 45.99, weight: 20 },
-                    { symbol: 'XFIV', name: 'BondBloxx Bloomberg FiveYrTrgDurUSTrsETF', price: 49.01, weight: 8 }
-                ]
-            },
-            'fixed-income-tax': {
-                name: 'Fixed Income (Tax Aware)',
-                holdings: [
-                    { symbol: 'BINC', name: 'iShares Flexible Income Active ETF', price: 52.74, weight: 25.5 },
-                    { symbol: 'MINO', name: 'PIMCO Muncpl Income Oppos Act Ex-Trd', price: 43.8, weight: 20 },
-                    { symbol: 'HYMB', name: 'SPDR Nuveen ICE High Yield Muncpl Bd ETF', price: 24.31, weight: 15 },
-                    { symbol: 'XSVN', name: 'BondBloxx Bloomberg SevenYrTrgDurUSTrETF', price: 47.46, weight: 10 },
-                    { symbol: 'GLDM', name: 'SPDR® Gold MiniShares', price: 65.15, weight: 1.5 },
-                    { symbol: 'BOXX', name: 'Alpha Architect 1-3 Month Box ETF', price: 113.04, weight: 13 },
-                    { symbol: 'JMST', name: 'JPMorgan Ultra-Short Municipal Inc ETF', price: 50.99, weight: 15 }
-                ]
-            },
-            'tactical-equity': {
-                name: 'Tactical Equity',
-                holdings: [
-                    { symbol: 'CBLS', name: 'Clough Hedged Equity ETF', price: 29.07, weight: 1.6 },
-                    { symbol: 'RSEE', name: 'Rareview Systematic Equity ETF', price: 30.59, weight: 1.6 },
-                    { symbol: 'QMNNX', name: 'AQR Equity Market Neutral N', price: 11, weight: 4 },
-                    { symbol: 'CTA', name: 'Simplify Managed Futures Strategy ETF', price: 27.47, weight: 3 },
-                    { symbol: 'ACIO', name: 'Aptus Collared Investment Opp ETF', price: 41.74, weight: 1 },
-                    { symbol: 'FTLS', name: 'First Trust Long/Short Equity ETF', price: 66.75, weight: 1.2 },
-                    { symbol: 'XHLF', name: 'BondBloxx Bloomberg SixMthTrgDurUSTrsETF', price: 50.33, weight: 2.4 },
-                    { symbol: 'BTAL', name: 'AGF U.S. Market Neutral Anti-Beta', price: 16.47, weight: 4 },
-                    { symbol: 'CLSE', name: 'Convergence Long/Short Equity ETF', price: 24.11, weight: 0.8 },
-                    { symbol: 'DBMF', name: 'iMGP DBi Managed Futures Strategy ETF', price: 25.61, weight: 0.4 },
-                    { symbol: 'EFV', name: 'iShares MSCI EAFE Value ETF', price: 63.33, weight: 8 },
-                    { symbol: 'SPYG', name: 'SPDR® Portfolio S&P 500 Growth ETF', price: 98.56, weight: 8.8 },
-                    { symbol: 'DYNF', name: 'iShares U.S. Equity Fac Rotation Act ETF', price: 55.99, weight: 8 },
-                    { symbol: 'SPMO', name: 'Invesco S&P 500® Momentum ETF', price: 115.69, weight: 8.8 },
-                    { symbol: 'AUSF', name: 'Global X Adaptive US Factor ETF', price: 44.57, weight: 4.8 },
-                    { symbol: 'PVAL', name: 'Putnam Focused Large Cap Value ETF', price: 40.55, weight: 7.2 },
-                    { symbol: 'DBEF', name: 'Xtrackers MSCI EAFE Hedged Equity ETF', price: 44.35, weight: 1.6 },
-                    { symbol: 'EDIV', name: 'SPDR® S&P Emerging Markets Dividend ETF', price: 37.98, weight: 4 },
-                    { symbol: 'IDMO', name: 'Invesco S&P International Dev Momt ETF', price: 50.88, weight: 7.2 },
-                    { symbol: 'SMH', name: 'VanEck Semiconductor ETF', price: 288.78, weight: 3.2 },
-                    { symbol: 'JQUA', name: 'JPMorgan US Quality Factor ETF', price: 60.45, weight: 8.8 },
-                    { symbol: 'MOAT', name: 'VanEck Morningstar Wide Moat ETF', price: 96.81, weight: 1.6 },
-                    { symbol: 'EQWL', name: 'Invesco S&P 100 Equal Weight ETF', price: 109.79, weight: 8 }
-                ]
+        // Dynamic portfolio loading from CSV files
+        let predefinedPortfolios = {};
+
+        // Function to load all model portfolios from data/models/ directory
+        async function loadModelPortfolios() {
+            const modelFiles = [
+                '100-0.csv',
+                '50_50__Tax_Aware_8-1-2025.csv',
+                '80-20.csv',
+                'All Equity.csv',
+                'Fixed-Income (Tax Aware).csv',
+                'Fixed-Income.csv',
+                'Tactical Equity.csv'
+            ];
+
+            for (const filename of modelFiles) {
+                try {
+                    const response = await fetch(`data/models/${filename}`);
+                    if (response.ok) {
+                        const csvText = await response.text();
+                        const portfolio = parseCSVPortfolio(csvText, filename);
+                        if (portfolio) {
+                            const key = filename.replace('.csv', '');
+                            predefinedPortfolios[key] = portfolio;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Could not load model portfolio: ${filename}`, error);
+                }
             }
-        };
+        }
+
+        // Function to parse CSV portfolio data
+        function parseCSVPortfolio(csvText, filename) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return null;
+
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const holdings = [];
+
+            // Find column indices
+            const symbolIndex = headers.findIndex(h => h.includes('symbol') || h.includes('ticker'));
+            const nameIndex = headers.findIndex(h => h.includes('name') || h.includes('description'));
+            const priceIndex = headers.findIndex(h => h.includes('price') || h.includes('value'));
+            const weightIndex = headers.findIndex(h => h.includes('weight') || h.includes('allocation') || h.includes('%'));
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                if (values.length < 2) continue;
+
+                const holding = {
+                    symbol: symbolIndex >= 0 ? values[symbolIndex] : values[0],
+                    name: nameIndex >= 0 ? values[nameIndex] : values[1] || values[0],
+                    price: priceIndex >= 0 ? parseFloat(values[priceIndex]) || 0 : 0,
+                    weight: weightIndex >= 0 ? parseFloat(values[weightIndex]) || 0 : 0
+                };
+
+                if (holding.symbol && holding.symbol !== '') {
+                    holdings.push(holding);
+                }
+            }
+
+            return {
+                name: filename.replace('.csv', '').replace(/_/g, ' '),
+                holdings: holdings
+            };
+        }
+
+        // Function to generate portfolio options HTML
+        function generatePortfolioOptions() {
+            return Object.keys(predefinedPortfolios).map(key =>
+                `<option value="${key}">${predefinedPortfolios[key].name}</option>`
+            ).join('');
+        }
+
+        // Function to refresh all blending dropdowns
+        function refreshBlendingDropdowns() {
+            const blendingSelects = document.querySelectorAll('.portfolio-select');
+            blendingSelects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = `<option value="">Select Portfolio...</option>${generatePortfolioOptions()}`;
+                select.value = currentValue; // Restore previous selection if still valid
+            });
+        }
 
         // --- Event Listeners ---
         loadPortfolioBtn.addEventListener('click', loadSelectedPortfolio);
@@ -797,6 +755,7 @@
 
             // Refresh the dropdown to show the newly saved portfolio
             populatePortfolioDropdown();
+            refreshBlendingDropdowns();
 
             showNotification(`Portfolio "${portfolioData.name}" saved successfully - now available in dropdown`, 'success');
         }
@@ -967,9 +926,7 @@
             blendingDiv.innerHTML = `
                 <select class="portfolio-select flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2">
                     <option value="">Select Portfolio...</option>
-                    ${Object.keys(predefinedPortfolios).map(key =>
-                `<option value="${key}">${predefinedPortfolios[key].name}</option>`
-            ).join('')}
+                    ${generatePortfolioOptions()}
                 </select>
                 <div class="flex items-center space-x-2">
                     <input type="number" class="weight-input w-16 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2 text-right" 
@@ -1123,12 +1080,16 @@
         emptyState.classList.remove('hidden');
         updatePortfolioStats();
 
-        // Initialize portfolio dropdown
-        populatePortfolioDropdown();
-
-        // Initialize blending tool with 2 default selections
-        addBlendingPortfolio();
-        addBlendingPortfolio();
+        // Initialize portfolio dropdown after loading models
+        async function initializePortfolios() {
+            await loadModelPortfolios();
+            populatePortfolioDropdown();
+            
+            // Initialize blending tool with 2 default selections after portfolios are loaded
+            addBlendingPortfolio();
+            addBlendingPortfolio();
+        }
+        initializePortfolios();
     </script>
 </body>
 
