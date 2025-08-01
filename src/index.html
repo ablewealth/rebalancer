@@ -150,6 +150,24 @@
         .nav-link:hover::before {
             left: 100%;
         }
+
+        /* Page Header - Exclude from compact styling */
+        .page-header h1 {
+            font-size: 1.875rem !important; /* text-3xl */
+            line-height: 2.25rem !important;
+        }
+        
+        @media (min-width: 768px) {
+            .page-header h1 {
+                font-size: 2.25rem !important; /* md:text-4xl */
+                line-height: 2.5rem !important;
+            }
+        }
+        
+        .page-header p {
+            font-size: 1rem !important; /* text-md */
+            line-height: 1.5rem !important;
+        }
     </style>
 </head>
 
@@ -223,7 +241,7 @@
                             Model Portfolios
                         </a>
                         <a href="buy-orders.html" class="mobile-nav-link text-gray-600 hover:text-green-600 hover:bg-green-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
-                            Buy Orders  
+                            Buy Orders
                         </a>
                         <a href="price-manager.html" class="mobile-nav-link text-gray-600 hover:text-teal-600 hover:bg-teal-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200">
                             Price Manager
@@ -252,7 +270,7 @@
         </div>
 
         <!-- Page Header -->
-        <div class="text-center mb-8">
+        <div class="text-center mb-8 page-header">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Advanced Tax Harvesting Optimization</h1>
             <p class="text-md text-gray-600 mt-2">This tool uses an optimization algorithm to find trades that best meet your tax goals.</p>
         </div>
