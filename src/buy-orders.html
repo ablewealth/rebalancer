@@ -271,15 +271,43 @@
         // Load model portfolios on page load
         window.addEventListener('load', refreshModelPortfolios);
 
-        // Model portfolios data
-        const modelPortfolios = {
-            '100-0.csv': '100% Equity / 0% Fixed Income',
-            '80-20.csv': '80% Equity / 20% Fixed Income', 
-            'All Equity.csv': 'All Equity Portfolio',
-            'Fixed-Income.csv': 'Fixed Income Portfolio',
-            'Fixed-Income (Tax Aware).csv': 'Fixed Income (Tax Aware)',
-            'Tactical Equity.csv': 'Tactical Equity Portfolio'
-        };
+        // Dynamic model portfolios data - loaded from CSV files
+        let modelPortfolios = {};
+
+        // Function to load all model portfolios from data/models/ directory
+        async function loadModelPortfolios() {
+            const modelFiles = [
+                '100-0.csv',
+                '50_50__Tax_Aware_8-1-2025.csv',
+                '80-20.csv',
+                'All Equity.csv',
+                'Fixed-Income (Tax Aware).csv',
+                'Fixed-Income.csv',
+                'Tactical Equity.csv'
+            ];
+
+            modelPortfolios = {}; // Clear existing data
+
+            for (const filename of modelFiles) {
+                try {
+                    console.log(`Attempting to load: ../data/models/${filename}`);
+                    const response = await fetch(`../data/models/${filename}`);
+                    console.log(`Response for ${filename}:`, response.status, response.ok);
+                    if (response.ok) {
+                        const csvText = await response.text();
+                        // Just store the filename and a display name for the dropdown
+                        const displayName = filename.replace('.csv', '').replace(/_/g, ' ');
+                        modelPortfolios[filename] = displayName;
+                        console.log(`Successfully loaded portfolio: ${filename} -> ${displayName}`);
+                    } else {
+                        console.warn(`Failed to load ${filename}: ${response.status} ${response.statusText}`);
+                    }
+                } catch (error) {
+                    console.warn(`Could not load model portfolio: ${filename}`, error);
+                }
+            }
+            console.log('Final modelPortfolios:', modelPortfolios);
+        }
 
         // --- Functions ---
         async function refreshModelPortfolios() {
@@ -290,6 +318,9 @@
                 // Show loading state
                 refreshIcon.classList.add('refresh-spin');
                 refreshModelsBtn.disabled = true;
+                
+                // Load model portfolios from CSV files
+                await loadModelPortfolios();
                 
                 // Clear current options except the first one
                 portfolioSelect.innerHTML = '<option value="">Select a model portfolio...</option>';
