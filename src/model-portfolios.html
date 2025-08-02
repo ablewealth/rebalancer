@@ -452,7 +452,8 @@
                 'AWM Model - All Equity.csv',
                 'AWM Model - Fixed_D.csv',
                 'AWM Model - Fixed_T.csv',
-                'AWM Model_Tactical Equity.csv'
+                'AWM Model_Tactical Equity.csv',
+                'AWM_Model___All_Equity.csv'
             ];
 
             for (const filename of modelFiles) {
@@ -460,6 +461,7 @@
                     console.log(`Attempting to load: ../data/models/${filename}`);
                     const response = await fetch(`../data/models/${filename}`);
                     console.log(`Response for ${filename}:`, response.status, response.ok);
+                    
                     if (response.ok) {
                         const csvText = await response.text();
                         const portfolio = parseCSVPortfolio(csvText, filename);
@@ -467,6 +469,8 @@
                             const key = filename.replace('.csv', '');
                             predefinedPortfolios[key] = portfolio;
                             console.log(`Successfully loaded portfolio: ${key}`, portfolio);
+                        } else {
+                            console.warn(`Failed to parse portfolio file: ${filename}`);
                         }
                     } else {
                         console.warn(`Failed to load ${filename}: ${response.status} ${response.statusText}`);
@@ -496,104 +500,113 @@
 
         // Function to parse CSV portfolio data
         function parseCSVPortfolio(csvText, filename) {
-            console.log(`Parsing portfolio: ${filename}`);
-            
-            // Remove BOM (Byte Order Mark) if present
-            csvText = csvText.replace(/^\uFEFF/, '');
-            
-            const lines = csvText.trim().split('\n');
-            if (lines.length < 2) {
-                console.warn(`${filename}: Not enough lines (${lines.length})`);
-                return null;
-            }
-
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-            const holdings = [];
-
-            console.log(`${filename} - CSV Headers:`, headers);
-
-            // Find column indices with more flexible matching
-            const symbolIndex = headers.findIndex(h => 
-                h.includes('symbol') || h.includes('ticker')
-            );
-            const nameIndex = headers.findIndex(h => 
-                h.includes('name') || h.includes('description') || h.includes('security')
-            );
-            const priceIndex = headers.findIndex(h => 
-                h.includes('price') || h.includes('value') || h.includes('cost')
-            );
-            const weightIndex = headers.findIndex(h => 
-                h.includes('weight') || h.includes('allocation') || h.includes('%') || 
-                h.includes('percent') || h.includes('target')
-            );
-
-            console.log(`${filename} - Column indices:`, { symbolIndex, nameIndex, priceIndex, weightIndex });
-
-            let totalWeight = 0;
-            let nonZeroWeights = 0;
-
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-
-                // Split CSV line properly handling quoted values
-                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/"/g, ''));
-                if (values.length < 2) continue;
-
-                // Clean and parse values
-                const symbol = symbolIndex >= 0 ? values[symbolIndex] : values[1];
-                const name = nameIndex >= 0 ? values[nameIndex] : (values[2] || values[1]);
-                const priceStr = priceIndex >= 0 ? values[priceIndex] : '0';
-                const weightStr = weightIndex >= 0 ? values[weightIndex] : '0';
-
-                // Clean price string (remove $, spaces, etc.)
-                const cleanPrice = priceStr.replace(/[$\s,]/g, '');
-                let price = parseFloat(cleanPrice) || 0;
-
-                // Use centralized price if available (overrides CSV price)
-                const centralizedPrice = getCentralizedPrice(symbol);
-                if (centralizedPrice !== null) {
-                    price = centralizedPrice;
-                    console.log(`Using centralized price for ${symbol}: $${price}`);
+            try {
+                console.log(`Parsing portfolio: ${filename}`);
+                
+                // Remove BOM (Byte Order Mark) if present
+                csvText = csvText.replace(/^\uFEFF/, '');
+                
+                const lines = csvText.trim().split('\n');
+                if (lines.length < 2) {
+                    console.warn(`${filename}: Not enough lines (${lines.length})`);
+                    return null;
                 }
 
-                // Clean weight string (remove %, spaces, etc.)
-                const cleanWeight = weightStr.replace(/[%\s,]/g, '');
-                const weight = parseFloat(cleanWeight) || 0;
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+                const holdings = [];
 
-                const holding = {
-                    symbol: symbol || '',
-                    name: name || '',
-                    price: price,
-                    weight: weight
+                console.log(`${filename} - CSV Headers:`, headers);
+
+                // Find column indices with more flexible matching
+                const symbolIndex = headers.findIndex(h => 
+                    h.includes('symbol') || h.includes('ticker')
+                );
+                const nameIndex = headers.findIndex(h => 
+                    h.includes('name') || h.includes('description') || h.includes('security')
+                );
+                const priceIndex = headers.findIndex(h => 
+                    h.includes('price') || h.includes('value') || h.includes('cost')
+                );
+                const weightIndex = headers.findIndex(h => 
+                    h.includes('weight') || h.includes('allocation') || h.includes('%') || 
+                    h.includes('percent') || h.includes('target')
+                );
+
+                console.log(`${filename} - Column indices:`, { symbolIndex, nameIndex, priceIndex, weightIndex });
+
+                if (symbolIndex === -1) {
+                    console.error(`${filename}: No symbol/ticker column found in headers: ${headers.join(', ')}`);
+                }
+
+                let totalWeight = 0;
+                let nonZeroWeights = 0;
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    // Split CSV line properly handling quoted values
+                    const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/"/g, ''));
+                    if (values.length < 2) continue;
+
+                    // Clean and parse values
+                    const symbol = symbolIndex >= 0 ? values[symbolIndex] : values[0];
+                    const name = nameIndex >= 0 ? values[nameIndex] : (values[1] || symbol);
+                    const priceStr = priceIndex >= 0 ? values[priceIndex] : '0';
+                    const weightStr = weightIndex >= 0 ? values[weightIndex] : '0';
+
+                    // Clean price string (remove $, spaces, etc.)
+                    const cleanPrice = priceStr.replace(/[$\s,]/g, '');
+                    let price = parseFloat(cleanPrice) || 0;
+
+                    // Use centralized price if available (overrides CSV price)
+                    const centralizedPrice = getCentralizedPrice(symbol);
+                    if (centralizedPrice !== null) {
+                        price = centralizedPrice;
+                        console.log(`Using centralized price for ${symbol}: $${price}`);
+                    }
+
+                    // Clean weight string (remove %, spaces, etc.)
+                    const cleanWeight = weightStr.replace(/[%\s,]/g, '');
+                    const weight = parseFloat(cleanWeight) || 0;
+
+                    const holding = {
+                        symbol: symbol || '',
+                        name: name || '',
+                        price: price,
+                        weight: weight
+                    };
+
+                    if (holding.symbol && holding.symbol !== '' && holding.symbol !== 'Symbol') {
+                        holdings.push(holding);
+                        totalWeight += weight;
+                        if (weight > 0) nonZeroWeights++;
+                    }
+                }
+
+                console.log(`${filename} - Parsed ${holdings.length} holdings, total weight: ${totalWeight}, non-zero weights: ${nonZeroWeights}`);
+
+                // Only return portfolio if it has valid holdings with weights
+                if (holdings.length === 0) {
+                    console.warn(`${filename}: No valid holdings found`);
+                    return null;
+                }
+                
+                // Show warning if all weights are zero but still return the portfolio
+                if (nonZeroWeights === 0) {
+                    console.warn(`${filename}: All holdings have zero weight - portfolio may appear empty`);
+                }
+
+                return {
+                    name: filename.replace('.csv', '').replace(/_/g, ' '),
+                    holdings: holdings,
+                    totalWeight: totalWeight,
+                    hasValidWeights: nonZeroWeights > 0
                 };
-
-                if (holding.symbol && holding.symbol !== '' && holding.symbol !== 'Symbol') {
-                    holdings.push(holding);
-                    totalWeight += weight;
-                    if (weight > 0) nonZeroWeights++;
-                }
-            }
-
-            console.log(`${filename} - Parsed ${holdings.length} holdings, total weight: ${totalWeight}, non-zero weights: ${nonZeroWeights}`);
-
-            // Only return portfolio if it has valid holdings with weights
-            if (holdings.length === 0) {
-                console.warn(`${filename}: No valid holdings found`);
+            } catch (error) {
+                console.error(`Error parsing CSV file ${filename}:`, error);
                 return null;
             }
-            
-            // Show warning if all weights are zero but still return the portfolio
-            if (nonZeroWeights === 0) {
-                console.warn(`${filename}: All holdings have zero weight - portfolio may appear empty`);
-            }
-
-            return {
-                name: filename.replace('.csv', '').replace(/_/g, ' '),
-                holdings: holdings,
-                totalWeight: totalWeight,
-                hasValidWeights: nonZeroWeights > 0
-            };
         }
 
         // Function to generate portfolio options HTML
@@ -1321,6 +1334,13 @@
         // Mobile menu functionality
         document.addEventListener('DOMContentLoaded', function() {
             try {
+                // Load model portfolios on page load
+                loadModelPortfolios().then(() => {
+                    populatePortfolioDropdown();
+                    refreshBlendingDropdowns();
+                    console.log('Model portfolios loaded on page initialization');
+                });
+                
                 const mobileMenuButton = document.getElementById('mobile-menu-button');
                 const mobileMenu = document.getElementById('mobile-menu');
                 

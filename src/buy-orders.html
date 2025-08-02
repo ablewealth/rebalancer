@@ -246,6 +246,60 @@
             <p class="text-md text-gray-600 mt-2">Generate buy orders to invest cash from sell orders into your target portfolio allocation.</p>
         </div>
 
+        <!-- Wash Sale Compliance Check Section -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">Wash Sale Compliance Check</h2>
+                <button id="runWashSaleAnalysis" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    Analyze Wash Sale Risk
+                </button>
+            </div>
+            
+            <div id="washSaleResults" class="hidden">
+                <!-- Results will be populated by JavaScript -->
+            </div>
+            
+            <div id="washSaleExplanation" class="text-sm text-gray-600 mt-4">
+                <p><strong>About Wash Sale Detection:</strong> This analysis compares your sell orders (tax-loss harvesting) with your proposed buy orders to identify potential IRS Section 1091 violations. The system uses a 4-tier risk classification based on ETF similarity scoring as outlined in our compliance framework.</p>
+                
+                <!-- Enhanced ETF Database Information -->
+                <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <h3 class="font-medium text-blue-800">Enhanced ETF Database</h3>
+                    </div>
+                    <p class="text-blue-700 text-xs mb-2">This tool uses a comprehensive database of 150+ ETFs to analyze potential wash sale violations with enhanced accuracy.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        <div class="bg-white p-2 rounded border border-blue-100">
+                            <span class="font-medium text-blue-700">50% Weight</span>
+                            <p class="text-gray-600">Underlying Index</p>
+                        </div>
+                        <div class="bg-white p-2 rounded border border-blue-100">
+                            <span class="font-medium text-blue-700">20% Weight</span>
+                            <p class="text-gray-600">Asset Class</p>
+                        </div>
+                        <div class="bg-white p-2 rounded border border-blue-100">
+                            <span class="font-medium text-blue-700">15% Weight</span>
+                            <p class="text-gray-600">Management Style</p>
+                        </div>
+                        <div class="bg-white p-2 rounded border border-blue-100">
+                            <span class="font-medium text-blue-700">15% Weight</span>
+                            <p class="text-gray-600">Issuer & Other Factors</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-yellow-800 text-xs"><strong>Note:</strong> This tool provides informational analysis and risk assessment, not certified financial or tax advice. Consult a qualified professional before executing trades.</p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Input Section -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
@@ -303,12 +357,20 @@
                 <div class="mb-6">
                     <div class="flex items-center justify-between mb-2">
                         <label for="portfolioSelect" class="block text-sm font-medium text-gray-700">Select Model Portfolio</label>
-                        <button id="refreshModelsBtn" class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 flex items-center">
-                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            Refresh
-                        </button>
+                        <div class="flex space-x-2">
+                            <button id="refreshModelsBtn" class="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 flex items-center">
+                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Refresh
+                            </button>
+                            <button id="createModelBtn" class="text-sm bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200 flex items-center">
+                                <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Create Model
+                            </button>
+                        </div>
                     </div>
                     <select id="portfolioSelect" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 mb-3">
                         <option value="">Select a model portfolio...</option>
@@ -401,6 +463,7 @@
         portfolioFileInput.addEventListener('change', handlePortfolioFileUpload);
         portfolioSelect.addEventListener('change', handlePortfolioSelection);
         refreshModelsBtn.addEventListener('click', refreshModelPortfolios);
+        document.getElementById('createModelBtn').addEventListener('click', createMissingModelFile);
         generateBtn.addEventListener('click', handleGeneration);
         exportBtn.addEventListener('click', handleExport);
 
@@ -431,8 +494,23 @@
             }
         });
 
-        // Load model portfolios on page load
-        window.addEventListener('load', refreshModelPortfolios);
+        // Load model portfolios on page load with debugging info
+        window.addEventListener('load', async () => {
+            console.log('Buy-orders page loaded, initializing model portfolios...');
+            
+            // List data/models directory in console to help debug
+            try {
+                const testResponse = await fetch('/data/models/100-0.csv');
+                console.log('Test file fetch response:', testResponse.status, testResponse.ok);
+                if (testResponse.ok) {
+                    console.log('Test file content available, models should load');
+                }
+            } catch (error) {
+                console.log('Test file fetch error:', error);
+            }
+            
+            refreshModelPortfolios();
+        });
 
         // Check for centralized prices and show notification
         window.addEventListener('load', () => {
@@ -455,6 +533,7 @@
 
         // Function to load all model portfolios from data/models/ directory
         async function loadModelPortfolios() {
+            // Only include files that actually exist in the data/models directory
             const modelFiles = [
                 'AWM Model - All Equity.csv',
                 'AWM Model - Fixed_D.csv', 
@@ -466,23 +545,141 @@
 
             for (const filename of modelFiles) {
                 try {
-                    console.log(`Attempting to load: ../data/models/${filename}`);
-                    const response = await fetch(`../data/models/${filename}`);
-                    console.log(`Response for ${filename}:`, response.status, response.ok);
-                    if (response.ok) {
-                        const csvText = await response.text();
-                        // Just store the filename and a display name for the dropdown
-                        const displayName = filename.replace('.csv', '').replace(/_/g, ' ');
-                        modelPortfolios[filename] = displayName;
-                        console.log(`Successfully loaded portfolio: ${filename} -> ${displayName}`);
-                    } else {
-                        console.warn(`Failed to load ${filename}: ${response.status} ${response.statusText}`);
+                    // Try multiple path formats to ensure we find the right one
+                    const possiblePaths = [
+                        `/data/models/${filename}`,
+                        `../data/models/${filename}`,
+                        `../../data/models/${filename}`,
+                        `data/models/${filename}`
+                    ];
+                    
+                    let loaded = false;
+                    for (const path of possiblePaths) {
+                        try {
+                            console.log(`Attempting to load from path: ${path}`);
+                            const response = await fetch(path);
+                            console.log(`Response for ${path}:`, response.status, response.ok);
+                            
+                            if (response.ok) {
+                                const csvText = await response.text();
+                                const displayName = filename.replace('.csv', '').replace(/_/g, ' ');
+                                modelPortfolios[filename] = displayName;
+                                console.log(`Successfully loaded portfolio from ${path}: ${filename} -> ${displayName}`);
+                                loaded = true;
+                                break; // Exit the path loop once successful
+                            }
+                        } catch (pathError) {
+                            console.log(`Path ${path} failed:`, pathError.message);
+                        }
+                    }
+                    
+                    if (!loaded) {
+                        console.warn(`Failed to load ${filename} from any path`);
                     }
                 } catch (error) {
                     console.warn(`Could not load model portfolio: ${filename}`, error);
                 }
             }
             console.log('Final modelPortfolios:', modelPortfolios);
+            return Object.keys(modelPortfolios).length > 0;
+        }
+
+        // Debug function to test loading a specific model file
+        async function testLoadSpecificModel(filename) {
+            try {
+                // Try multiple path formats
+                const possiblePaths = [
+                    `/data/models/${filename}`,
+                    `../data/models/${filename}`,
+                    `../../data/models/${filename}`,
+                    `data/models/${filename}`
+                ];
+                
+                for (const path of possiblePaths) {
+                    try {
+                        console.log(`DEBUG: Testing load of specific file: ${path}`);
+                        const response = await fetch(path);
+                        console.log(`DEBUG: Response for ${path}: ${response.status}, ok: ${response.ok}`);
+                        
+                        if (response.ok) {
+                            const text = await response.text();
+                            console.log(`DEBUG: File content (first 100 chars): ${text.substring(0, 100)}...`);
+                            return true;
+                        }
+                    } catch (pathError) {
+                        console.log(`DEBUG: Path ${path} failed:`, pathError.message);
+                    }
+                }
+                
+                console.error(`DEBUG: Failed to load file from any path`);
+                return false;
+            } catch (error) {
+                console.error(`DEBUG: Error testing model load:`, error);
+                return false;
+            }
+        }
+        
+        // Function to create missing model files if needed
+        function createMissingModelFile() {
+            // Create sample model file content
+            const modelContent = `Model,Symbol,Name,Price,Target Percent
+"Basic 60-40","VOO","Vanguard S&P 500 ETF",485.26,40.0
+"Basic 60-40","VXF","Vanguard Extended Market ETF",172.45,10.0
+"Basic 60-40","VEA","Vanguard FTSE Developed Markets ETF",50.12,10.0
+"Basic 60-40","VXUS","Vanguard Total International Stock ETF",61.78,10.0
+"Basic 60-40","BND","Vanguard Total Bond Market ETF",72.14,25.0
+"Basic 60-40","BNDX","Vanguard Total International Bond ETF",48.76,5.0`;
+
+            // Show a dialog to select from missing files
+            const missingFiles = ['100-0.csv', '80-20.csv', 'All Equity.csv', 'Fixed-Income.csv', 'Tactical Equity.csv'];
+            const selectHtml = missingFiles.map(file => 
+                `<option value="${file}">${file.replace('.csv', '')}</option>`
+            ).join('');
+            
+            const dialogHtml = `
+                <div class="bg-white p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold mb-2">Create Missing Model File</h3>
+                    <p class="mb-3">Select a model file to create:</p>
+                    <select id="missing-model-select" class="w-full p-2 mb-3 border rounded">
+                        ${selectHtml}
+                    </select>
+                    <div class="flex justify-end">
+                        <button id="cancel-create-model" class="px-4 py-2 mr-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                        <button id="confirm-create-model" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Create</button>
+                    </div>
+                </div>
+            `;
+            
+            // Create and show the dialog
+            const dialogOverlay = document.createElement('div');
+            dialogOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            dialogOverlay.innerHTML = dialogHtml;
+            document.body.appendChild(dialogOverlay);
+            
+            // Set up event handlers
+            document.getElementById('cancel-create-model').addEventListener('click', () => {
+                document.body.removeChild(dialogOverlay);
+            });
+            
+            document.getElementById('confirm-create-model').addEventListener('click', async () => {
+                const select = document.getElementById('missing-model-select');
+                const selectedFile = select.value;
+                document.body.removeChild(dialogOverlay);
+                
+                // Create a file for download
+                const blob = new Blob([modelContent.replace(/Basic 60-40/g, selectedFile.replace('.csv', ''))], 
+                    { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", selectedFile);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification(`Model file "${selectedFile}" created. Please save it to your data/models/ directory.`, 'success');
+            });
         }
 
         // --- Functions ---
@@ -496,12 +693,13 @@
                 refreshModelsBtn.disabled = true;
                 
                 // Load model portfolios from CSV files
-                await loadModelPortfolios();
+                const loadSuccess = await loadModelPortfolios();
                 
                 // Clear current options except the first one
                 portfolioSelect.innerHTML = '<option value="">Select a model portfolio...</option>';
                 
                 // Add available model portfolios
+                const portfolioCount = Object.keys(modelPortfolios).length;
                 for (const [filename, displayName] of Object.entries(modelPortfolios)) {
                     const option = document.createElement('option');
                     option.value = filename;
@@ -512,7 +710,17 @@
                 // Small delay to show the refresh animation
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                showNotification('Model portfolios refreshed successfully', 'success');
+                if (portfolioCount > 0) {
+                    showNotification(`${portfolioCount} model portfolios loaded successfully`, 'success');
+                } else {
+                    // Try testing a specific file to debug the issue
+                    const testResult = await testLoadSpecificModel('100-0.csv');
+                    if (!testResult) {
+                        showNotification('Could not load model portfolios. Check console for details.', 'warning');
+                    } else {
+                        showNotification('Model portfolios refreshed but none were found', 'warning');
+                    }
+                }
             } catch (error) {
                 console.error('Error refreshing model portfolios:', error);
                 showNotification('Error refreshing model portfolios', 'error');
@@ -533,17 +741,48 @@
             }
 
             try {
-                // Load the selected model portfolio
-                console.log(`Attempting to load: ../data/models/${selectedFile}`);
-                const response = await fetch(`../data/models/${selectedFile}`);
-                console.log(`Response for ${selectedFile}:`, response.status, response.ok);
-                if (!response.ok) {
-                    throw new Error(`Failed to load ${selectedFile}: ${response.status} ${response.statusText}`);
+                // Load the selected model portfolio with multiple path options
+                const possiblePaths = [
+                    `/data/models/${selectedFile}`,
+                    `../data/models/${selectedFile}`,
+                    `../../data/models/${selectedFile}`,
+                    `data/models/${selectedFile}`
+                ];
+                
+                let response = null;
+                let successPath = null;
+                
+                for (const path of possiblePaths) {
+                    try {
+                        console.log(`Attempting to load from path: ${path}`);
+                        const pathResponse = await fetch(path);
+                        console.log(`Response for ${path}:`, pathResponse.status, pathResponse.ok);
+                        
+                        if (pathResponse.ok) {
+                            response = pathResponse;
+                            successPath = path;
+                            break; // Exit loop once successful
+                        }
+                    } catch (pathError) {
+                        console.log(`Path ${path} failed:`, pathError.message);
+                    }
+                }
+                
+                if (!response || !response.ok) {
+                    throw new Error(`Failed to load ${selectedFile} from any path`);
                 }
                 
                 const csvText = await response.text();
-                console.log(`CSV content for ${selectedFile}:`, csvText.substring(0, 200) + '...');
-                portfolioData = parsePortfolioCSVWithLogging(csvText);
+                console.log(`CSV content for ${selectedFile} loaded from ${successPath}:`, csvText.substring(0, 200) + '...');
+                
+                // Add debug logging for parsing
+                try {
+                    portfolioData = parsePortfolioCSVWithLogging(csvText);
+                    console.log(`Successfully parsed ${portfolioData.length} positions from ${selectedFile}`);
+                } catch (parseError) {
+                    console.error('Error parsing CSV:', parseError);
+                    throw new Error(`Could not parse CSV data: ${parseError.message}`);
+                }
                 
                 // Clear file input and update display
                 portfolioFileInput.value = '';
@@ -1107,6 +1346,610 @@
                 console.error('Navigation initialization error:', error);
             }
         });
+
+        // =================================
+        // WASH SALE DETECTION SYSTEM
+        // Based on Framework: A Framework for an Automated Wash Sale Avoidance and Portfolio Rebalancing System
+        // =================================
+
+        // Enhanced ETF Database using ETF-Wash-Sale-Database_08-01-2025.csv
+        let etfDatabase = {};
+        
+        // Function to load ETF database from CSV file
+        async function loadETFDatabase() {
+            try {
+                const response = await fetch('/data/etf-database/ETF-Wash-Sale-Database_08-01-2025.csv');
+                const csvData = await response.text();
+                const rows = csvData.split('\n');
+                const headers = rows[0].split(',');
+                
+                // Skip header row and process each ETF
+                for (let i = 1; i < rows.length; i++) {
+                    if (!rows[i].trim()) continue; // Skip empty rows
+                    
+                    const values = rows[i].split(',');
+                    const symbol = values[0].trim();
+                    
+                    if (symbol) {
+                        etfDatabase[symbol] = {
+                            name: values[1].trim(),
+                            issuer: values[2].trim(),
+                            assetClass: values[3].trim(),
+                            category: values[4].trim(),
+                            managementStyle: values[5].trim(),
+                            index: values[6].trim() || 'N/A', // Use index/benchmark as primary similarity factor
+                            expenseRatio: parseFloat(values[7]) || 0,
+                            aum: values[8].trim(), // Assets Under Management
+                            avgDailyVolume: parseInt(values[9]) || 0
+                        };
+                    }
+                }
+                
+                console.log(`ETF Database loaded: ${Object.keys(etfDatabase).length} ETFs`);
+                return true;
+            } catch (error) {
+                console.error('Error loading ETF database:', error);
+                // Fallback to static database if loading fails
+                initializeStaticETFDatabase();
+                return false;
+            }
+        }
+        
+        // Fallback static database with key ETFs (will be used if CSV loading fails)
+        function initializeStaticETFDatabase() {
+            console.warn('Using fallback static ETF database');
+            
+            etfDatabase = {
+                // S&P 500 Family - High Risk Tier 1
+                'IVV': { name: 'iShares Core S&P 500 ETF', index: 'S&P 500', assetClass: 'US Equity', category: 'Large Cap Blend', managementStyle: 'Passive', issuer: 'iShares' },
+                'VOO': { name: 'Vanguard S&P 500 ETF', index: 'S&P 500', assetClass: 'US Equity', category: 'Large Cap Blend', managementStyle: 'Passive', issuer: 'Vanguard' },
+                'SPY': { name: 'SPDR S&P 500 ETF Trust', index: 'S&P 500', assetClass: 'US Equity', category: 'Large Cap Blend', managementStyle: 'Passive', issuer: 'State Street' },
+                
+                // Total Market - Tier 3
+                'VTI': { name: 'Vanguard Total Stock Market ETF', index: 'CRSP US Total Market', assetClass: 'US Equity', category: 'Large Cap Blend', managementStyle: 'Passive', issuer: 'Vanguard' },
+                'ITOT': { name: 'iShares Core S&P Total US Stock Market ETF', index: 'S&P Total Market', assetClass: 'US Equity', category: 'Large Cap Blend', managementStyle: 'Passive', issuer: 'iShares' },
+                
+                // International
+                'VEA': { name: 'Vanguard FTSE Developed Markets ETF', index: 'FTSE Developed All Cap ex US', assetClass: 'International Equity', category: 'Foreign Large Blend', managementStyle: 'Passive', issuer: 'Vanguard' },
+                'IEFA': { name: 'iShares Core MSCI EAFE ETF', index: 'MSCI EAFE IMI', assetClass: 'International Equity', category: 'Foreign Large Blend', managementStyle: 'Passive', issuer: 'iShares' },
+                
+                // Fixed Income
+                'AGG': { name: 'iShares Core U.S. Aggregate Bond ETF', index: 'Bloomberg US Aggregate Bond Index', assetClass: 'Fixed Income', category: 'Intermediate Core Bond', managementStyle: 'Passive', issuer: 'iShares' },
+                'BND': { name: 'Vanguard Total Bond Market ETF', index: 'Bloomberg US Aggregate Float Adjusted Index', assetClass: 'Fixed Income', category: 'Intermediate Core Bond', managementStyle: 'Passive', issuer: 'Vanguard' }
+            };
+        }
+        
+        // Initialize database loading
+        loadETFDatabase().then(success => {
+            if (!success) {
+                console.warn('Using fallback static ETF database due to loading failure');
+            }
+        });
+
+        // Enhanced Multi-Factor Similarity Scoring System (Based on ETF-Wash-Sale-Database document)
+        function calculateSimilarityScore(symbol1, symbol2) {
+            const etf1 = etfDatabase[symbol1];
+            const etf2 = etfDatabase[symbol2];
+            
+            if (!etf1 || !etf2) return 0; // Unknown ETFs get 0 score
+            if (symbol1 === symbol2) return 100; // Same ETF
+            
+            let score = 0;
+            let reasonsForScore = [];
+            
+            // 1. Underlying Index/Benchmark (Weight: 50%) - Most important factor per documentation
+            if (etf1.index === etf2.index && etf1.index !== 'N/A') {
+                score += 50;
+                reasonsForScore.push(`Identical underlying index: ${etf1.index}`);
+            } else if (etf1.index && etf2.index) {
+                // Check for related indexes within same families
+                if (etf1.index.includes('S&P 500') && etf2.index.includes('S&P 500')) {
+                    score += 40;
+                    reasonsForScore.push('Related S&P 500 index variants');
+                } else if (etf1.index.includes('Russell') && etf2.index.includes('Russell')) {
+                    score += 30;
+                    reasonsForScore.push('Related Russell index variants');
+                } else if (etf1.index.includes('MSCI') && etf2.index.includes('MSCI')) {
+                    score += 30;
+                    reasonsForScore.push('Related MSCI index variants');
+                } else if (etf1.index.includes('FTSE') && etf2.index.includes('FTSE')) {
+                    score += 30;
+                    reasonsForScore.push('Related FTSE index variants');
+                } else if (etf1.index.includes('Bloomberg') && etf2.index.includes('Bloomberg')) {
+                    score += 25;
+                    reasonsForScore.push('Related Bloomberg index variants');
+                }
+            }
+            
+            // 2. Asset Class & Category (Weight: 20%)
+            if (etf1.assetClass === etf2.assetClass && etf1.category === etf2.category) {
+                score += 20;
+                reasonsForScore.push(`Identical asset class and category: ${etf1.assetClass}, ${etf1.category}`);
+            } else if (etf1.assetClass === etf2.assetClass) {
+                score += 10;
+                reasonsForScore.push(`Same asset class: ${etf1.assetClass}`);
+            }
+            
+            // 3. Management Style (Weight: 15%)
+            if (etf1.managementStyle === etf2.managementStyle) {
+                score += 15;
+                reasonsForScore.push(`Same management style: ${etf1.managementStyle}`);
+            } else if (etf1.managementStyle === 'Passive' && etf2.managementStyle === 'Passive') {
+                // Passive-to-passive transitions particularly susceptible to wash sales
+                score += 15;
+                reasonsForScore.push('Both use passive management style');
+            } else if (etf1.managementStyle === 'Active' && etf2.managementStyle === 'Active') {
+                score += 10;
+                reasonsForScore.push('Both use active management style');
+            }
+            
+            // 4. Different Issuer (Weight: 10%) - Different issuers can help reduce similarity
+            if (etf1.issuer !== etf2.issuer) {
+                score -= 10;
+                reasonsForScore.push(`Different issuers: ${etf1.issuer} vs ${etf2.issuer}`);
+            } else {
+                score += 5;
+                reasonsForScore.push(`Same issuer: ${etf1.issuer}`);
+            }
+            
+            // 5. AUM and Expense Ratio bonuses/penalties (Weight: 5%)
+            // Similar expense ratios may indicate similar investment approaches
+            if (etf1.expenseRatio && etf2.expenseRatio) {
+                const expenseDiff = Math.abs(etf1.expenseRatio - etf2.expenseRatio);
+                if (expenseDiff < 0.1) {
+                    score += 5;
+                    reasonsForScore.push('Similar expense ratios');
+                }
+            }
+            
+            // Final score capped at 100
+            const finalScore = Math.max(0, Math.min(100, score));
+            
+            // Log detailed scoring information for significant similarities (debug only)
+            if (finalScore > 50) {
+                console.debug(`Similarity analysis for ${symbol1} vs ${symbol2}: Score ${finalScore}%`, reasonsForScore);
+            }
+            
+            return finalScore;
+        }
+
+        // Enhanced Risk Tier Classification with detailed descriptions
+        function getSimilarityRiskTier(score) {
+            if (score >= 90) {
+                return { 
+                    tier: 1, 
+                    level: 'High Risk', 
+                    color: 'red', 
+                    description: 'Presumed Identical - Likely Wash Sale',
+                    explanation: 'These ETFs are substantially identical per IRS Section 1091 criteria. If sold at a loss and repurchased within 61 days (30 days before or after the sale), the loss will likely be disallowed.'
+                };
+            } 
+            
+            if (score >= 65) {
+                return { 
+                    tier: 2, 
+                    level: 'Moderate Risk', 
+                    color: 'orange', 
+                    description: 'User Warning - Potential Risk',
+                    explanation: 'These ETFs share significant similarities that could potentially trigger IRS scrutiny. Consider alternative investments if the original position was sold at a loss within the past 30 days.'
+                };
+            }
+            
+            if (score >= 30) {
+                return { 
+                    tier: 3, 
+                    level: 'Low Risk', 
+                    color: 'yellow', 
+                    description: 'Generally Acceptable',
+                    explanation: 'These ETFs have some similarities but would generally be considered different enough to avoid wash sale treatment. However, consider your specific tax situation before proceeding.'
+                };
+            }
+            
+            return { 
+                tier: 4, 
+                level: 'Not Substantially Identical', 
+                color: 'green', 
+                description: 'Safe Alternative',
+                explanation: 'These ETFs are sufficiently different in their underlying securities, investment objectives, or other key characteristics to avoid wash sale concerns.'
+            };
+        }
+
+        // Alternative Recommendation Engine (Section 4.2 of framework)
+        // Enhanced Alternative Recommendation Engine
+        function findWashSaleAlternatives(originalSymbol, targetAssetClass, targetStyle) {
+            const alternatives = [];
+            const originalETF = etfDatabase[originalSymbol];
+            
+            if (!originalETF) {
+                console.warn(`Cannot find alternatives for unknown ETF: ${originalSymbol}`);
+                return alternatives;
+            }
+            
+            // Use provided target class/category or fall back to original ETF's values
+            const searchAssetClass = targetAssetClass || originalETF.assetClass;
+            const searchCategory = targetStyle || (originalETF.category || originalETF.style);
+            
+            console.log(`Finding alternatives for ${originalSymbol} (${originalETF.name}) - Asset Class: ${searchAssetClass}, Category: ${searchCategory}`);
+            
+            // First pass - find all potential alternatives in the same asset class/category
+            const potentialAlternatives = [];
+            
+            for (const [symbol, etf] of Object.entries(etfDatabase)) {
+                if (symbol === originalSymbol) continue;
+                
+                // Prioritize ETFs in the same asset class and category first
+                if (etf.assetClass === searchAssetClass) {
+                    const similarityScore = calculateSimilarityScore(originalSymbol, symbol);
+                    const riskTier = getSimilarityRiskTier(similarityScore);
+                    
+                    // Only consider safe alternatives (tier 3 or 4)
+                    if (riskTier.tier >= 3) {
+                        potentialAlternatives.push({
+                            symbol,
+                            name: etf.name,
+                            issuer: etf.issuer,
+                            assetClass: etf.assetClass,
+                            style: etf.style || etf.category,
+                            index: etf.index,
+                            expenseRatio: etf.expenseRatio,
+                            aum: etf.aum,
+                            avgDailyVolume: etf.avgDailyVolume,
+                            similarityScore,
+                            riskTier
+                        });
+                    }
+                }
+            }
+            
+            // Second pass - sort and filter the alternatives
+            
+            // Filter for category match if we have enough alternatives
+            let filteredAlternatives = potentialAlternatives;
+            const categoryMatches = potentialAlternatives.filter(alt => 
+                (alt.style === searchCategory) || (alt.category === searchCategory)
+            );
+            
+            if (categoryMatches.length >= 3) {
+                filteredAlternatives = categoryMatches;
+            }
+            
+            // Sort by multiple criteria
+            filteredAlternatives.sort((a, b) => {
+                // First by risk tier (safer alternatives first)
+                if (b.riskTier.tier !== a.riskTier.tier) {
+                    return b.riskTier.tier - a.riskTier.tier;
+                }
+                
+                // Then by expense ratio (lower is better) if available
+                if (a.expenseRatio && b.expenseRatio && a.expenseRatio !== b.expenseRatio) {
+                    return a.expenseRatio - b.expenseRatio;
+                }
+                
+                // Then by trading volume (higher is better) if available
+                if (a.avgDailyVolume && b.avgDailyVolume) {
+                    return b.avgDailyVolume - a.avgDailyVolume;
+                }
+                
+                // Lastly by name
+                return a.name.localeCompare(b.name);
+            });
+            
+            // Return top alternatives (limit to 5)
+            return filteredAlternatives.slice(0, 5);
+        }
+
+        // Main Wash Sale Analysis Function
+        function analyzeWashSaleViolations() {
+            console.log('Starting wash sale analysis with enhanced ETF database...');
+            
+            // Get sell orders from localStorage (from previous page)
+            const sellOrders = JSON.parse(localStorage.getItem('sellOrders') || '[]');
+            console.log('Retrieved sell orders from localStorage:', sellOrders);
+            
+            // Get proposed buy orders from current page (correct table ID)
+            const buyOrderRows = document.querySelectorAll('#buy-orders-table tr');
+            const buyOrders = [];
+            
+            buyOrderRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8) { // Buy order table has 8 columns
+                    // Columns: Action, Symbol, Name, Price, Target %, Shares, Investment Amount, Actual %
+                    buyOrders.push({
+                        symbol: cells[1].textContent.trim(), // Symbol is in 2nd column
+                        name: cells[2].textContent.trim(),   // Name is in 3rd column
+                        shares: parseInt(cells[5].textContent.replace(/,/g, '')), // Shares in 6th column
+                        price: parseFloat(cells[3].textContent.replace(/[$,]/g, '')), // Price in 4th column
+                        marketValue: parseFloat(cells[6].textContent.replace(/[$,]/g, '')) // Investment amount in 7th column
+                    });
+                }
+            });
+            
+            console.log('Sell orders:', sellOrders);
+            console.log('Buy orders:', buyOrders);
+            
+            if (sellOrders.length === 0) {
+                console.warn('No sell orders found in localStorage. If you expect sell orders, make sure you generate them on the Tax Harvesting page first.');
+            }
+            
+            if (buyOrders.length === 0) {
+                console.warn('No buy orders found in the table. Please add buy orders before running wash sale analysis.');
+            }
+            
+            const violations = [];
+            
+            // Step 3 of framework: Wash Sale Violation Detection Loop
+            // Per IRS Section 1091, check for substantially identical securities within 61-day window
+            sellOrders.forEach(sellOrder => {
+                if (sellOrder.actualGain && sellOrder.actualGain < 0) { // Only check loss sales
+                    buyOrders.forEach(buyOrder => {
+                        const similarityScore = calculateSimilarityScore(sellOrder.symbol, buyOrder.symbol);
+                        const riskTier = getSimilarityRiskTier(similarityScore);
+                        
+                        if (riskTier.tier <= 2) { // Tier 1 or 2 = violation risk
+                            const soldETF = etfDatabase[sellOrder.symbol];
+                            const purchasedETF = etfDatabase[buyOrder.symbol];
+                            
+                            // Get recommended alternatives
+                            const alternatives = findWashSaleAlternatives(
+                                buyOrder.symbol, 
+                                soldETF?.assetClass || purchasedETF?.assetClass, 
+                                soldETF?.category || soldETF?.style || purchasedETF?.category
+                            );
+                            
+                            // Create comprehensive violation record
+                            violations.push({
+                                soldSymbol: sellOrder.symbol,
+                                soldName: sellOrder.name,
+                                soldLoss: sellOrder.actualGain,
+                                soldShares: sellOrder.shares,
+                                soldDate: sellOrder.date || 'N/A',
+                                purchasedSymbol: buyOrder.symbol,
+                                purchasedName: buyOrder.name,
+                                purchasedAmount: buyOrder.marketValue,
+                                purchasedShares: buyOrder.shares,
+                                similarityScore: similarityScore,
+                                riskTier: riskTier,
+                                alternatives: alternatives,
+                                // Include key similarity factors
+                                similarityFactors: {
+                                    sameIndex: soldETF && purchasedETF && soldETF.index === purchasedETF.index,
+                                    sameAssetClass: soldETF && purchasedETF && soldETF.assetClass === purchasedETF.assetClass,
+                                    sameIssuer: soldETF && purchasedETF && soldETF.issuer === purchasedETF.issuer,
+                                    sameManagementStyle: soldETF && purchasedETF && 
+                                                      soldETF.managementStyle === purchasedETF.managementStyle
+                                },
+                                description: `Planned purchase of ${buyOrder.shares} shares of ${buyOrder.symbol} may be substantially identical to ${sellOrder.shares} shares of ${sellOrder.symbol} sold at a loss of $${Math.abs(sellOrder.actualGain).toFixed(2)}`
+                            });
+                        }
+                    });
+                }
+            });
+            
+            displayWashSaleResults(violations);
+            
+            return violations;
+        }
+
+        // Display Results Function
+        function displayWashSaleResults(violations) {
+            const resultsDiv = document.getElementById('washSaleResults');
+            
+            if (violations.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <h3 class="text-lg font-semibold text-green-800">✅ No Wash Sale Violations Detected</h3>
+                        </div>
+                        <p class="text-green-700 mt-2">Your proposed buy orders do not create any substantial similarity conflicts with your sell orders. You can proceed with confidence.</p>
+                    </div>
+                `;
+            } else {
+                let violationsHTML = `
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+                        <div class="flex items-center mb-3">
+                            <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                            <h3 class="text-lg font-semibold text-red-800">⚠️ ${violations.length} Potential Wash Sale Violation${violations.length > 1 ? 's' : ''} Detected</h3>
+                        </div>
+                        <p class="text-red-700 mb-4">The following buy orders may trigger IRS Section 1091 wash sale violations:</p>
+                `;
+                
+                violations.forEach((violation, index) => {
+                    const riskColor = violation.riskTier.tier <= 1 ? 'red' : 'yellow';
+                    
+                    // Format similarity factors
+                    let factorsHTML = '';
+                    if (violation.similarityFactors) {
+                        factorsHTML = `
+                            <div class="mt-3 p-2 bg-${riskColor}-100 rounded-lg">
+                                <h5 class="font-medium text-${riskColor}-800 mb-1">Key Similarity Factors:</h5>
+                                <ul class="list-disc ml-5 text-xs text-${riskColor}-700 space-y-1">
+                                    ${violation.similarityFactors.sameIndex ? 
+                                        `<li class="font-medium">Same underlying index (strongest factor)</li>` : ''}
+                                    ${violation.similarityFactors.sameAssetClass ? 
+                                        `<li>Same asset class (${violation.soldSymbol} and ${violation.purchasedSymbol})</li>` : ''}
+                                    ${violation.similarityFactors.sameIssuer ? 
+                                        `<li>Same issuer/provider</li>` : ''}
+                                    ${violation.similarityFactors.sameManagementStyle ? 
+                                        `<li>Same management style (active/passive)</li>` : ''}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    violationsHTML += `
+                        <div class="mb-6 p-4 bg-${riskColor}-50 border border-${riskColor}-200 rounded-lg">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-${riskColor}-800">Violation #${index + 1}: ${violation.soldSymbol} → ${violation.purchasedSymbol}</h4>
+                                    <p class="text-sm text-${riskColor}-700">${violation.description}</p>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-${riskColor}-100 text-${riskColor}-800">
+                                    Tier ${violation.riskTier.tier} - ${violation.riskTier.level || violation.riskTier.description}
+                                </span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                                <div>
+                                    <strong>Sold (Loss):</strong> ${violation.soldSymbol}${violation.soldName ? ` (${violation.soldName})` : ''}<br>
+                                    <strong>Loss Amount:</strong> $${Math.abs(violation.soldLoss).toLocaleString()}<br>
+                                    ${violation.soldShares ? `<strong>Shares Sold:</strong> ${violation.soldShares.toLocaleString()}<br>` : ''}
+                                    ${violation.soldDate ? `<strong>Date Sold:</strong> ${violation.soldDate}` : ''}
+                                </div>
+                                <div>
+                                    <strong>Buying:</strong> ${violation.purchasedSymbol}${violation.purchasedName ? ` (${violation.purchasedName})` : ''}<br>
+                                    <strong>Buy Amount:</strong> $${violation.purchasedAmount.toLocaleString()}<br>
+                                    ${violation.purchasedShares ? `<strong>Shares to Buy:</strong> ${violation.purchasedShares.toLocaleString()}` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-2 bg-${riskColor}-100 rounded-lg mb-3">
+                                <div>
+                                    <strong class="text-${riskColor}-800">Similarity Score:</strong> 
+                                    <span class="text-lg font-bold">${(violation.similarityScore * 100).toFixed(0)}%</span>
+                                </div>
+                                <div class="text-xs text-${riskColor}-700">
+                                    ${violation.riskTier.description}
+                                </div>
+                            </div>
+                            
+                            ${factorsHTML}
+                            
+                            ${violation.alternatives && violation.alternatives.length > 0 ? `
+                                <div class="mt-4">
+                                    <h5 class="font-medium text-${riskColor}-800 mb-2">📋 Recommended Safe Alternatives:</h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        ${violation.alternatives.slice(0, 4).map(alt => {
+                                            // Handle both object and string formats of alternatives
+                                            if (typeof alt === 'object' && alt.symbol) {
+                                                return `
+                                                    <div class="p-2 bg-white border border-gray-200 rounded text-xs">
+                                                        <strong>${alt.symbol}</strong> - ${alt.name ? (alt.name.length > 30 ? alt.name.substring(0, 30) + '...' : alt.name) : ''}<br>
+                                                        <span class="text-gray-600">${alt.assetClass || ''} ${alt.style || alt.managementStyle || ''}</span><br>
+                                                        ${alt.description ? `<span class="text-gray-500">${alt.description}</span><br>` : ''}
+                                                        <span class="text-green-600 font-medium">✓ Safe alternative</span>
+                                                    </div>
+                                                `;
+                                            } else {
+                                                return `
+                                                    <div class="p-2 bg-white border border-gray-200 rounded text-xs">
+                                                        <strong>${alt}</strong><br>
+                                                        <span class="text-green-600 font-medium">✓ Safe alternative</span>
+                                                    </div>
+                                                `;
+                                            }
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="mt-4 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700">
+                                <p><strong>IRS Wash Sale Impact:</strong> If you proceed with this purchase, your loss of $${Math.abs(violation.soldLoss).toLocaleString()} may be disallowed and added to the cost basis of the new security.</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Add educational content about wash sales
+                violationsHTML += `
+                    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 class="text-blue-800 font-medium mb-2">About Wash Sale Risk Tiers:</h4>
+                        <ul class="list-disc ml-5 text-sm text-blue-700 space-y-2">
+                            <li><strong>Tier 1 (High Risk):</strong> Highly likely to be considered substantially identical by the IRS. ETFs sharing the same underlying index or with over 90% portfolio overlap.</li>
+                            <li><strong>Tier 2 (Medium Risk):</strong> May be considered substantially identical, recommended to avoid. ETFs tracking similar indices with significant portfolio overlap.</li>
+                            <li><strong>Tier 3 (Low Risk):</strong> Likely different enough to avoid wash sale rule. May share an asset class but track different indices.</li>
+                            <li><strong>Tier 4 (Very Low Risk):</strong> Different enough to avoid wash sale rule. Typically different asset classes or investment approaches.</li>
+                        </ul>
+                        
+                        <h4 class="text-blue-800 font-medium mt-4 mb-2">Similarity Scoring Factors:</h4>
+                        <ul class="list-disc ml-5 text-sm text-blue-700 space-y-1">
+                            <li><strong>Underlying Index (50%):</strong> The most important factor. ETFs tracking the same index are likely substantially identical.</li>
+                            <li><strong>Asset Class (20%):</strong> General category like US Equity, Fixed Income, etc.</li>
+                            <li><strong>Management Style (15%):</strong> Active vs. Passive management approaches</li>
+                            <li><strong>Issuer (10%):</strong> The company offering the ETF (Vanguard, iShares, etc.)</li>
+                            <li><strong>Other Factors (5%):</strong> Including expense ratio, assets under management, trading volume, etc.</li>
+                        </ul>
+                        
+                        <p class="mt-4 text-sm text-blue-800 font-medium">This analysis is for informational purposes only and is not tax advice. Consult a tax professional for specific advice.</p>
+                    </div>
+                </div>
+                `;
+                resultsDiv.innerHTML = violationsHTML;
+            }
+            
+            resultsDiv.classList.remove('hidden');
+        }
+
+        // Event Listener for Wash Sale Analysis Button
+        document.addEventListener('DOMContentLoaded', function() {
+            const analyzeButton = document.getElementById('runWashSaleAnalysis');
+            if (analyzeButton) {
+                analyzeButton.addEventListener('click', function() {
+                    console.log('Wash sale analysis button clicked');
+                    analyzeWashSaleViolations();
+                });
+            }
+        });
+
+        // Test function to verify wash sale detection (for development/testing)
+        function testWashSaleDetection() {
+            console.log('Testing wash sale detection system...');
+            
+            // Test similarity scoring
+            console.log('VOO vs SPY similarity:', calculateSimilarityScore('VOO', 'SPY')); // Should be high (same index)
+            console.log('VOO vs VTI similarity:', calculateSimilarityScore('VOO', 'VTI')); // Should be moderate
+            console.log('VOO vs VEA similarity:', calculateSimilarityScore('VOO', 'VEA')); // Should be low
+            console.log('VOO vs BOND similarity:', calculateSimilarityScore('VOO', 'BOND')); // Should be very low
+            
+            // Test risk tier classification
+            console.log('Risk tier for score 95:', getSimilarityRiskTier(95));
+            console.log('Risk tier for score 70:', getSimilarityRiskTier(70));
+            console.log('Risk tier for score 40:', getSimilarityRiskTier(40));
+            console.log('Risk tier for score 10:', getSimilarityRiskTier(10));
+            
+            // Test with sample data
+            const testSellOrders = [
+                { symbol: 'SPY', actualGain: -5000, shares: 100, price: 450, marketValue: 45000 },
+                { symbol: 'BOND', actualGain: -1000, shares: 50, price: 80, marketValue: 4000 }
+            ];
+            
+            const testBuyOrders = [
+                { symbol: 'VOO', shares: 100, price: 450, marketValue: 45000 },
+                { symbol: 'VTI', shares: 50, price: 250, marketValue: 12500 },
+                { symbol: 'BINC', shares: 100, price: 50, marketValue: 5000 }
+            ];
+            
+            localStorage.setItem('sellOrders', JSON.stringify(testSellOrders));
+            
+            // Simulate buy orders table
+            const buyOrdersTable = document.getElementById('buy-orders-table');
+            if (buyOrdersTable) {
+                buyOrdersTable.innerHTML = testBuyOrders.map(order => `
+                    <tr>
+                        <td>BUY</td>
+                        <td>${order.symbol}</td>
+                        <td>Test ETF</td>
+                        <td>$${order.price}</td>
+                        <td>10%</td>
+                        <td>${order.shares}</td>
+                        <td>$${order.marketValue}</td>
+                        <td>10%</td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Run the analysis
+            analyzeWashSaleViolations();
+            
+            console.log('Test completed. Check wash sale results section.');
+        }
+
+        // Make test function available globally for console testing
+        window.testWashSaleDetection = testWashSaleDetection;
     </script>
     </div> <!-- End content-area -->
 </body>

@@ -371,12 +371,13 @@
 
         // --- Functions ---
         async function scanAllModels() {
-            // Complete list of all known model portfolio files
+            // Complete list of all known model portfolio files - must match EXACT filenames in directory
             const modelFiles = [
                 'AWM Model - All Equity.csv',
                 'AWM Model - Fixed_D.csv',
                 'AWM Model - Fixed_T.csv',
-                'AWM Model_Tactical Equity.csv'
+                'AWM Model_Tactical Equity.csv',
+                'AWM_Model___All_Equity.csv'
             ];
 
             // Add any custom models specified by the user
@@ -396,48 +397,61 @@
             let foundModels = [];
             let notFoundModels = [];
 
-            for (const filename of modelFiles) {
-                try {
-                    const response = await fetch(`../data/models/${filename}`);
-                    if (response.ok) {
-                        const csvText = await response.text();
-                        const portfolio = parseCSVPortfolio(csvText, filename);
-                        if (portfolio) {
-                            modelPortfolios[filename] = portfolio;
-                            foundModels.push(filename);
+            try {
+                for (const filename of modelFiles) {
+                    try {
+                        console.log(`Attempting to load model: ../data/models/${filename}`);
+                        const response = await fetch(`../data/models/${filename}`);
+                        
+                        if (response.ok) {
+                            const csvText = await response.text();
+                            const portfolio = parseCSVPortfolio(csvText, filename);
+                            if (portfolio) {
+                                modelPortfolios[filename] = portfolio;
+                                foundModels.push(filename);
+                                console.log(`Successfully loaded model: ${filename}`);
 
-                            // Extract symbols and prices
-                            portfolio.holdings.forEach(holding => {
-                                const symbol = holding.symbol;
-                                if (symbol && symbol !== '') {
-                                    if (symbolPrices.has(symbol)) {
-                                        // Update existing entry
-                                        const existing = symbolPrices.get(symbol);
-                                        existing.models.add(filename);
-                                        // Use the most recent price if different
-                                        if (holding.price > 0) {
-                                            existing.price = holding.price;
+                                // Extract symbols and prices
+                                portfolio.holdings.forEach(holding => {
+                                    const symbol = holding.symbol;
+                                    if (symbol && symbol !== '') {
+                                        if (symbolPrices.has(symbol)) {
+                                            // Update existing entry
+                                            const existing = symbolPrices.get(symbol);
+                                            existing.models.add(filename);
+                                            // Use the most recent price if different
+                                            if (holding.price > 0) {
+                                                existing.price = holding.price;
+                                            }
+                                        } else {
+                                            // Create new entry
+                                            symbolPrices.set(symbol, {
+                                                symbol: symbol,
+                                                name: holding.name || '',
+                                                price: holding.price || 0,
+                                                models: new Set([filename]),
+                                                lastUpdated: new Date().toISOString()
+                                            });
                                         }
-                                    } else {
-                                        // Create new entry
-                                        symbolPrices.set(symbol, {
-                                            symbol: symbol,
-                                            name: holding.name || '',
-                                            price: holding.price || 0,
-                                            models: new Set([filename]),
-                                            lastUpdated: new Date().toISOString()
-                                        });
                                     }
-                                }
-                            });
+                                });
+                            } else {
+                                console.warn(`Failed to parse model portfolio: ${filename}`);
+                                notFoundModels.push(`${filename} (parsing error)`);
+                            }
+                        } else {
+                            console.warn(`Failed to load ${filename}: ${response.status} ${response.statusText}`);
+                            notFoundModels.push(`${filename} (${response.status} ${response.statusText})`);
                         }
-                    } else {
-                        notFoundModels.push(filename);
+                    } catch (error) {
+                        console.error(`Error loading model portfolio: ${filename}`, error);
+                        notFoundModels.push(`${filename} (${error.message})`);
                     }
-                } catch (error) {
-                    console.warn(`Could not load model portfolio: ${filename}`, error);
-                    notFoundModels.push(filename);
                 }
+            } catch (outerError) {
+                console.error("Critical error in scan operation:", outerError);
+                showNotification(`Error scanning models: ${outerError.message}`, 'error');
+                return;
             }
 
             // Store original prices for comparison
@@ -448,54 +462,102 @@
             // Provide detailed feedback
             let message = `Discovered ${symbolPrices.size} unique symbols from ${foundModels.length} models`;
             if (notFoundModels.length > 0) {
-                message += `. Could not find: ${notFoundModels.join(', ')}`;
+                message += `. Could not find/parse: ${notFoundModels.join(', ')}`;
+                console.error("Models not found or with errors:", notFoundModels);
             }
-            showNotification(message, foundModels.length > 0 ? 'success' : 'warning');
+            
+            if (foundModels.length === 0) {
+                message = "⚠️ No models could be loaded! Please check console for details.";
+                console.error("No models were loaded. Check that file paths are correct and files exist in /data/models/ directory.");
+            }
+            
+            showNotification(message, foundModels.length > 0 ? 'success' : 'error');
         }
 
         function parseCSVPortfolio(csvText, filename) {
-            const lines = csvText.trim().split('\n');
-            if (lines.length < 2) return null;
-
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-            const holdings = [];
-
-            // Find column indices
-            const symbolIndex = headers.findIndex(h => h.includes('symbol') || h.includes('ticker'));
-            const nameIndex = headers.findIndex(h => h.includes('name') || h.includes('description'));
-            const priceIndex = headers.findIndex(h => h.includes('price') || h.includes('value'));
-            const weightIndex = headers.findIndex(h => h.includes('weight') || h.includes('allocation') || h.includes('%'));
-
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-
-                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/"/g, ''));
-                if (values.length < 2) continue;
-
-                const symbol = symbolIndex >= 0 ? values[symbolIndex] : values[1];
-                const name = nameIndex >= 0 ? values[nameIndex] : (values[2] || values[1]);
-                const priceStr = priceIndex >= 0 ? values[priceIndex] : '0';
-                const weightStr = weightIndex >= 0 ? values[weightIndex] : '0';
-
-                const cleanPrice = priceStr.replace(/[$\s,]/g, '');
-                const price = parseFloat(cleanPrice) || 0;
-                const weight = parseFloat(weightStr.replace(/[%\s,]/g, '')) || 0;
-
-                if (symbol && symbol !== '' && symbol !== 'Symbol') {
-                    holdings.push({
-                        symbol: symbol,
-                        name: name,
-                        price: price,
-                        weight: weight
-                    });
+            try {
+                // Remove BOM (Byte Order Mark) if present
+                csvText = csvText.replace(/^\uFEFF/, '');
+                
+                const lines = csvText.trim().split('\n');
+                if (lines.length < 2) {
+                    console.error(`CSV file ${filename} has too few lines: ${lines.length}`);
+                    return null;
                 }
-            }
 
-            return {
-                name: filename.replace('.csv', '').replace(/_/g, ' '),
-                holdings: holdings
-            };
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+                console.log(`${filename} headers:`, headers);
+                
+                const holdings = [];
+
+                // Find column indices with more flexible matching
+                const symbolIndex = headers.findIndex(h => 
+                    h.includes('symbol') || h.includes('ticker')
+                );
+                const nameIndex = headers.findIndex(h => 
+                    h.includes('name') || h.includes('description') || h.includes('security')
+                );
+                const priceIndex = headers.findIndex(h => 
+                    h.includes('price') || h.includes('value') || h.includes('cost')
+                );
+                const weightIndex = headers.findIndex(h => 
+                    h.includes('weight') || h.includes('allocation') || h.includes('%') || 
+                    h.includes('percent') || h.includes('target')
+                );
+
+                console.log(`${filename} column indices:`, { symbolIndex, nameIndex, priceIndex, weightIndex });
+
+                if (symbolIndex === -1) {
+                    console.error(`${filename}: No symbol/ticker column found in headers: ${headers.join(', ')}`);
+                }
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    // Split CSV line properly handling quoted values
+                    const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/"/g, ''));
+                    if (values.length < 2) continue;
+
+                    // Clean and parse values
+                    const symbol = symbolIndex >= 0 ? values[symbolIndex] : values[0];
+                    const name = nameIndex >= 0 ? values[nameIndex] : (values[1] || symbol);
+                    const priceStr = priceIndex >= 0 ? values[priceIndex] : '0';
+                    const weightStr = weightIndex >= 0 ? values[weightIndex] : '0';
+
+                    // Clean price string (remove $, spaces, etc.)
+                    const cleanPrice = priceStr.replace(/[$\s,]/g, '');
+                    const price = parseFloat(cleanPrice) || 0;
+                    
+                    // Clean weight string (remove %, spaces, etc.)
+                    const cleanWeight = weightStr.replace(/[%\s,]/g, '');
+                    const weight = parseFloat(cleanWeight) || 0;
+
+                    if (symbol && symbol !== '' && symbol !== 'Symbol') {
+                        holdings.push({
+                            symbol: symbol,
+                            name: name || '',
+                            price: price,
+                            weight: weight
+                        });
+                    }
+                }
+
+                console.log(`${filename}: Successfully parsed ${holdings.length} holdings`);
+                
+                if (holdings.length === 0) {
+                    console.error(`${filename}: No valid holdings found after parsing`);
+                    return null;
+                }
+
+                return {
+                    name: filename.replace('.csv', '').replace(/_/g, ' '),
+                    holdings: holdings
+                };
+            } catch (error) {
+                console.error(`Error parsing CSV file ${filename}:`, error);
+                return null;
+            }
         }
 
         function renderPriceTable() {

@@ -7,6 +7,14 @@
     <title>Advanced Tax Harvesting Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Load the module loader first -->
+    <script>
+        // Debug base URL to ensure scripts load correctly
+        console.log('Current page URL:', window.location.href);
+        console.log('Current page path:', window.location.pathname);
+        console.log('Base directory:', window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1));
+    </script>
+    <script src="./js/module-loader.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -333,6 +341,36 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Wash Sale Settings -->
+                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
+                        <svg class="h-5 w-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Wash Sale Compliance Settings
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="enableWashSaleCheck" checked
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-700">Enable automatic wash sale detection</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="conservativeMode" checked
+                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2 text-sm text-gray-700">Use conservative similarity scoring (recommended)</span>
+                            </label>
+                        </div>
+                        <div class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded border border-yellow-200">
+                            <p><strong>Important:</strong> This tool cannot detect purchases in other accounts (spouse, IRA, etc.). 
+                            You must manually verify compliance across all your accounts.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Target Section -->
@@ -366,6 +404,13 @@
                         </svg>
                         Generate Recommendations
                     </button>
+                    <button id="washSaleCheckBtn"
+                        class="w-full bg-orange-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-700 transition-all duration-200 shadow-md flex items-center justify-center hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        Check Wash Sale Risk
+                    </button>
                     <button id="exportBtn"
                         class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md flex items-center justify-center hidden">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
@@ -387,6 +432,13 @@
                                 clip-rule="evenodd" />
                         </svg>
                         Proceed to Buy Orders
+                    </button>
+                    <button id="demoWashSaleBtn"
+                        class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200 shadow-md flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Demo Wash Sale Detection
                     </button>
                 </div>
             </div>
@@ -512,19 +564,64 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- AI Trade Rationale Section -->
+            <div id="ai-rationale-section" class="mt-6 p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                        AI Trade Rationale
+                    </h3>
+                    <button id="generate-ai-rationale-btn" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center text-sm font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Generate Analysis
+                    </button>
+                </div>
+                
+                <div id="ai-rationale-loading" class="hidden">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span class="ml-3 text-gray-600">Generating AI analysis of your tax harvesting strategy...</span>
+                    </div>
+                </div>
+                
+                <div id="ai-rationale-content" class="hidden">
+                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                        <div class="prose prose-sm max-w-none">
+                            <div id="ai-rationale-text" class="text-gray-700 leading-relaxed whitespace-pre-wrap"></div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
+                            <span class="text-xs text-gray-500">Generated by AI • Review recommendations with your advisor</span>
+                            <button id="copy-rationale-btn" 
+                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                                Copy Analysis
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
     </div>
 
     <script>
+        console.log('Script loaded and executing...');
         // --- DOM Elements ---
         const costBasisFileInput = document.getElementById('costBasisFile');
         const ytdFileInput = document.getElementById('ytdFile');
         const costBasisFileNameDisplay = document.getElementById('cost-basis-file-name');
         const ytdFileNameDisplay = document.getElementById('ytd-file-name');
         const calculateBtn = document.getElementById('calculateBtn');
+        const washSaleCheckBtn = document.getElementById('washSaleCheckBtn');
         const exportBtn = document.getElementById('exportBtn');
-        const proceedToBuyBtn = document.getElementById('proceedToBuyBtn');
         const resultsContainer = document.getElementById('results-container');
         const loader = document.getElementById('loader');
         const recommendationsDiv = document.getElementById('recommendations');
@@ -539,17 +636,163 @@
         const selectAllCheckbox = document.getElementById('selectAllCheckbox');
         const selectedCountSpan = document.getElementById('selected-count');
         const totalCountSpan = document.getElementById('total-count');
+        
+        // AI Trade Rationale Elements
+        const aiRationaleSection = document.getElementById('ai-rationale-section');
+        const generateAiRationaleBtn = document.getElementById('generate-ai-rationale-btn');
+        const aiRationaleLoading = document.getElementById('ai-rationale-loading');
+        const aiRationaleContent = document.getElementById('ai-rationale-content');
+        const aiRationaleText = document.getElementById('ai-rationale-text');
+        const copyRationaleBtn = document.getElementById('copy-rationale-btn');
+        const proceedToBuyBtn = document.getElementById('proceedToBuyBtn');
+        const demoWashSaleBtn = document.getElementById('demoWashSaleBtn');
 
         let portfolioData = [];
         let lastRecommendations = [];
         let lastSummaryData = {};
+        
+        // Wash Sale Avoidance System - ETF Database and Similarity Scoring
+        const etfDatabase = {
+            // S&P 500 Family - High Risk
+            'IVV': { name: 'iShares Core S&P 500 ETF', index: 'S&P 500', assetClass: 'US Large Cap', style: 'Blend', issuer: 'iShares' },
+            'VOO': { name: 'Vanguard S&P 500 ETF', index: 'S&P 500', assetClass: 'US Large Cap', style: 'Blend', issuer: 'Vanguard' },
+            'SPY': { name: 'SPDR S&P 500 ETF Trust', index: 'S&P 500', assetClass: 'US Large Cap', style: 'Blend', issuer: 'State Street' },
+            'SPLG': { name: 'SPDR Portfolio S&P 500 ETF', index: 'S&P 500', assetClass: 'US Large Cap', style: 'Blend', issuer: 'State Street' },
+            
+            // S&P 500 Growth/Value - Moderate Risk
+            'SPYG': { name: 'SPDR Portfolio S&P 500 Growth ETF', index: 'S&P 500 Growth', assetClass: 'US Large Cap', style: 'Growth', issuer: 'State Street' },
+            'VOOG': { name: 'Vanguard S&P 500 Growth ETF', index: 'S&P 500 Growth', assetClass: 'US Large Cap', style: 'Growth', issuer: 'Vanguard' },
+            'VOOV': { name: 'Vanguard S&P 500 Value ETF', index: 'S&P 500 Value', assetClass: 'US Large Cap', style: 'Value', issuer: 'Vanguard' },
+            'SPYV': { name: 'SPDR Portfolio S&P 500 Value ETF', index: 'S&P 500 Value', assetClass: 'US Large Cap', style: 'Value', issuer: 'State Street' },
+            
+            // Russell 1000 Family - Moderate Risk with S&P 500
+            'IWB': { name: 'iShares Russell 1000 ETF', index: 'Russell 1000', assetClass: 'US Large Cap', style: 'Blend', issuer: 'iShares' },
+            'IWF': { name: 'iShares Russell 1000 Growth ETF', index: 'Russell 1000 Growth', assetClass: 'US Large Cap', style: 'Growth', issuer: 'iShares' },
+            'IWD': { name: 'iShares Russell 1000 Value ETF', index: 'Russell 1000 Value', assetClass: 'US Large Cap', style: 'Value', issuer: 'iShares' },
+            
+            // Total Market - Low to Moderate Risk
+            'VTI': { name: 'Vanguard Total Stock Market ETF', index: 'CRSP US Total Market', assetClass: 'US Total Market', style: 'Blend', issuer: 'Vanguard' },
+            'ITOT': { name: 'iShares Core S&P Total US Stock Market ETF', index: 'S&P TMI', assetClass: 'US Total Market', style: 'Blend', issuer: 'iShares' },
+            
+            // CRSP Large Cap - Low Risk with S&P 500
+            'VUG': { name: 'Vanguard Growth ETF', index: 'CRSP US Large Cap Growth', assetClass: 'US Large Cap', style: 'Growth', issuer: 'Vanguard' },
+            'VTV': { name: 'Vanguard Value ETF', index: 'CRSP US Large Cap Value', assetClass: 'US Large Cap', style: 'Value', issuer: 'Vanguard' },
+            
+            // Small Cap
+            'IJR': { name: 'iShares Core S&P Small-Cap ETF', index: 'S&P SmallCap 600', assetClass: 'US Small Cap', style: 'Blend', issuer: 'iShares' },
+            'VBR': { name: 'Vanguard Small-Cap Value ETF', index: 'CRSP US Small Cap Value', assetClass: 'US Small Cap', style: 'Value', issuer: 'Vanguard' },
+            'VB': { name: 'Vanguard Small-Cap ETF', index: 'CRSP US Small Cap', assetClass: 'US Small Cap', style: 'Blend', issuer: 'Vanguard' },
+            
+            // International
+            'VEA': { name: 'Vanguard FTSE Developed Markets ETF', index: 'FTSE Developed All Cap ex US', assetClass: 'International Developed', style: 'Blend', issuer: 'Vanguard' },
+            'EFA': { name: 'iShares MSCI EAFE ETF', index: 'MSCI EAFE', assetClass: 'International Developed', style: 'Blend', issuer: 'iShares' },
+            'VEU': { name: 'Vanguard FTSE All-World ex-US ETF', index: 'FTSE All-World ex US', assetClass: 'International Total', style: 'Blend', issuer: 'Vanguard' },
+            
+            // Factor/Strategy ETFs
+            'VIG': { name: 'Vanguard Dividend Appreciation ETF', index: 'NASDAQ US Dividend Achievers Select', assetClass: 'US Large Cap', style: 'Dividend Growth', issuer: 'Vanguard' },
+            'DVY': { name: 'iShares Select Dividend ETF', index: 'Dow Jones US Select Dividend', assetClass: 'US Large Cap', style: 'High Dividend', issuer: 'iShares' },
+            'VYM': { name: 'Vanguard High Dividend Yield ETF', index: 'FTSE High Dividend Yield', assetClass: 'US Large Cap', style: 'High Dividend', issuer: 'Vanguard' }
+        };
+
+        // Calculate similarity score between two ETFs (0-100 scale)
+        function calculateSimilarityScore(symbol1, symbol2) {
+            const etf1 = etfDatabase[symbol1];
+            const etf2 = etfDatabase[symbol2];
+            
+            if (!etf1 || !etf2) return 0; // Unknown ETFs are not similar
+            if (symbol1 === symbol2) return 100; // Same ETF
+            
+            let score = 0;
+            
+            // Index match (50% weight) - Most important factor
+            if (etf1.index === etf2.index) {
+                score += 50;
+            } else if (etf1.index.includes('S&P 500') && etf2.index.includes('S&P 500')) {
+                score += 40; // Same index family
+            } else if (etf1.index.includes('Russell 1000') && etf2.index.includes('Russell 1000')) {
+                score += 40;
+            }
+            
+            // Asset Class match (20% weight)
+            if (etf1.assetClass === etf2.assetClass) {
+                score += 20;
+            } else if (etf1.assetClass.includes('US Large Cap') && etf2.assetClass.includes('US Large Cap')) {
+                score += 15;
+            }
+            
+            // Style match (20% weight)
+            if (etf1.style === etf2.style) {
+                score += 20;
+            } else if ((etf1.style === 'Blend' || etf2.style === 'Blend') && 
+                      (etf1.style === 'Growth' || etf1.style === 'Value' || etf2.style === 'Growth' || etf2.style === 'Value')) {
+                score += 10;
+            }
+            
+            // Different issuer reduces risk (10% weight reduction)
+            if (etf1.issuer !== etf2.issuer) {
+                score -= 5;
+            }
+            
+            return Math.min(100, Math.max(0, score));
+        }
+
+        // Get risk tier based on similarity score
+        function getSimilarityRiskTier(score) {
+            if (score >= 90) return { tier: 1, level: 'High Risk', color: 'red', description: 'Presumed Substantially Identical' };
+            if (score >= 65) return { tier: 2, level: 'Moderate Risk', color: 'yellow', description: 'User Warning Required' };
+            if (score >= 30) return { tier: 3, level: 'Low Risk', color: 'green', description: 'Generally Acceptable' };
+            return { tier: 4, level: 'No Risk', color: 'green', description: 'Not Substantially Identical' };
+        }
+
+        // Find alternative ETFs to avoid wash sales
+        function findWashSaleAlternatives(originalSymbol, targetAssetClass, targetStyle) {
+            const alternatives = [];
+            const originalETF = etfDatabase[originalSymbol];
+            
+            if (!originalETF) return alternatives;
+            
+            for (const [symbol, etf] of Object.entries(etfDatabase)) {
+                if (symbol === originalSymbol) continue;
+                
+                const similarityScore = calculateSimilarityScore(originalSymbol, symbol);
+                const riskTier = getSimilarityRiskTier(similarityScore);
+                
+                // Only suggest alternatives that are low risk (tier 3 or 4)
+                if (riskTier.tier >= 3) {
+                    // Prefer same asset class and style if specified
+                    const assetClassMatch = targetAssetClass ? etf.assetClass === targetAssetClass : true;
+                    const styleMatch = targetStyle ? etf.style === targetStyle : true;
+                    
+                    if (assetClassMatch || styleMatch) {
+                        alternatives.push({
+                            symbol: symbol,
+                            name: etf.name,
+                            similarityScore: similarityScore,
+                            riskTier: riskTier,
+                            assetClass: etf.assetClass,
+                            style: etf.style,
+                            index: etf.index
+                        });
+                    }
+                }
+            }
+            
+            // Sort by similarity score (ascending) and asset class match
+            return alternatives.sort((a, b) => {
+                if (targetAssetClass && a.assetClass === targetAssetClass && b.assetClass !== targetAssetClass) return -1;
+                if (targetAssetClass && b.assetClass === targetAssetClass && a.assetClass !== targetAssetClass) return 1;
+                return a.similarityScore - b.similarityScore;
+            }).slice(0, 5); // Return top 5 alternatives
+        }
 
         // --- Event Listeners ---
         costBasisFileInput.addEventListener('change', handleCostBasisFileUpload);
         ytdFileInput.addEventListener('change', handleYtdFileUpload);
         calculateBtn.addEventListener('click', handleCalculation);
+        washSaleCheckBtn.addEventListener('click', handleWashSaleCheck);
         exportBtn.addEventListener('click', handleExport);
         proceedToBuyBtn.addEventListener('click', handleProceedToBuy);
+        demoWashSaleBtn.addEventListener('click', handleDemoWashSale);
         recommendationsTable.addEventListener('click', handleRowToggle);
         selectAllBtn.addEventListener('click', handleSelectAll);
         deselectAllBtn.addEventListener('click', handleDeselectAll);
@@ -557,6 +800,10 @@
         portfolioTable.addEventListener('change', handlePortfolioCheckboxChange);
         portfolioTable.addEventListener('click', handlePortfolioRowToggle);
         portfolioTable.addEventListener('input', handlePriceEdit);
+        
+        // AI Rationale Event Listeners
+        generateAiRationaleBtn.addEventListener('click', handleGenerateAiRationale);
+        copyRationaleBtn.addEventListener('click', handleCopyRationale);
 
         // --- Functions ---
         function handleCostBasisFileUpload(event) {
@@ -660,8 +907,53 @@
             const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
 
             try {
-                const requiredCols = ['Symbol', 'Short Term Realized Gain/(Loss)', 'Long Term Realized Gain/(Loss)'];
-                const indices = findHeaderIndices(header, requiredCols);
+                // CRITICAL FIX: More flexible column detection for YTD data
+                // Accept both standard columns and alternate column names
+                const possibleColumns = {
+                    symbol: ['Symbol', 'Security', 'Ticker'],
+                    stGain: ['Short Term Realized Gain/(Loss)', 'ST Gain/Loss', 'Short Term G/L', 'Gain/Loss'],
+                    ltGain: ['Long Term Realized Gain/(Loss)', 'LT Gain/Loss', 'Long Term G/L']
+                };
+                
+                // Find the best matching column for each type of data
+                const indices = {};
+                for (const [key, alternatives] of Object.entries(possibleColumns)) {
+                    for (const alt of alternatives) {
+                        const index = header.findIndex(h => h.toLowerCase().includes(alt.toLowerCase()));
+                        if (index !== -1) {
+                            indices[key] = index;
+                            break;
+                        }
+                    }
+                }
+                
+                // Check if we found necessary columns
+                if (indices.symbol === undefined) {
+                    throw new Error('Could not find Symbol column in YTD CSV');
+                }
+                
+                // For simple files that only have a single Gain/Loss column, also check for a Term column
+                let termIndex = -1;
+                if (indices.stGain === undefined && indices.ltGain === undefined && indices.stGain === indices.ltGain) {
+                    termIndex = header.findIndex(h => h.toLowerCase().includes('term'));
+                    if (termIndex === -1) {
+                        throw new Error('YTD CSV format not recognized. Need either separate ST/LT gain columns or a Term column');
+                    }
+                    
+                    // If we have a term column, find the gain/loss column
+                    const gainIndex = header.findIndex(h => 
+                        h.toLowerCase().includes('gain') || 
+                        h.toLowerCase().includes('loss') || 
+                        h.toLowerCase().includes('g/l'));
+                    
+                    if (gainIndex === -1) {
+                        throw new Error('Could not find Gain/Loss column in YTD CSV');
+                    }
+                    
+                    indices.gainLoss = gainIndex;
+                }
+                
+                console.log('YTD CSV column indices:', indices, 'Term index:', termIndex);
 
                 let totalST = 0;
                 let totalLT = 0;
@@ -672,14 +964,50 @@
                     if (!symbol || symbol.toLowerCase().includes('total')) {
                         return;
                     }
-                    totalST += cleanValue(values[indices.shorttermrealizedgainloss]);
-                    totalLT += cleanValue(values[indices.longtermrealizedgainloss]);
+                    
+                    // CRITICAL FIX: Handle different CSV formats
+                    if (termIndex !== -1 && indices.gainLoss !== undefined) {
+                        // Format with Term column and single Gain/Loss column
+                        const term = values[termIndex]?.trim();
+                        const gainLoss = cleanValue(values[indices.gainLoss]);
+                        
+                        if (term && term.toLowerCase().includes('short')) {
+                            totalST += gainLoss;
+                        } else if (term && (term.toLowerCase().includes('long') || term.toLowerCase().includes('lt'))) {
+                            totalLT += gainLoss;
+                        } else {
+                            console.warn(`Unknown term type: ${term} for ${symbol}, gain: ${gainLoss}`);
+                        }
+                    } else {
+                        // Format with separate ST and LT columns
+                        if (indices.stGain !== undefined) {
+                            totalST += cleanValue(values[indices.stGain]);
+                        }
+                        if (indices.ltGain !== undefined) {
+                            totalLT += cleanValue(values[indices.ltGain]);
+                        }
+                    }
                 });
-
-                document.getElementById('realizedST').value = totalST.toFixed(2);
-                document.getElementById('realizedLT').value = totalLT.toFixed(2);
+                
+                // CRITICAL FIX: Add sanity check and debug info
+                console.log(`YTD Realized Totals (before auto-fill): ST=${totalST.toFixed(2)}, LT=${totalLT.toFixed(2)}`);
+                
+                // Safety check - only update if values are numeric and reasonable
+                if (!isNaN(totalST) && Math.abs(totalST) < 10000000) {
+                    document.getElementById('realizedST').value = totalST.toFixed(2);
+                } else {
+                    console.error('Invalid ST total calculated:', totalST);
+                }
+                
+                if (!isNaN(totalLT) && Math.abs(totalLT) < 10000000) {
+                    document.getElementById('realizedLT').value = totalLT.toFixed(2);
+                } else {
+                    console.error('Invalid LT total calculated:', totalLT);
+                }
+                
                 console.log(`Auto-filled Realized Gains: ST=${totalST.toFixed(2)}, LT=${totalLT.toFixed(2)}`);
             } catch (error) {
+                console.error('Error parsing YTD CSV:', error);
                 alert(error.message);
                 ytdFileInput.value = '';
                 ytdFileNameDisplay.textContent = '';
@@ -1019,6 +1347,7 @@
         }
 
         function handleCalculation() {
+            console.log('handleCalculation called');
             if (portfolioData.length === 0) {
                 alert('Please upload your Cost Basis CSV file first.');
                 return;
@@ -1026,6 +1355,7 @@
 
             // Check if any positions are selected for selling
             const selectedPositions = portfolioData.filter(lot => lot.includedInSelling);
+            console.log('Selected positions:', selectedPositions.length);
             if (selectedPositions.length === 0) {
                 alert('Please select at least one position to include in the selling algorithm.');
                 return;
@@ -1050,67 +1380,614 @@
             const neededLT = targetLT - realizedLT;
 
             setTimeout(() => {
+                console.log('Starting calculation with neededST:', neededST, 'neededLT:', neededLT);
                 const excludedPositions = portfolioData.filter(lot => !lot.includedInSelling);
-                lastRecommendations = generateAdvancedRecommendations(neededST, neededLT);
-                displayResults(lastRecommendations, { realizedST, realizedLT, targetST, targetLT }, excludedPositions);
+                
+                // Use enhanced recommendation system with wash sale detection
+                const analysisResult = generateAdvancedRecommendationsWithWashSaleCheck(neededST, neededLT);
+                console.log('Analysis result:', analysisResult);
+                lastRecommendations = analysisResult.recommendations;
+                
+                // Display results with wash sale warnings
+                displayResultsWithWashSaleAnalysis(analysisResult, { realizedST, realizedLT, targetST, targetLT }, excludedPositions);
+                
                 loader.classList.add('hidden');
                 recommendationsDiv.classList.remove('hidden');
                 if (lastRecommendations.length > 0) {
                     exportBtn.classList.remove('hidden');
                     proceedToBuyBtn.classList.remove('hidden');
+                    washSaleCheckBtn.classList.remove('hidden');
+                    aiRationaleSection.classList.remove('hidden');
                 }
             }, 500);
         }
 
-        function generateAdvancedRecommendations(neededST, neededLT) {
-            // Only include lots that are selected for selling
-            let lots = JSON.parse(JSON.stringify(portfolioData))
-                .filter(lot => lot.quantity >= 1 && lot.includedInSelling);
-            let recommendations = [];
-
-            const findBestCombination = (target, lotsPool) => {
-                if (target === 0 || lotsPool.length === 0) return [];
-
-                const seekingGain = target > 0;
-                const sortedLots = [...lotsPool].sort((a, b) => Math.abs(a.unrealizedGain) - Math.abs(b.unrealizedGain));
-
-                let chosenLots = [];
-                let currentTotal = 0;
-
-                for (const lot of sortedLots) {
-                    const lastTotal = currentTotal;
-                    const newTotal = currentTotal + lot.unrealizedGain;
-
-                    const crossedTarget = seekingGain ? (newTotal >= target) : (newTotal <= target);
-
-                    if (crossedTarget) {
-                        const diffWithLot = Math.abs(target - newTotal);
-                        const diffWithoutLot = Math.abs(target - lastTotal);
-
-                        if (diffWithLot < diffWithoutLot) {
-                            chosenLots.push(lot);
+        // Wash Sale Detection Functions
+        function checkWashSaleViolations(recommendations, portfolioHistory = []) {
+            const violations = [];
+            const today = new Date();
+            
+            recommendations.forEach(recommendation => {
+                if (recommendation.unrealizedGain >= 0) return; // Only check loss positions
+                
+                const saleDate = new Date(today); // Assume sale today
+                const washSalePeriodStart = new Date(saleDate.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days before
+                const washSalePeriodEnd = new Date(saleDate.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days after
+                
+                // Check against all other positions in portfolio for recent purchases
+                portfolioData.forEach(lot => {
+                    if (lot.symbol === recommendation.symbol) return; // Skip same symbol
+                    
+                    const similarityScore = calculateSimilarityScore(recommendation.symbol, lot.symbol);
+                    const riskTier = getSimilarityRiskTier(similarityScore);
+                    
+                    // Flag if high or moderate risk
+                    if (riskTier.tier <= 2) {
+                        const acquiredDate = new Date(lot.acquired);
+                        
+                        // Check if acquired within 30 days before sale
+                        if (acquiredDate >= washSalePeriodStart && acquiredDate <= saleDate) {
+                            violations.push({
+                                type: 'lookback',
+                                soldSymbol: recommendation.symbol,
+                                purchasedSymbol: lot.symbol,
+                                saleDate: saleDate.toISOString().split('T')[0],
+                                purchaseDate: lot.acquired,
+                                similarityScore: similarityScore,
+                                riskTier: riskTier,
+                                disallowedLoss: Math.abs(recommendation.unrealizedGain),
+                                description: `Recently purchased ${lot.symbol} on ${lot.acquired}, which may be substantially identical to ${recommendation.symbol}`
+                            });
                         }
-                        return chosenLots;
-                    } else {
-                        chosenLots.push(lot);
-                        currentTotal = newTotal;
                     }
-                }
-                return chosenLots;
-            };
+                });
+                
+                // Check against other recommendations (look-forward check)
+                recommendations.forEach(otherRec => {
+                    if (otherRec.symbol === recommendation.symbol) return;
+                    if (otherRec.unrealizedGain < 0) return; // Only check against purchases (gains or neutral)
+                    
+                    const similarityScore = calculateSimilarityScore(recommendation.symbol, otherRec.symbol);
+                    const riskTier = getSimilarityRiskTier(similarityScore);
+                    
+                    if (riskTier.tier <= 2) {
+                        violations.push({
+                            type: 'lookforward',
+                            soldSymbol: recommendation.symbol,
+                            purchasedSymbol: otherRec.symbol,
+                            saleDate: saleDate.toISOString().split('T')[0],
+                            purchaseDate: saleDate.toISOString().split('T')[0], // Same day
+                            similarityScore: similarityScore,
+                            riskTier: riskTier,
+                            disallowedLoss: Math.abs(recommendation.unrealizedGain),
+                            description: `Planned purchase of ${otherRec.symbol} may be substantially identical to ${recommendation.symbol} being sold`
+                        });
+                    }
+                });
+            });
+            
+            return violations;
+        }
 
+        // Helper function to find the best combination of lots to meet a target gain/loss
+        function findBestCombination(targetAmount, availableLots) {
+            // MIGRATE TO MODULAR ARCHITECTURE
+            // First, check if the module is available
+            if (window.ModuleRegistry && window.ModuleRegistry.get('algorithm')) {
+                console.log('Using modular tax harvesting algorithm');
+                const algorithmModule = window.ModuleRegistry.get('algorithm');
+                return algorithmModule.findBestCombination(targetAmount, availableLots);
+            }
+            
+            // Fallback to embedded algorithm if module not available
+            console.warn('Modular algorithm not available, using embedded version');
+            
+            console.log('findBestCombination called with target:', targetAmount, 'lots:', availableLots.length);
+            if (!availableLots || availableLots.length === 0) return [];
+            if (Math.abs(targetAmount) < 0.01) return []; // Target too small
+            
+            // STRICT TARGET ENFORCEMENT: Set hard limit on maximum allowed total
+            // This will be our absolute upper bound to prevent major overshoots
+            const STRICT_MAX_LIMIT = Math.abs(targetAmount) * 1.05; // Never exceed target by more than 5%
+            
+            // Filter and sort lots appropriately
+            const relevantLots = availableLots.filter(lot => {
+                if (targetAmount > 0) return lot.unrealizedGain > 0; // Need gains
+                else return lot.unrealizedGain < 0; // Need losses
+            });
+            
+            if (relevantLots.length === 0) return [];
+            
+            // Sort by unrealized gain magnitude (largest first for more efficient targeting)
+            // This prevents overshooting by selecting fewer, larger positions
+            const sortedLots = [...relevantLots].sort((a, b) => {
+                if (targetAmount > 0) {
+                    return b.unrealizedGain - a.unrealizedGain; // Largest gains first
+                } else {
+                    return a.unrealizedGain - b.unrealizedGain; // Largest losses first (most negative)
+                }
+            });
+            
+            const selectedLots = [];
+            let currentAmount = 0;
+            
+            console.log(`Targeting ${targetAmount > 0 ? 'gains' : 'losses'} of ${Math.abs(targetAmount).toFixed(2)}`);
+            
+            // Use a greedy approach with strict target adherence
+            for (const lot of sortedLots) {
+                const remainingNeeded = targetAmount - currentAmount;
+                console.log(`\nEvaluating ${lot.symbol}: gain ${lot.unrealizedGain.toFixed(2)}, remaining needed: ${remainingNeeded.toFixed(2)}`);
+                
+                // Stop if we've already reached the target within tolerance
+                if (Math.abs(remainingNeeded) < 0.01) {
+                    console.log('Target reached within tolerance, stopping');
+                    break;
+                }
+                
+                // Also stop if we've overshot the target
+                if ((targetAmount > 0 && currentAmount > targetAmount) ||
+                    (targetAmount < 0 && currentAmount < targetAmount)) {
+                    console.log('Target exceeded, stopping to prevent further overshooting');
+                    break;
+                }
+                
+                // CRITICAL FIX: Enforce absolute maximum limit first
+                const lotTotalGain = lot.unrealizedGain;
+                const projectedTotal = currentAmount + lotTotalGain;
+                
+                // Immediate rejection if this lot would cause us to exceed our strict max limit
+                if (Math.abs(projectedTotal) > STRICT_MAX_LIMIT) {
+                    console.log(`⛔ STRICT LIMIT: Adding ${lot.symbol} would exceed maximum allowed total (${STRICT_MAX_LIMIT.toFixed(2)}), skipping`);
+                    break; // Break the entire loop - we're too close to limit
+                }
+                
+                const targetExceedance = Math.abs(projectedTotal - targetAmount);
+                
+                // Progressive tolerance - stricter for larger targets
+                let tolerancePercent = 0.02; // 2% baseline tolerance (reduced from 3%)
+                if (Math.abs(targetAmount) > 50000) {
+                    // For large targets (>$50k), use even stricter tolerance
+                    tolerancePercent = 0.01; // 1% for large targets
+                }
+                const targetTolerance = Math.abs(targetAmount) * tolerancePercent;
+                
+                // If adding the whole lot stays within reasonable bounds, add it
+                if ((targetAmount > 0 && projectedTotal <= targetAmount) ||
+                    (targetAmount < 0 && projectedTotal >= targetAmount)) {
+                    
+                    // Add extra check to avoid crossing the target boundary 
+                    // when we're already close to target
+                    const currentProximity = Math.abs(currentAmount / targetAmount);
+                    if (currentProximity > 0.9 && // Already at 90%+ of target
+                       ((targetAmount > 0 && projectedTotal > targetAmount) ||
+                        (targetAmount < 0 && projectedTotal < targetAmount))) {
+                        console.log(`✗ Skipping whole lot - would cross target when already close`);
+                    } else {
+                        selectedLots.push({
+                            ...lot,
+                            sharesToSell: lot.quantity,
+                            actualGain: lotTotalGain,
+                            proceeds: (lot.price * lot.quantity),
+                            reason: targetAmount > 0 ? 'Tax Gain Harvesting' : 'Tax Loss Harvesting'
+                        });
+                        
+                        currentAmount = projectedTotal;
+                        console.log(`✓ Added whole lot: ${lot.symbol}, gain: ${lotTotalGain.toFixed(2)}, running total: ${currentAmount.toFixed(2)}`);
+                    }
+                    
+                } else if (targetExceedance <= targetTolerance && 
+                          // CRITICAL FIX: Much stricter threshold - only allow exceeding if we're below 90% of target
+                          Math.abs(currentAmount) < Math.abs(targetAmount) * 0.90) {
+                    
+                    // CRITICAL CHECK: Enforce the absolute maximum limit
+                    if (Math.abs(projectedTotal) > STRICT_MAX_LIMIT) {
+                        console.log(`⛔ STRICT LIMIT: Adding ${lot.symbol} would exceed maximum allowed total (${STRICT_MAX_LIMIT.toFixed(2)}), skipping`);
+                        break; // Exit the loop entirely
+                    }
+                    
+                    // Extra check - if target is large and we're already close, be extra cautious
+                    if (Math.abs(targetAmount) > 50000 && Math.abs(currentAmount) > Math.abs(targetAmount) * 0.75) {
+                        // For large targets when already near 75%, check if exceeding by more than 0.5%
+                        if (targetExceedance > Math.abs(targetAmount) * 0.005) {
+                            console.log(`✗ Skipping lot - too much overshoot for a large target already near completion`);
+                            break; // Stop here to avoid overshooting large targets
+                        }
+                    }
+                    
+                    // If overshoot is within tolerance and we haven't already reached close to target, add the whole lot
+                    selectedLots.push({
+                        ...lot,
+                        sharesToSell: lot.quantity,
+                        actualGain: lotTotalGain,
+                        proceeds: (lot.price * lot.quantity),
+                        reason: targetAmount > 0 ? 'Tax Gain Harvesting' : 'Tax Loss Harvesting'
+                    });
+                    
+                    currentAmount = projectedTotal;
+                    console.log(`✓ Added whole lot (within tolerance): ${lot.symbol}, gain: ${lotTotalGain.toFixed(2)}, running total: ${currentAmount.toFixed(2)}`);
+                    break; // Stop here as we're close enough
+                    
+                } else {
+                    // Try partial shares for more precision
+                    const lotGainPerShare = lot.unrealizedGain / lot.quantity;
+                    
+                    if (Math.abs(lotGainPerShare) > 0.001) { // Meaningful gain per share
+                        const sharesNeeded = Math.abs(remainingNeeded / lotGainPerShare);
+                        let idealShares = Math.floor(sharesNeeded);
+                        
+                        // Ensure we have at least 1 share but not more than available
+                        idealShares = Math.max(1, Math.min(idealShares, lot.quantity));
+                        
+                        // Only proceed if it's a reasonable number of shares (at least 1% of position)
+                        const minShares = Math.max(1, Math.ceil(lot.quantity * 0.01));
+                        
+                        if (idealShares >= minShares && idealShares < lot.quantity) {
+                            const actualGain = lotGainPerShare * idealShares;
+                            const newTotal = currentAmount + actualGain;
+                            
+                            // Ensure partial addition doesn't overshoot
+                            const partialExceedance = (targetAmount > 0) ? 
+                                Math.max(0, newTotal - targetAmount) : 
+                                Math.max(0, targetAmount - newTotal);
+                            
+                            // More strict tolerance for partial lots, especially large targets
+                            let partialTolerance;
+                            if (Math.abs(targetAmount) > 75000) {
+                                partialTolerance = targetTolerance * 0.5; // Half the normal tolerance for large targets
+                            } else {
+                                partialTolerance = targetTolerance * 0.75; // 75% of normal tolerance otherwise
+                            }
+                            
+                            // Only allow partial selling if it gets us closer to target
+                            const currentDistance = Math.abs(targetAmount - currentAmount);
+                            const newDistance = Math.abs(targetAmount - newTotal);
+                            
+                            // More stringent conditions for partial lot inclusion
+                            if (newDistance < currentDistance && partialExceedance <= partialTolerance) {
+                                selectedLots.push({
+                                    ...lot,
+                                    sharesToSell: idealShares,
+                                    actualGain: actualGain,
+                                    proceeds: (lot.price * idealShares),
+                                    reason: targetAmount > 0 ? 'Tax Gain Harvesting' : 'Tax Loss Harvesting'
+                                });
+                                
+                                currentAmount = newTotal;
+                                console.log(`✓ Added partial lot: ${lot.symbol}, shares: ${idealShares}/${lot.quantity}, gain: ${actualGain.toFixed(2)}, running total: ${currentAmount.toFixed(2)}`);
+                            } else {
+                                console.log(`✗ Partial lot would overshoot or not improve accuracy, skipping`);
+                            }
+                        }
+                    }
+                    
+                    // After trying partial, stop the loop to avoid further overshooting
+                    break;
+                }
+                
+                // CRITICAL FIX: Much stricter early termination threshold
+                if ((targetAmount > 0 && currentAmount >= targetAmount * 0.90) || // Stop at 90% of target for positive targets
+                    (targetAmount < 0 && currentAmount <= targetAmount * 0.90)) { // Stop at 90% of target for negative targets
+                    console.log('⚠️ EARLY TERMINATION: Target reached 90%+ of goal, stopping to prevent overshooting');
+                    break;
+                }
+                
+                // CRITICAL FIX: Check against strict maximum limit
+                if (Math.abs(currentAmount) > STRICT_MAX_LIMIT * 0.95) { // If we're at 95% of our strict limit
+                    console.log(`⛔ STRICT LIMIT: Already at ${(Math.abs(currentAmount)/STRICT_MAX_LIMIT*100).toFixed(1)}% of maximum allowed total (${STRICT_MAX_LIMIT.toFixed(2)}), halting immediately`);
+                    break;
+                }
+                
+                // Additional safety checks with progressive thresholds based on target size
+                const currentExceedance = Math.abs(currentAmount - targetAmount);
+                let maxExceedancePercent = 0.015; // 1.5% default (reduced from 3%)
+                
+                // For larger targets, use even stricter thresholds
+                if (Math.abs(targetAmount) > 50000) {
+                    maxExceedancePercent = 0.01; // 1% for large targets
+                }
+                if (Math.abs(targetAmount) > 100000) {
+                    maxExceedancePercent = 0.005; // 0.5% for very large targets
+                }
+                
+                if (currentExceedance > Math.abs(targetAmount) * maxExceedancePercent) {
+                    console.log(`⚠️ Exceeding target by more than ${(maxExceedancePercent*100).toFixed(1)}%, halting immediately`);
+                    break;
+                }
+            }
+            
+            const finalTotal = selectedLots.reduce((sum, lot) => sum + lot.actualGain, 0);
+            const accuracy = Math.abs(finalTotal - targetAmount);
+            const accuracyPercent = (accuracy / Math.abs(targetAmount)) * 100;
+            
+            console.log(`\n=== findBestCombination Results ===`);
+            console.log(`Target: ${targetAmount.toFixed(2)}`);
+            console.log(`Actual: ${finalTotal.toFixed(2)}`);
+            console.log(`Accuracy: ${accuracy.toFixed(2)} (${accuracyPercent.toFixed(1)}% off target)`);
+            console.log(`Selected ${selectedLots.length} lots`);
+            
+            return selectedLots;
+        }
+
+        // Basic recommendation function without wash sale checks
+        function generateAdvancedRecommendations(neededST, neededLT) {
+            console.log('generateAdvancedRecommendations called with:', neededST, neededLT);
+            
+            // CRITICAL FIX: If targets are very close to current values, don't do anything
+            // This prevents the algorithm from trying to find tiny adjustments
+            if (Math.abs(neededST) < 100 && Math.abs(neededLT) < 100) {
+                console.log('Targets are very close to current values, no action needed');
+                return [];
+            }
+            
+            // CRITICAL FIX: Use the modular architecture if available
+            if (window.ModuleRegistry && window.ModuleRegistry.get('algorithm')) {
+                console.log('Using modular tax harvesting algorithm for advanced recommendations');
+                const algorithmModule = window.ModuleRegistry.get('algorithm');
+                
+                // EMERGENCY FIX: Use the new interface with params object
+                const ytdGains = {
+                    shortTerm: parseFloat(document.getElementById('realizedST').value) || 0,
+                    longTerm: parseFloat(document.getElementById('realizedLT').value) || 0
+                };
+                
+                const taxTargets = {
+                    shortTerm: parseFloat(document.getElementById('targetST').value) || 0,
+                    longTerm: parseFloat(document.getElementById('targetLT').value) || 0
+                };
+                
+                const params = {
+                    positions: portfolioData,
+                    taxTargets: taxTargets,
+                    ytdGains: ytdGains
+                };
+                
+                console.log('Calling algorithm with params:', params);
+                
+                // Get results from algorithm
+                const result = algorithmModule.generateRecommendations(params);
+                
+                // Check if we got a result with the new format
+                if (result && result.selectedPositions) {
+                    console.log('EMERGENCY: New format result received:', result);
+                    return result.selectedPositions;
+                } else {
+                    // Fall back to old format call
+                    console.log('EMERGENCY: New format failed, trying legacy format');
+                    return algorithmModule.generateRecommendations(neededST, neededLT, portfolioData);
+                }
+            }
+            
+            // Fallback to embedded algorithm
+            console.warn('Modular algorithm not available, using embedded version');
+            
+            const lots = portfolioData.filter(lot => lot.includedInSelling);
+            console.log('Available lots for trading:', lots.length);
+            const recommendationsArray = [];
+
+            // Separate into categories
             const stGains = lots.filter(l => l.term === 'Short' && l.unrealizedGain > 0);
             const stLosses = lots.filter(l => l.term === 'Short' && l.unrealizedGain < 0);
             const ltGains = lots.filter(l => l.term === 'Long' && l.unrealizedGain > 0);
             const ltLosses = lots.filter(l => l.term === 'Long' && l.unrealizedGain < 0);
 
-            if (neededST > 0) recommendations.push(...findBestCombination(neededST, stGains));
-            else if (neededST < 0) recommendations.push(...findBestCombination(neededST, stLosses));
+            console.log('Categories - ST Gains:', stGains.length, 'ST Losses:', stLosses.length, 'LT Gains:', ltGains.length, 'LT Losses:', ltLosses.length);
+            
+            // MIGRATE TO MODULAR ARCHITECTURE
+            // Check if the module is available for generating recommendations
+            if (window.ModuleRegistry && window.ModuleRegistry.get('algorithm')) {
+                console.log('Using modular tax harvesting algorithm for recommendations');
+                const algorithmModule = window.ModuleRegistry.get('algorithm');
+                return algorithmModule.generateRecommendations(neededST, neededLT, lots);
+            }
+            
+            // Fallback to embedded algorithm if module not available
+            console.warn('Modular algorithm not available for recommendations, using embedded version');
+            
+            // CRITICAL FIX: Check for excessive targets and cap them
+            const capTarget = (target) => {
+                // For gains, don't exceed 105% of target
+                // For losses, don't go below 105% of target
+                const maxMultiplier = 1.05;
+                if (target > 0) {
+                    return Math.min(target, target * maxMultiplier);
+                } else {
+                    return Math.max(target, target * maxMultiplier);
+                }
+            };
+            
+            // Apply caps to targets
+            const cappedSTTarget = capTarget(neededST);
+            const cappedLTTarget = capTarget(neededLT);
+            
+            console.log(`Original ST Target: ${neededST}, Capped: ${cappedSTTarget}`);
+            console.log(`Original LT Target: ${neededLT}, Capped: ${cappedLTTarget}`);
 
-            if (neededLT > 0) recommendations.push(...findBestCombination(neededLT, ltGains));
-            else if (neededLT < 0) recommendations.push(...findBestCombination(neededLT, ltLosses));
+            if (cappedSTTarget > 0) recommendationsArray.push(...findBestCombination(cappedSTTarget, stGains));
+            else if (cappedSTTarget < 0) recommendationsArray.push(...findBestCombination(cappedSTTarget, stLosses));
 
-            return recommendations;
+            if (cappedLTTarget > 0) recommendationsArray.push(...findBestCombination(cappedLTTarget, ltGains));
+            else if (cappedLTTarget < 0) recommendationsArray.push(...findBestCombination(cappedLTTarget, ltLosses));
+
+            console.log('Generated recommendations:', recommendationsArray.length);
+            return recommendationsArray;
+        }
+
+        // Enhanced recommendation function with wash sale avoidance
+        function generateAdvancedRecommendationsWithWashSaleCheck(neededST, neededLT) {
+            // Get initial recommendations
+            const initialRecommendations = generateAdvancedRecommendations(neededST, neededLT);
+            
+            // Check for wash sale violations
+            const violations = checkWashSaleViolations(initialRecommendations);
+            
+            // If no violations, return original recommendations
+            if (violations.length === 0) {
+                return {
+                    recommendations: initialRecommendations,
+                    violations: [],
+                    alternatives: []
+                };
+            }
+            
+            // Generate alternatives for violated positions
+            const alternatives = [];
+            violations.forEach(violation => {
+                const soldETF = etfDatabase[violation.soldSymbol];
+                const purchasedETF = etfDatabase[violation.purchasedSymbol];
+                
+                if (soldETF && purchasedETF) {
+                    const alternativeETFs = findWashSaleAlternatives(
+                        violation.purchasedSymbol, 
+                        purchasedETF.assetClass, 
+                        purchasedETF.style
+                    );
+                    
+                    alternatives.push({
+                        violatedSymbol: violation.purchasedSymbol,
+                        soldSymbol: violation.soldSymbol,
+                        riskTier: violation.riskTier,
+                        alternatives: alternativeETFs
+                    });
+                }
+            });
+            
+            return {
+                recommendations: initialRecommendations,
+                violations: violations,
+                alternatives: alternatives
+            };
+        }
+
+        // Enhanced display function with wash sale analysis
+        function displayResultsWithWashSaleAnalysis(analysisResult, targets, excludedPositions = []) {
+            const { recommendations, violations, alternatives } = analysisResult;
+            
+            // First display standard results
+            displayResults(recommendations, targets, excludedPositions);
+            
+            // Add wash sale warnings if any violations found
+            if (violations.length > 0) {
+                displayWashSaleWarnings(violations, alternatives);
+            }
+        }
+
+        // Display wash sale warnings and alternatives
+        function displayWashSaleWarnings(violations, alternatives) {
+            // Create wash sale warnings section if it doesn't exist
+            let washSaleSection = document.getElementById('wash-sale-analysis');
+            if (!washSaleSection) {
+                washSaleSection = document.createElement('div');
+                washSaleSection.id = 'wash-sale-analysis';
+                washSaleSection.className = 'mt-6 p-4 border-l-4 border-red-400 bg-red-50';
+                
+                // Insert after recommendations table
+                const recommendationsContainer = document.getElementById('recommendations');
+                recommendationsContainer.appendChild(washSaleSection);
+            }
+
+            const formatCurrency = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+            let washSaleHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Wash Sale Risk Detected</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <p class="mb-3">
+                                <strong>Warning:</strong> The following recommended trades may trigger wash sale violations under IRS Section 1091. 
+                                This could result in the disallowance of ${formatCurrency(violations.reduce((sum, v) => sum + v.disallowedLoss, 0))} in tax losses.
+                            </p>
+            `;
+
+            // Display each violation
+            violations.forEach((violation, index) => {
+                const riskColor = violation.riskTier.tier === 1 ? 'red' : 'yellow';
+                const bgColor = violation.riskTier.tier === 1 ? 'bg-red-100' : 'bg-yellow-100';
+                const textColor = violation.riskTier.tier === 1 ? 'text-red-800' : 'text-yellow-800';
+                
+                washSaleHTML += `
+                    <div class="mt-4 p-3 ${bgColor} rounded-lg border border-${riskColor}-200">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${riskColor}-100 text-${riskColor}-800">
+                                    ${violation.riskTier.level}
+                                </span>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h4 class="text-sm font-medium ${textColor}">
+                                    Violation ${index + 1}: ${violation.soldSymbol} → ${violation.purchasedSymbol}
+                                </h4>
+                                <p class="mt-1 text-sm ${textColor}">
+                                    ${violation.description}
+                                </p>
+                                <div class="mt-2 text-xs ${textColor}">
+                                    <p><strong>Similarity Score:</strong> ${violation.similarityScore}/100</p>
+                                    <p><strong>Potential Disallowed Loss:</strong> ${formatCurrency(violation.disallowedLoss)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Display alternatives if available
+            if (alternatives.length > 0) {
+                washSaleHTML += `
+                    <div class="mt-4">
+                        <h4 class="text-sm font-medium text-red-800 mb-3">Recommended Alternatives:</h4>
+                `;
+
+                alternatives.forEach(alt => {
+                    washSaleHTML += `
+                        <div class="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <h5 class="text-sm font-medium text-green-800">
+                                Instead of ${alt.violatedSymbol}, consider:
+                            </h5>
+                            <div class="mt-2 grid grid-cols-1 gap-2">
+                    `;
+
+                    alt.alternatives.slice(0, 3).forEach(alternative => {
+                        washSaleHTML += `
+                            <div class="flex items-center justify-between p-2 bg-white rounded border border-green-200">
+                                <div>
+                                    <span class="font-medium text-gray-900">${alternative.symbol}</span>
+                                    <span class="text-sm text-gray-600 ml-2">${alternative.name}</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-gray-500">${alternative.index}</div>
+                                    <div class="text-xs text-green-600">Risk Score: ${alternative.similarityScore}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    washSaleHTML += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                washSaleHTML += `</div>`;
+            }
+
+            washSaleHTML += `
+                            <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <p class="text-sm text-blue-800">
+                                    <strong>Important:</strong> This analysis is for informational purposes only. 
+                                    Consult with your tax advisor before executing any trades that may trigger wash sale rules.
+                                    The 61-day wash sale period includes 30 days before and after the sale date.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            washSaleSection.innerHTML = washSaleHTML;
         }
 
         function displayResults(recommendations, targets, excludedPositions = []) {
@@ -1184,11 +2061,15 @@
 
             let summaryHTML = `
                 <div class="text-center">
+                    <p class="text-sm text-gray-500">Current ST Gain/Loss</p>
+                    <p class="text-lg font-medium ${targets.realizedST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedST)}</p>
                     <p class="text-sm text-gray-500">Projected Final ST Gain/Loss</p>
                     <p class="text-xl font-bold ${finalST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalST)}</p>
                     <p class="text-xs text-gray-500">(Target: ${formatCurrencyWithSign(targets.targetST)})</p>
                 </div>
                 <div class="text-center">
+                    <p class="text-sm text-gray-500">Current LT Gain/Loss</p>
+                    <p class="text-lg font-medium ${targets.realizedLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedLT)}</p>
                     <p class="text-sm text-gray-500">Projected Final LT Gain/Loss</p>
                     <p class="text-xl font-bold ${finalLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalLT)}</p>
                     <p class="text-xs text-gray-500">(Target: ${formatCurrencyWithSign(targets.targetLT)})</p>
@@ -1231,6 +2112,130 @@
             const childRows = recommendationsTable.querySelectorAll(`tr[data-parent-symbol="${symbol}"]`);
             parentRow.querySelector('svg').classList.toggle('icon-rotate');
             childRows.forEach(row => row.classList.toggle('hidden'));
+        }
+
+        function handleWashSaleCheck() {
+            if (lastRecommendations.length === 0) {
+                alert("Please generate recommendations first before checking for wash sale violations.");
+                return;
+            }
+            
+            // Perform wash sale analysis on current recommendations
+            const violations = checkWashSaleViolations(lastRecommendations);
+            
+            if (violations.length === 0) {
+                alert("✅ No wash sale violations detected! Your recommended trades appear to comply with IRS Section 1091.");
+                return;
+            }
+            
+            // Generate alternatives for violated positions
+            const alternatives = [];
+            violations.forEach(violation => {
+                const soldETF = etfDatabase[violation.soldSymbol];
+                const purchasedETF = etfDatabase[violation.purchasedSymbol];
+                
+                if (soldETF && purchasedETF) {
+                    const alternativeETFs = findWashSaleAlternatives(
+                        violation.purchasedSymbol, 
+                        purchasedETF.assetClass, 
+                        purchasedETF.style
+                    );
+                    
+                    alternatives.push({
+                        violatedSymbol: violation.purchasedSymbol,
+                        soldSymbol: violation.soldSymbol,
+                        riskTier: violation.riskTier,
+                        alternatives: alternativeETFs
+                    });
+                }
+            });
+            
+            // Display wash sale warnings
+            displayWashSaleWarnings(violations, alternatives);
+            
+            // Scroll to wash sale section
+            const washSaleSection = document.getElementById('wash-sale-analysis');
+            if (washSaleSection) {
+                washSaleSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function handleDemoWashSale() {
+            // Create demo data with wash sale violations
+            const demoRecommendations = [
+                {
+                    symbol: 'IVV',
+                    quantity: 100,
+                    marketValue: 45000,
+                    costBasis: 47000,
+                    unrealizedGain: -2000,
+                    term: 'Long',
+                    acquired: '2023-01-15'
+                },
+                {
+                    symbol: 'VTI',
+                    quantity: 50,
+                    marketValue: 11000,
+                    costBasis: 12000,
+                    unrealizedGain: -1000,
+                    term: 'Short',
+                    acquired: '2023-08-10'
+                }
+            ];
+            
+            // Set up demo portfolio data that will trigger violations
+            portfolioData = [
+                ...demoRecommendations,
+                {
+                    symbol: 'VOO', // This will conflict with IVV sale
+                    quantity: 25,
+                    marketValue: 11000,
+                    costBasis: 10500,
+                    unrealizedGain: 500,
+                    term: 'Long',
+                    acquired: '2023-12-01' // Recent purchase
+                },
+                {
+                    symbol: 'ITOT', // This will conflict with VTI sale
+                    quantity: 30,
+                    marketValue: 6500,
+                    costBasis: 6200,
+                    unrealizedGain: 300,
+                    term: 'Short',
+                    acquired: '2023-11-15' // Recent purchase
+                }
+            ];
+            
+            // Set lastRecommendations for wash sale analysis
+            lastRecommendations = demoRecommendations;
+            
+            // Show results container
+            resultsContainer.classList.remove('hidden');
+            
+            // Use enhanced recommendation system with wash sale detection
+            const analysisResult = generateAdvancedRecommendationsWithWashSaleCheck(0, -3000);
+            
+            // Set demo summary data
+            lastSummaryData = {
+                finalST: 0,
+                finalLT: -3000,
+                totalGainFromTrades: -3000,
+                totalMarketValueFromTrades: 56000,
+                targetST: 0,
+                targetLT: -3000
+            };
+            
+            // Display results with wash sale warnings
+            displayResultsWithWashSaleAnalysis(analysisResult, { realizedST: 0, realizedLT: 0, targetST: 0, targetLT: -3000 }, []);
+            
+            // Show all buttons
+            recommendationsDiv.classList.remove('hidden');
+            exportBtn.classList.remove('hidden');
+            proceedToBuyBtn.classList.remove('hidden');
+            washSaleCheckBtn.classList.remove('hidden');
+            aiRationaleSection.classList.remove('hidden');
+            
+            alert("Demo loaded! This shows wash sale violations between IVV→VOO and VTI→ITOT. Check the wash sale warnings below.");
         }
 
         function handleExport() {
@@ -1306,6 +2311,21 @@
 
             localStorage.setItem('taxHarvestingTransfer', JSON.stringify(transferData));
 
+            // Store sell orders for wash sale detection
+            const sellOrders = lastRecommendations.map(rec => ({
+                symbol: rec.symbol,
+                shares: rec.sharesToSell,
+                price: rec.currentPrice || rec.price,
+                marketValue: rec.marketValue,
+                actualGain: rec.actualGain,
+                name: rec.name,
+                account: rec.account,
+                lotId: rec.lotId
+            }));
+
+            localStorage.setItem('sellOrders', JSON.stringify(sellOrders));
+            console.log('Stored sell orders for wash sale detection:', sellOrders);
+
             // Navigate to buy-orders page
             window.location.href = 'buy-orders.html';
         }
@@ -1341,6 +2361,122 @@
             };
 
             localStorage.setItem('taxHarvestingReport', JSON.stringify(reportData));
+        }
+
+        // AI Rationale Functions
+        function handleGenerateAiRationale() {
+            if (lastRecommendations.length === 0) {
+                alert("Please generate recommendations first before requesting AI analysis.");
+                return;
+            }
+
+            aiRationaleSection.classList.remove('hidden');
+            aiRationaleLoading.classList.remove('hidden');
+            aiRationaleContent.classList.add('hidden');
+            generateAiRationaleBtn.disabled = true;
+
+            // Simulate AI analysis (replace with actual AI API call)
+            setTimeout(() => {
+                const analysisText = generateMockAiAnalysis();
+                aiRationaleText.textContent = analysisText;
+                
+                aiRationaleLoading.classList.add('hidden');
+                aiRationaleContent.classList.remove('hidden');
+                generateAiRationaleBtn.disabled = false;
+            }, 2000);
+        }
+
+        function generateMockAiAnalysis() {
+            const totalTrades = lastRecommendations.length;
+            const totalGain = lastSummaryData.totalGainFromTrades || 0;
+            const stGain = lastSummaryData.finalST - (lastSummaryData.targetST - lastSummaryData.finalST + totalGain);
+            const ltGain = lastSummaryData.finalLT - (lastSummaryData.targetLT - lastSummaryData.finalLT + totalGain);
+            
+            // Check for wash sale violations in current recommendations
+            const washSaleAnalysis = checkWashSaleViolations(lastRecommendations);
+            
+            let analysis = `Based on your portfolio analysis and tax optimization goals, here's my comprehensive assessment:\n\n`;
+            
+            analysis += `STRATEGY OVERVIEW:\n`;
+            analysis += `The algorithm has identified ${totalTrades} optimal positions for sale, generating an estimated ${totalGain >= 0 ? 'gain' : 'loss'} of $${Math.abs(totalGain).toLocaleString()}.\n\n`;
+            
+            // Wash Sale Risk Assessment
+            if (washSaleAnalysis.length > 0) {
+                analysis += `⚠️  WASH SALE RISK ANALYSIS:\n`;
+                analysis += `WARNING: ${washSaleAnalysis.length} potential wash sale violation(s) detected!\n`;
+                washSaleAnalysis.forEach((violation, index) => {
+                    analysis += `${index + 1}. ${violation.riskTier.level}: Selling ${violation.soldSymbol} while holding/buying ${violation.purchasedSymbol}\n`;
+                    analysis += `   Similarity Score: ${violation.similarityScore}/100 - ${violation.riskTier.description}\n`;
+                    analysis += `   Potential disallowed loss: $${violation.disallowedLoss.toLocaleString()}\n`;
+                });
+                analysis += `\nRecommendation: Review alternative ETFs provided to avoid triggering IRS Section 1091.\n\n`;
+            } else {
+                analysis += `✅ WASH SALE COMPLIANCE:\n`;
+                analysis += `No wash sale violations detected. Your proposed trades comply with IRS Section 1091 requirements.\n\n`;
+            }
+            
+            if (totalGain < 0) {
+                analysis += `TAX BENEFITS:\n`;
+                analysis += `• The realized losses can offset other capital gains in your portfolio\n`;
+                analysis += `• Up to $3,000 of excess losses can offset ordinary income annually\n`;
+                analysis += `• Unused losses carry forward indefinitely to future tax years\n`;
+                if (washSaleAnalysis.length > 0) {
+                    analysis += `• However, wash sale violations could defer these tax benefits\n`;
+                }
+                analysis += `\n`;
+            }
+            
+            analysis += `PORTFOLIO IMPACT:\n`;
+            analysis += `• Short-term position impact: $${Math.abs(stGain).toLocaleString()}\n`;
+            analysis += `• Long-term position impact: $${Math.abs(ltGain).toLocaleString()}\n`;
+            analysis += `• Total market value being sold: $${lastSummaryData.totalMarketValueFromTrades?.toLocaleString() || '0'}\n\n`;
+            
+            analysis += `COMPLIANCE RECOMMENDATIONS:\n`;
+            if (washSaleAnalysis.length > 0) {
+                analysis += `• PRIORITY: Address wash sale violations before executing trades\n`;
+                analysis += `• Consider recommended alternative ETFs that maintain similar exposure\n`;
+                analysis += `• Review all accounts (including spouse's) for recent purchases\n`;
+            }
+            analysis += `• Verify no substantially identical securities purchased 30 days before sale date\n`;
+            analysis += `• Plan replacement investments outside the 61-day wash sale window\n`;
+            analysis += `• Document all transactions for accurate tax reporting\n\n`;
+            
+            analysis += `NEXT STEPS:\n`;
+            analysis += `1. ${washSaleAnalysis.length > 0 ? '⚠️  RESOLVE WASH SALE ISSUES FIRST' : '✅ Review and approve the recommended trades'}\n`;
+            analysis += `2. ${washSaleAnalysis.length > 0 ? 'Select alternative ETFs from provided recommendations' : 'Export the trade list for your broker'}\n`;
+            analysis += `3. Coordinate execution timing with your tax advisor\n`;
+            analysis += `4. Monitor the 61-day period to avoid future wash sale violations\n\n`;
+            
+            analysis += `LEGAL DISCLAIMER:\n`;
+            analysis += `This analysis is for informational purposes only and does not constitute tax or legal advice. `;
+            analysis += `Wash sale determinations depend on specific facts and circumstances. `;
+            analysis += `Consult your tax advisor before executing any trades.`;
+            
+            return analysis;
+        }
+
+        function handleCopyRationale() {
+            const text = aiRationaleText.textContent;
+            if (!text) {
+                alert("No analysis to copy.");
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = copyRationaleBtn.innerHTML;
+                copyRationaleBtn.innerHTML = `
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Copied!
+                `;
+                
+                setTimeout(() => {
+                    copyRationaleBtn.innerHTML = originalText;
+                }, 2000);
+            }).catch(() => {
+                alert("Failed to copy to clipboard. Please select and copy manually.");
+            });
         }
 
         // Mobile menu functionality
@@ -1380,7 +2516,7 @@
             }
         });
     </script>
-    </div> <!-- End content-area -->
+</div> <!-- End content-area -->
 </body>
 
 </html>

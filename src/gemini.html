@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrated Portfolio Rebalancing Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* General UI enhancements */
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            color: #4338ca;
+            font-weight: 600;
+        }
+
+        .section-card {
+            transition: box-shadow 0.3s ease;
+        }
+
+        .section-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #4f46e5;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        .spinner-small {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom scrollbar for tables */
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .parent-row { cursor: pointer; }
+        .icon-rotate { transform: rotate(90deg); transition: transform 0.2s; }
+        .excluded-row { opacity: 0.6; background-color: #fef2f2; }
+
+
+        /* Print-specific styles */
+        @media print {
+            body { font-size: 9px; line-height: 1.2; }
+            .no-print { display: none !important; }
+            .print-break-before { page-break-before: always; }
+            .print-break-inside-avoid { page-break-inside: avoid; }
+            .shadow-lg { box-shadow: none !important; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ccc !important; padding: 4px !important; }
+            h1 { font-size: 16px !important; }
+            h2 { font-size: 14px !important; }
+            h3 { font-size: 12px !important; }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="app" class="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Header -->
+        <header class="flex flex-wrap justify-between items-center pb-4 mb-6 border-b border-slate-200">
+            <div class="flex items-center">
+                <img src="https://raw.githubusercontent.com/ablewealth/rebalancer/main/src/AWM-Logo.png" alt="Logo" class="h-10 mr-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">Integrated Portfolio Rebalancer</h1>
+                    <p class="text-sm text-slate-500">A unified suite for tax harvesting, rebalancing, and reporting.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 mt-4 sm:mt-0">
+                 <button id="showReportBtn" class="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors text-sm font-semibold flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H3V9a4 4 0 004-4h2a4 4 0 004 4v2m-6 4h12M9 3v2a4 4 0 004 4h2a4 4 0 004-4V3m-6 18v-2a4 4 0 00-4-4H3v-2a4 4 0 004-4h2a4 4 0 004 4v2"></path></svg>
+                    View Report
+                </button>
+            </div>
+        </header>
+
+        <!-- Client Information Bar -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div>
+                <label for="clientName" class="block text-xs font-medium text-slate-600">Client Name</label>
+                <input type="text" id="clientName" placeholder="John Doe" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2">
+            </div>
+            <div>
+                <label for="custodian" class="block text-xs font-medium text-slate-600">Custodian</label>
+                <input type="text" id="custodian" placeholder="Fidelity" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2">
+            </div>
+            <div>
+                <label for="accountNumber" class="block text-xs font-medium text-slate-600">Account Number</label>
+                <input type="text" id="accountNumber" placeholder="123-456789" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div>
+            <!-- Tab Navigation -->
+            <div class="mb-6 border-b border-slate-200">
+                <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+                    <button data-tab="tax-harvesting" class="tab-button active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">
+                        1. Tax Harvesting
+                    </button>
+                    <button data-tab="model-portfolios" class="tab-button whitespace-nowrap py-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 font-medium text-sm">
+                        2. Model Portfolios
+                    </button>
+                    <button data-tab="buy-orders" class="tab-button whitespace-nowrap py-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 font-medium text-sm">
+                        3. Buy Orders
+                    </button>
+                     <button data-tab="price-manager" class="tab-button whitespace-nowrap py-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 font-medium text-sm">
+                        Price Manager
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tab-content">
+                <div id="tax-harvesting-view" class="tab-panel"></div>
+                <div id="model-portfolios-view" class="tab-panel hidden"></div>
+                <div id="buy-orders-view" class="tab-panel hidden"></div>
+                <div id="price-manager-view" class="tab-panel hidden"></div>
+            </div>
+        </div>
+
+        <!-- Report Modal -->
+        <div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50 no-print">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-full max-h-[95vh] flex flex-col">
+                <div class="flex justify-between items-center p-4 border-b">
+                    <h2 class="text-xl font-bold">Comprehensive Report</h2>
+                    <div>
+                        <button id="printReportBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-semibold mr-2">Print</button>
+                        <button id="closeReportBtn" class="text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+                    </div>
+                </div>
+                <div id="report-content-container" class="overflow-y-auto p-6"></div>
+            </div>
+        </div>
+
+        <!-- Notification Area -->
+        <div id="notification-area" class="fixed bottom-5 right-5 z-50 space-y-3"></div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // =========================================================================
+            // --- 1. APPLICATION STATE ---
+            // =========================================================================
+
+            const appState = {
+                client: { name: '', custodian: '', accountNumber: '' },
+                tax: { portfolio: [], ytdGains: { st: 0, lt: 0 }, targets: { st: 0, lt: 0 }, recommendations: [], excludedPositions: [], cashFromSales: 0, summary: {}, tradeRationale: '' },
+                models: { available: {}, current: [], currentName: '' },
+                buy: { cashAvailable: 0, reserves: { percent: 1.0, dollar: 0 }, orders: [], summary: {} },
+                prices: new Map(),
+                report: { marketCommentary: '' },
+                ui: { activeTab: 'tax-harvesting', isLoading: false },
+            };
+
+            // =========================================================================
+            // --- 2. TEMPLATES ---
+            // =========================================================================
+            
+            function getTemplateForTab(tabId) {
+                switch(tabId) {
+                    case 'tax-harvesting': return `
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                               <h2 class="text-xl font-semibold border-b pb-3">1. Upload Data & Set Targets</h2>
+                               <div><label for="costBasisFile" class="block text-sm font-medium text-slate-700 mb-1">A. Upload Cost Basis CSV</label><input type="file" id="costBasisFile" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"></div>
+                               <div><label for="ytdFile" class="block text-sm font-medium text-slate-700 mb-1">B. Upload YTD Realized Gains CSV (Optional)</label><input type="file" id="ytdFile" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"></div>
+                               <div><h3 class="text-md font-medium text-slate-800">Year-to-Date Realized Gains</h3><div class="grid grid-cols-2 gap-4 mt-2"><div><label for="realizedST" class="block text-xs font-medium text-slate-600">Short-Term</label><input type="number" id="realizedST" placeholder="0.00" class="mt-1 w-full rounded-md border-slate-300 shadow-sm text-sm p-2"></div><div><label for="realizedLT" class="block text-xs font-medium text-slate-600">Long-Term</label><input type="number" id="realizedLT" placeholder="0.00" class="mt-1 w-full rounded-md border-slate-300 shadow-sm text-sm p-2"></div></div></div>
+                               <div><h3 class="text-md font-medium text-slate-800">Annual Tax Targets</h3><div class="grid grid-cols-2 gap-4 mt-2"><div><label for="targetST" class="block text-xs font-medium text-slate-600">Target Short-Term</label><input type="number" id="targetST" placeholder="-3000" class="mt-1 w-full rounded-md border-slate-300 shadow-sm text-sm p-2"></div><div><label for="targetLT" class="block text-xs font-medium text-slate-600">Target Long-Term</label><input type="number" id="targetLT" placeholder="5000" class="mt-1 w-full rounded-md border-slate-300 shadow-sm text-sm p-2"></div></div></div>
+                               <div class="pt-4 border-t"><button id="calculateBtn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-all shadow-sm flex items-center justify-center text-base">Generate Recommendations</button></div>
+                            </div>
+                            <div id="tax-results-container" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4"><h2 class="text-xl font-semibold border-b pb-3">2. Recommendations</h2><div id="tax-summary-view"></div><div id="tax-recommendations-table" class="table-container overflow-x-auto"></div><div id="tax-rationale-view"></div></div>
+                        </div>
+                        <div id="tax-portfolio-container" class="mt-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200"></div>`;
+                    case 'model-portfolios': return `<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200"><h2 class="text-xl font-semibold">Model Portfolios</h2><p class="text-slate-600 mt-2">Create, edit, and manage your portfolio models for buy order generation.</p></div>`;
+                    case 'buy-orders': return `<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200"><h2 class="text-xl font-semibold">Buy Orders</h2><p class="text-slate-600 mt-2">Generate buy orders to invest cash from sell orders into your target portfolio allocation.</p></div>`;
+                    case 'price-manager': return `<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200"><h2 class="text-xl font-semibold">Price Manager</h2><p class="text-slate-600 mt-2">Centralized symbol pricing for all model portfolios. Update prices here to sync across all models.</p></div>`;
+                    default: return '';
+                }
+            }
+
+            // =========================================================================
+            // --- 3. CORE UI & EVENT HANDLING ---
+            // =========================================================================
+
+            function setupEventListeners() {
+                document.querySelectorAll('.tab-button').forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+                document.getElementById('clientName').addEventListener('input', (e) => updateClientInfo('name', e.target.value));
+                document.getElementById('custodian').addEventListener('input', (e) => updateClientInfo('custodian', e.target.value));
+                document.getElementById('accountNumber').addEventListener('input', (e) => updateClientInfo('accountNumber', e.target.value));
+                document.getElementById('showReportBtn').addEventListener('click', showReport);
+                document.getElementById('closeReportBtn').addEventListener('click', hideReport);
+                document.getElementById('printReportBtn').addEventListener('click', () => window.print());
+            }
+            
+            function setupTabEventListeners(tabId) {
+                if (tabId === 'tax-harvesting') {
+                    document.getElementById('costBasisFile').addEventListener('change', (e) => handleCostBasisUpload(e.target.files[0]));
+                    document.getElementById('ytdFile').addEventListener('change', (e) => handleYtdUpload(e.target.files[0]));
+                    document.getElementById('calculateBtn').addEventListener('click', handleCalculationTrigger);
+                }
+            }
+
+            function switchTab(tabId) {
+                appState.ui.activeTab = tabId;
+                renderActiveTab();
+            }
+
+            function updateClientInfo(field, value) {
+                appState.client[field] = value;
+                localStorage.setItem('rebalancerClientInfo', JSON.stringify(appState.client));
+            }
+            
+            function loadDataFromLocalStorage() {
+                const clientInfo = localStorage.getItem('rebalancerClientInfo');
+                if (clientInfo) appState.client = JSON.parse(clientInfo);
+            }
+            
+            // =========================================================================
+            // --- 4. GEMINI API INTEGRATION ---
+            // =========================================================================
+
+            async function callGemini(prompt, retries = 3, delay = 1000) {
+                appState.ui.isLoading = true;
+                renderAll(); 
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.5, topK: 1, topP: 1, maxOutputTokens: 2048 }};
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) {
+                        if (response.status === 429 && retries > 0) { await new Promise(res => setTimeout(res, delay)); return callGemini(prompt, retries - 1, delay * 2); }
+                        throw new Error(`API error: ${response.status} ${response.statusText}`);
+                    }
+                    const result = await response.json();
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) return result.candidates[0].content.parts[0].text;
+                    else throw new Error('Invalid response structure from Gemini API');
+                } catch (error) {
+                    console.error("Gemini API call failed:", error);
+                    showNotification("AI generation failed. Please try again.", "error");
+                    return null;
+                } finally {
+                    appState.ui.isLoading = false;
+                    renderAll();
+                }
+            }
+
+            async function generateTradeRationale() {
+                const { targets, ytdGains, recommendations, summary } = appState.tax;
+                if (recommendations.length === 0) return;
+                const prompt = `Generate a client-friendly rationale for tax harvesting trades. Situation: Targets ST $${targets.st.toFixed(2)}, LT $${targets.lt.toFixed(2)}. YTD Gains ST $${ytdGains.st.toFixed(2)}, LT $${ytdGains.lt.toFixed(2)}. Trades: ${recommendations.map(r => `SELL ${r.symbol} for ${r.term} ${r.unrealizedGain.toFixed(2)}`).join('; ')}. Outcome: Final ST $${summary.finalST.toFixed(2)}, LT $${summary.finalLT.toFixed(2)}. Explain how these trades achieve the goals. Start with "The recommended trades are designed to..."`;
+                const rationale = await callGemini(prompt);
+                if (rationale) {
+                    appState.tax.tradeRationale = rationale;
+                    renderTaxHarvestingView();
+                    showNotification("Trade rationale generated.", "success");
+                }
+            }
+            
+            async function generateMarketCommentary() {
+                const topHoldings = [...new Set(appState.tax.portfolio.map(p => p.symbol))].slice(0, 10).join(', ');
+                const prompt = `Provide a brief, high-level market/economic commentary for a client report as of ${new Date().toDateString()}. Mention general trends and optionally these holdings: ${topHoldings}. Be professional and do not give advice.`;
+                const commentary = await callGemini(prompt);
+                if(commentary) {
+                    appState.report.marketCommentary = commentary;
+                    document.getElementById('report-content-container').innerHTML = generateReportHTML();
+                    showNotification("Market commentary generated.", "success");
+                }
+            }
+
+            // =========================================================================
+            // --- 5. RENDERING ENGINE ---
+            // =========================================================================
+
+            function renderAll() {
+                renderClientInfo();
+                renderActiveTab();
+            }
+
+            function renderClientInfo() {
+                document.getElementById('clientName').value = appState.client.name;
+                document.getElementById('custodian').value = appState.client.custodian;
+                document.getElementById('accountNumber').value = appState.client.accountNumber;
+            }
+
+            function renderActiveTab() {
+                document.querySelectorAll('.tab-button').forEach(button => button.classList.toggle('active', button.dataset.tab === appState.ui.activeTab));
+                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.toggle('hidden', panel.id !== `${appState.ui.activeTab}-view`));
+
+                const view = document.getElementById(`${appState.ui.activeTab}-view`);
+                if (view && view.innerHTML.trim() === '') {
+                    view.innerHTML = getTemplateForTab(appState.ui.activeTab);
+                    setupTabEventListeners(appState.ui.activeTab);
+                }
+                
+                if(appState.ui.activeTab === 'tax-harvesting') renderTaxHarvestingView();
+            }
+            
+            // =========================================================================
+            // --- 6. TAX HARVESTING LOGIC & RENDERING ---
+            // =========================================================================
+
+            function renderTaxHarvestingView() {
+                renderTaxPortfolioTable();
+                renderTaxResults();
+            }
+
+            function handleCostBasisUpload(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        appState.tax.portfolio = parseCostBasisCSV(e.target.result);
+                        showNotification(`Loaded ${appState.tax.portfolio.length} lots from ${file.name}`, 'success');
+                        renderTaxHarvestingView();
+                    } catch (error) {
+                        showNotification(error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+            
+            function handleYtdUpload(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const gains = parseYtdCSV(e.target.result);
+                        appState.tax.ytdGains = gains;
+                        document.getElementById('realizedST').value = gains.st.toFixed(2);
+                        document.getElementById('realizedLT').value = gains.lt.toFixed(2);
+                        showNotification(`Loaded YTD gains from ${file.name}`, 'success');
+                    } catch (error) {
+                        showNotification(error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function handleCalculationTrigger() {
+                appState.tax.ytdGains.st = parseFloat(document.getElementById('realizedST').value) || 0;
+                appState.tax.ytdGains.lt = parseFloat(document.getElementById('realizedLT').value) || 0;
+                appState.tax.targets.st = parseFloat(document.getElementById('targetST').value) || 0;
+                appState.tax.targets.lt = parseFloat(document.getElementById('targetLT').value) || 0;
+
+                if (appState.tax.portfolio.length === 0) {
+                    showNotification("Please upload a cost basis file first.", "warning");
+                    return;
+                }
+
+                appState.tax.recommendations = generateAdvancedRecommendations();
+                
+                const stGainFromTrades = appState.tax.recommendations.filter(r => r.term === 'Short').reduce((sum, r) => sum + r.unrealizedGain, 0);
+                const ltGainFromTrades = appState.tax.recommendations.filter(r => r.term === 'Long').reduce((sum, r) => sum + r.unrealizedGain, 0);
+                
+                appState.tax.summary = {
+                    finalST: appState.tax.ytdGains.st + stGainFromTrades,
+                    finalLT: appState.tax.ytdGains.lt + ltGainFromTrades,
+                    totalGainFromTrades: stGainFromTrades + ltGainFromTrades,
+                    totalMarketValueFromTrades: appState.tax.recommendations.reduce((sum, r) => sum + r.marketValue, 0)
+                };
+                
+                appState.tax.tradeRationale = '';
+                showNotification(`${appState.tax.recommendations.length} trade recommendations generated.`, 'success');
+                renderTaxResults();
+            }
+
+            function renderTaxPortfolioTable() {
+                const container = document.getElementById('tax-portfolio-container');
+                if (!container) return;
+                
+                if (appState.tax.portfolio.length === 0) {
+                    container.innerHTML = `<p class="text-slate-500 text-center">Upload a Cost Basis CSV to see portfolio holdings.</p>`;
+                    return;
+                }
+                
+                container.innerHTML = `<h2 class="text-xl font-semibold mb-4">Portfolio Holdings (${appState.tax.portfolio.length} lots)</h2><p class="text-slate-600">Interactive portfolio table will be rendered here.</p>`;
+            }
+
+            function renderTaxResults() {
+                const summaryContainer = document.getElementById('tax-summary-view');
+                const tableContainer = document.getElementById('tax-recommendations-table');
+                const rationaleContainer = document.getElementById('tax-rationale-view');
+                if (!summaryContainer) return;
+
+                const { summary, targets, recommendations } = appState.tax;
+                const formatCurrency = (num = 0) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+                if (Object.keys(summary).length === 0) {
+                    summaryContainer.innerHTML = `<p class="text-slate-500 text-center">Generate recommendations to see results.</p>`;
+                    tableContainer.innerHTML = '';
+                    rationaleContainer.innerHTML = '';
+                    return;
+                }
+                
+                summaryContainer.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div><p class="text-xs text-slate-500">Projected Final ST</p><p class="font-bold text-lg ${summary.finalST < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(summary.finalST)}</p><p class="text-xs text-slate-400">Target: ${formatCurrency(targets.st)}</p></div>
+                        <div><p class="text-xs text-slate-500">Projected Final LT</p><p class="font-bold text-lg ${summary.finalLT < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(summary.finalLT)}</p><p class="text-xs text-slate-400">Target: ${formatCurrency(targets.lt)}</p></div>
+                    </div>
+                `;
+
+                if (recommendations.length > 0) {
+                    tableContainer.innerHTML = `
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50"><tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Symbol</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Acquired</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase">Gain/Loss</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Term</th>
+                            </tr></thead>
+                            <tbody class="bg-white divide-y divide-slate-200">
+                                ${recommendations.map(lot => `
+                                    <tr>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-slate-900">${lot.symbol}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-slate-500">${lot.acquired}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-right ${lot.unrealizedGain < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(lot.unrealizedGain)}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-center">${lot.term}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>`;
+                } else {
+                    tableContainer.innerHTML = `<p class="text-slate-500 text-center py-4">No trades needed to meet targets.</p>`;
+                }
+                
+                let rationaleContent = `<h3 class="text-md font-medium text-slate-800">✨ AI-Generated Trade Rationale</h3>`;
+                if (appState.ui.isLoading && !appState.tax.tradeRationale) {
+                    rationaleContent += `<div class="flex items-center justify-center p-4"><div class="loader"></div></div>`;
+                } else if (appState.tax.tradeRationale) {
+                    rationaleContent += `<div class="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg whitespace-pre-wrap">${appState.tax.tradeRationale}</div>`;
+                }
+                if (recommendations.length > 0) {
+                     rationaleContent += `<button id="generateRationaleBtn" class="mt-2 w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center text-sm">${appState.ui.isLoading ? '<div class="spinner-small mr-2"></div> Regenerating...' : '✨ Regenerate Rationale'}</button>`;
+                }
+                rationaleContainer.innerHTML = rationaleContent;
+                const rationaleBtn = document.getElementById('generateRationaleBtn');
+                if(rationaleBtn) rationaleBtn.addEventListener('click', generateTradeRationale);
+            }
+
+            // =========================================================================
+            // --- 7. PARSING & ALGORITHMS ---
+            // =========================================================================
+            
+            function parseCostBasisCSV(csvText) {
+                const lines = csvText.trim().split('\n');
+                if (lines.length < 2) throw new Error('CSV is empty or invalid.');
+                const header = lines.shift().split(',').map(h => h.trim().toLowerCase());
+                const indices = {
+                    symbol: header.findIndex(h => h.includes('symbol')),
+                    acquired: header.findIndex(h => h.includes('acquired')),
+                    quantity: header.findIndex(h => h.includes('quantity')),
+                    marketValue: header.findIndex(h => h.includes('market value')),
+                    costBasis: header.findIndex(h => h.includes('cost basis')),
+                    term: header.findIndex(h => h.includes('holding period')),
+                };
+                if (Object.values(indices).some(i => i === -1)) throw new Error('CSV is missing required columns (symbol, acquired, quantity, market value, cost basis, holding period)');
+                const cleanValue = (val) => parseFloat(String(val).replace(/[$, "()]/g, '')) || 0;
+                return lines.map((line, index) => {
+                    const values = line.split(',');
+                    const marketValue = cleanValue(values[indices.marketValue]);
+                    const costBasis = cleanValue(values[indices.costBasis]);
+                    return { id: `lot-${index}`, symbol: values[indices.symbol]?.trim(), acquired: values[indices.acquired]?.trim(), quantity: cleanValue(values[indices.quantity]), marketValue, costBasis, unrealizedGain: marketValue - costBasis, term: values[indices.term]?.toLowerCase().includes('long') ? 'Long' : 'Short', included: true };
+                }).filter(lot => lot.symbol && lot.quantity > 0);
+            }
+            
+            function parseYtdCSV(csvText) {
+                const lines = csvText.trim().split('\n');
+                lines.shift();
+                const cleanValue = (val) => parseFloat(String(val).replace(/[$, "()]/g, '')) || 0;
+                return lines.reduce((acc, line) => {
+                    const values = line.split(',');
+                    acc.st += cleanValue(values[1]);
+                    acc.lt += cleanValue(values[2]);
+                    return acc;
+                }, { st: 0, lt: 0 });
+            }
+
+            function generateAdvancedRecommendations() {
+                const { portfolio, targets, ytdGains } = appState.tax;
+                const neededST = targets.st - ytdGains.st;
+                const neededLT = targets.lt - ytdGains.lt;
+                const lots = portfolio.filter(lot => lot.included);
+                let recommendations = [];
+                const findBestCombination = (target, lotsPool) => {
+                    if (Math.abs(target) < 1 || lotsPool.length === 0) return [];
+                    lotsPool.sort((a, b) => Math.abs(target - a.unrealizedGain) - Math.abs(target - b.unrealizedGain));
+                    return lotsPool.length > 0 ? [lotsPool[0]] : [];
+                };
+                if (neededST !== 0) {
+                    const pool = lots.filter(l => l.term === 'Short' && Math.sign(l.unrealizedGain) === Math.sign(neededST));
+                    recommendations.push(...findBestCombination(neededST, pool));
+                }
+                if (neededLT !== 0) {
+                    const pool = lots.filter(l => l.term === 'Long' && Math.sign(l.unrealizedGain) === Math.sign(neededLT));
+                    recommendations.push(...findBestCombination(neededLT, pool));
+                }
+                return recommendations;
+            }
+
+            // =========================================================================
+            // --- 8. NOTIFICATION & REPORTING ---
+            // =========================================================================
+
+            function showNotification(message, type = 'info', duration = 4000) {
+                const area = document.getElementById('notification-area');
+                const notification = document.createElement('div');
+                const colors = { info: 'bg-blue-500', success: 'bg-green-500', warning: 'bg-yellow-500', error: 'bg-red-500' };
+                notification.className = `transform transition-all duration-300 ease-in-out translate-y-4 opacity-0 p-4 rounded-lg shadow-lg text-white text-sm font-semibold ${colors[type]}`;
+                notification.textContent = message;
+                area.appendChild(notification);
+                setTimeout(() => notification.classList.remove('translate-y-4', 'opacity-0'), 10);
+                setTimeout(() => {
+                    notification.classList.add('opacity-0');
+                    notification.addEventListener('transitionend', () => notification.remove());
+                }, duration);
+            }
+
+            function showReport() {
+                document.getElementById('report-modal').classList.remove('hidden');
+                document.getElementById('report-content-container').innerHTML = generateReportHTML();
+            }
+
+            function hideReport() {
+                document.getElementById('report-modal').classList.add('hidden');
+            }
+
+            function generateReportHTML() {
+                const { client, tax, report } = appState;
+                const formatCurrency = (num = 0) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                let commentaryHTML = `<h3 class="text-lg font-semibold mb-2">✨ Market & Economic Commentary</h3>`;
+                if (appState.ui.isLoading && !report.marketCommentary) {
+                    commentaryHTML += `<div class="flex justify-center p-4"><div class="loader"></div></div>`;
+                } else if (report.marketCommentary) {
+                    commentaryHTML += `<p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-md whitespace-pre-wrap">${report.marketCommentary}</p>`;
+                }
+                commentaryHTML += `<button id="generateCommentaryBtn" class="mt-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold py-2 px-3 rounded-lg text-xs flex items-center">${appState.ui.isLoading ? '<div class="spinner-small mr-2"></div> Generating...' : '✨ Generate Commentary'}</button>`;
+                let html = `<div class="space-y-6"><div><h2 class="text-xl font-bold border-b pb-2">Tax Harvesting Summary</h2><p class="text-sm mt-2">Projected Final ST Gain/Loss: <span class="font-semibold">${formatCurrency(tax.summary.finalST)}</span></p><p class="text-sm">Projected Final LT Gain/Loss: <span class="font-semibold">${formatCurrency(tax.summary.finalLT)}</span></p></div><div class="print-break-before">${commentaryHTML}</div></div>`;
+                setTimeout(() => {
+                    const btn = document.getElementById('generateCommentaryBtn');
+                    if(btn) btn.addEventListener('click', generateMarketCommentary);
+                }, 0);
+                return html;
+            }
+            
+            async function loadModelPortfolios() {}
+
+            // =========================================================================
+            // --- INITIALIZATION ---
+            // =========================================================================
+            
+            setupEventListeners();
+            loadDataFromLocalStorage();
+            renderAll();
+            loadModelPortfolios();
+        });
+    </script>
+</body>
+</html>
