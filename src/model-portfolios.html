@@ -502,13 +502,17 @@
 
         // Function to parse CSV portfolio data
         function parseCSVPortfolio(csvText, filename) {
+            console.log(`Parsing portfolio: ${filename}`);
             const lines = csvText.trim().split('\n');
-            if (lines.length < 2) return null;
+            if (lines.length < 2) {
+                console.warn(`${filename}: Not enough lines (${lines.length})`);
+                return null;
+            }
 
             const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
             const holdings = [];
 
-            console.log('CSV Headers:', headers);
+            console.log(`${filename} - CSV Headers:`, headers);
 
             // Find column indices with more flexible matching
             const symbolIndex = headers.findIndex(h => 
@@ -525,7 +529,10 @@
                 h.includes('percent') || h.includes('target')
             );
 
-            console.log('Column indices:', { symbolIndex, nameIndex, priceIndex, weightIndex });
+            console.log(`${filename} - Column indices:`, { symbolIndex, nameIndex, priceIndex, weightIndex });
+
+            let totalWeight = 0;
+            let nonZeroWeights = 0;
 
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
@@ -563,18 +570,31 @@
                     weight: weight
                 };
 
-                console.log('Parsed holding:', holding);
-
                 if (holding.symbol && holding.symbol !== '' && holding.symbol !== 'Symbol') {
                     holdings.push(holding);
+                    totalWeight += weight;
+                    if (weight > 0) nonZeroWeights++;
                 }
             }
 
-            console.log('Final holdings:', holdings);
+            console.log(`${filename} - Parsed ${holdings.length} holdings, total weight: ${totalWeight}, non-zero weights: ${nonZeroWeights}`);
+
+            // Only return portfolio if it has valid holdings with weights
+            if (holdings.length === 0) {
+                console.warn(`${filename}: No valid holdings found`);
+                return null;
+            }
+            
+            // Show warning if all weights are zero but still return the portfolio
+            if (nonZeroWeights === 0) {
+                console.warn(`${filename}: All holdings have zero weight - portfolio may appear empty`);
+            }
 
             return {
                 name: filename.replace('.csv', '').replace(/_/g, ' '),
-                holdings: holdings
+                holdings: holdings,
+                totalWeight: totalWeight,
+                hasValidWeights: nonZeroWeights > 0
             };
         }
 
@@ -690,6 +710,7 @@
         }
 
         function populatePortfolioDropdown() {
+            console.log('Populating portfolio dropdown...');
             // Clear existing options except the first one
             portfolioSelect.innerHTML = '<option value="">-- Select Portfolio --</option>';
 
@@ -708,16 +729,23 @@
             }
 
             // Add predefined portfolios
-            const predefinedGroup = document.createElement('optgroup');
-            predefinedGroup.label = 'Model Portfolios';
-            Object.keys(predefinedPortfolios).forEach(key => {
-                const portfolio = predefinedPortfolios[key];
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = portfolio.name;
-                predefinedGroup.appendChild(option);
-            });
-            portfolioSelect.appendChild(predefinedGroup);
+            if (Object.keys(predefinedPortfolios).length > 0) {
+                const predefinedGroup = document.createElement('optgroup');
+                predefinedGroup.label = 'Model Portfolios';
+                Object.keys(predefinedPortfolios).forEach(key => {
+                    const portfolio = predefinedPortfolios[key];
+                    const option = document.createElement('option');
+                    option.value = key;
+                    // Add indicator if portfolio has no valid weights
+                    const weightIndicator = portfolio.hasValidWeights ? '' : ' (no weights)';
+                    option.textContent = portfolio.name + weightIndicator;
+                    predefinedGroup.appendChild(option);
+                });
+                portfolioSelect.appendChild(predefinedGroup);
+                console.log(`Added ${Object.keys(predefinedPortfolios).length} model portfolios to dropdown`);
+            } else {
+                console.warn('No predefined portfolios found to add to dropdown');
+            }
         }
 
         function handleFileUpload(event) {
@@ -1318,31 +1346,41 @@
 
         // Initialize portfolio dropdown after loading models
         async function initializePortfolios() {
-            await loadModelPortfolios();
-            populatePortfolioDropdown();
-            
-            // Initialize blending tool with 2 default selections after portfolios are loaded
-            addBlendingPortfolio();
-            addBlendingPortfolio();
+            console.log('Starting portfolio initialization...');
+            try {
+                await loadModelPortfolios();
+                console.log('Model portfolios loaded, predefinedPortfolios:', predefinedPortfolios);
+                populatePortfolioDropdown();
+                console.log('Portfolio dropdown populated');
+                
+                // Initialize blending tool with 2 default selections after portfolios are loaded
+                addBlendingPortfolio();
+                addBlendingPortfolio();
 
-            // Check for centralized prices and show notification
-            const savedPrices = localStorage.getItem('centralizedPrices');
-            if (savedPrices) {
-                try {
-                    const pricesData = JSON.parse(savedPrices);
-                    const symbolCount = Object.keys(pricesData).length;
-                    if (symbolCount > 0) {
-                        showNotification(`Using centralized prices for ${symbolCount} symbols from Price Manager`, 'info');
+                // Check for centralized prices and show notification
+                const savedPrices = localStorage.getItem('centralizedPrices');
+                if (savedPrices) {
+                    try {
+                        const pricesData = JSON.parse(savedPrices);
+                        const symbolCount = Object.keys(pricesData).length;
+                        if (symbolCount > 0) {
+                            showNotification(`Using centralized prices for ${symbolCount} symbols from Price Manager`, 'info');
+                        }
+                    } catch (error) {
+                        console.warn('Error loading centralized prices:', error);
                     }
-                } catch (error) {
-                    console.warn('Error loading centralized prices:', error);
                 }
+            } catch (error) {
+                console.error('Error initializing portfolios:', error);
+                showNotification('Error loading model portfolios. Check console for details.', 'error');
             }
         }
-        initializePortfolios();
         
         // Mobile menu functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize portfolios after DOM is loaded
+            initializePortfolios();
+            
             try {
                 const mobileMenuButton = document.getElementById('mobile-menu-button');
                 const mobileMenu = document.getElementById('mobile-menu');
