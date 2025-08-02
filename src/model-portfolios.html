@@ -449,16 +449,11 @@
         // Function to load all model portfolios from data/models/ directory
         async function loadModelPortfolios() {
             const modelFiles = [
-                '100-0.csv',
-                '80-20.csv',
-                'All Equity.csv',
-                'All_Equity.csv',
                 'AWM Model - All Equity.csv',
-                'AWM Model - Fixed (D).csv',
-                'AWM Model - Fixed (T).csv',
-                'AWM Tactical Equity.csv',
-                'Fixed-Income.csv',
-                'Tactical Equity.csv'
+                'AWM Model - Fixed_D.csv',
+                'AWM Model - Fixed_T.csv',
+                'AWM Model_Tactical Equity.csv',
+                'All_Equity.csv'
             ];
 
             for (const filename of modelFiles) {
@@ -503,6 +498,10 @@
         // Function to parse CSV portfolio data
         function parseCSVPortfolio(csvText, filename) {
             console.log(`Parsing portfolio: ${filename}`);
+            
+            // Remove BOM (Byte Order Mark) if present
+            csvText = csvText.replace(/^\uFEFF/, '');
+            
             const lines = csvText.trim().split('\n');
             if (lines.length < 2) {
                 console.warn(`${filename}: Not enough lines (${lines.length})`);

@@ -1,14 +1,14 @@
-Model,Symbol,Name,Price,Target Percent
-"All Equity","EFV","iShares MSCI EAFE Value ETF",63.26,10.0
-"All Equity","SPYG","SPDR® Portfolio S&P 500 Growth ETF",96.76,11.0
-"All Equity","DYNF","iShares U.S. Equity Fac Rotation Act ETF",55.01,10.0
-"All Equity","SPMO","Invesco S&P 500® Momentum ETF",113.23,11.0
-"All Equity","AUSF","Global X Adaptive US Factor ETF",44.16,6.0
-"All Equity","PVAL","Putnam Focused Large Cap Value ETF",39.93,9.0
-"All Equity","DBEF","Xtrackers MSCI EAFE Hedged Equity ETF",43.78,2.0
-"All Equity","EDIV","SPDR® S&P Emerging Markets Dividend ETF",38.04,5.0
-"All Equity","IDMO","Invesco S&P International Dev Momt ETF",50.60,9.0
-"All Equity","SMH","VanEck Semiconductor ETF",283.95,4.0
-"All Equity","JQUA","JPMorgan US Quality Factor ETF",59.81,11.0
-"All Equity","MOAT","VanEck Morningstar Wide Moat ETF",95.85,2.0
-"All Equity","EQWL","Invesco S&P 100 Equal Weight ETF",108.47,10.0
+Model,Symbol,Name,Weight
+All Equity,EFV,iShares MSCI EAFE Value ETF,10
+All Equity,SPYG,SPDR® Portfolio S&P 500 Growth ETF,11
+All Equity,DYNF,iShares U.S. Equity Fac Rotation Act ETF,10
+All Equity,SPMO,Invesco S&P 500® Momentum ETF,11
+All Equity,AUSF,Global X Adaptive US Factor ETF,6
+All Equity,PVAL,Putnam Focused Large Cap Value ETF,9
+All Equity,DBEF,Xtrackers MSCI EAFE Hedged Equity ETF,2
+All Equity,EDIV,SPDR® S&P Emerging Markets Dividend ETF,5
+All Equity,IDMO,Invesco S&P International Dev Momt ETF,9
+All Equity,SMH,VanEck Semiconductor ETF,4
+All Equity,JQUA,JPMorgan US Quality Factor ETF,11
+All Equity,MOAT,VanEck Morningstar Wide Moat ETF,2
+All Equity,EQWL,Invesco S&P 100 Equal Weight ETF,10
