@@ -457,7 +457,7 @@
         async function loadModelPortfolios() {
             const modelFiles = [
                 'AWM Model - All Equity.csv',
-                'AWM Model - Fixed_D.csv',
+                'AWM Model - Fixed_D.csv', 
                 'AWM Model - Fixed_T.csv',
                 'AWM Model_Tactical Equity.csv',
                 'All_Equity.csv'
@@ -596,6 +596,9 @@
         }
 
         function parsePortfolioCSV(csvText) {
+            // Remove BOM character if present
+            csvText = csvText.replace(/^\uFEFF/, '');
+            
             const lines = csvText.trim().split('\n');
             if (lines.length < 2) return [];
             
@@ -615,12 +618,13 @@
             
             console.log('Column indices:', { symbolIndex, nameIndex, priceIndex, targetPercentIndex });
             
-            if (symbolIndex === -1 || priceIndex === -1 || targetPercentIndex === -1) {
+            // For AWM models, priceIndex might be -1 (no price column), which is OK
+            if (symbolIndex === -1 || targetPercentIndex === -1) {
                 console.error('CSV parsing failed - missing required columns:', {
                     symbolIndex, nameIndex, priceIndex, targetPercentIndex,
                     headers: header
                 });
-                alert('CSV must contain Symbol, Price, and Target Percent/Weight columns. Check console for details.');
+                alert('CSV must contain Symbol and Weight/Target Percent columns. Check console for details.');
                 return [];
             }
 
@@ -631,18 +635,21 @@
                 const values = trimmedLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                 const symbol = values[symbolIndex]?.trim().replace(/"/g, '');
                 const name = values[nameIndex]?.trim().replace(/"/g, '') || '';
-                const priceStr = values[priceIndex]?.trim().replace(/[$\s,"]/g, '');
+                const priceStr = priceIndex >= 0 ? values[priceIndex]?.trim().replace(/[$\s,"]/g, '') : '';
                 const targetPercentStr = values[targetPercentIndex]?.trim().replace(/[%\s,"]/g, '');
                 
                 if (!symbol || symbol === 'Symbol') return null;
                 
                 let price = parseFloat(priceStr) || 0;
                 
-                // Use centralized price if available (overrides CSV price)
+                // Use centralized price if available (this is essential for AWM models without price columns)
                 const centralizedPrice = getCentralizedPrice(symbol);
                 if (centralizedPrice !== null) {
                     price = centralizedPrice;
                     console.log(`Using centralized price for ${symbol}: $${price}`);
+                } else if (priceIndex === -1 || price === 0) {
+                    // No price in CSV and no centralized price - this will cause issues
+                    console.warn(`No price available for ${symbol} - needs centralized price from Price Manager`);
                 }
                 
                 const targetPercent = parseFloat(targetPercentStr) || 0;
@@ -658,11 +665,15 @@
             }).filter(item => {
                 if (!item) return false;
                 
-                // Allow items with valid symbols and prices, even if target percent is 0
-                const isValid = item.symbol && item.symbol !== '' && item.price >= 0;
+                // Valid if has symbol and either has price or target percent (will warn about missing prices later)
+                const isValid = item.symbol && item.symbol !== '';
                 
                 if (!isValid) {
                     console.warn('Filtered out invalid item:', item);
+                }
+                
+                if (item.price === 0) {
+                    console.warn('Warning: Item has no price - will need centralized pricing:', item.symbol);
                 }
                 
                 if (item.targetPercent === 0) {
@@ -801,6 +812,14 @@
             const hasValidTargets = portfolioData.some(item => item.targetPercent > 0);
             if (!hasValidTargets) {
                 alert('Warning: All target percentages in the selected portfolio are 0%. This will not generate any buy orders. Please select a different portfolio or upload a custom CSV with valid target percentages.');
+                return;
+            }
+            
+            // Check for missing prices
+            const itemsWithoutPrices = portfolioData.filter(item => item.price === 0 || !item.price);
+            if (itemsWithoutPrices.length > 0) {
+                const symbolsWithoutPrices = itemsWithoutPrices.map(item => item.symbol).join(', ');
+                alert(`Warning: The following symbols have no prices: ${symbolsWithoutPrices}. Please use the Price Manager to set centralized prices, or upload a portfolio CSV that includes prices.`);
                 return;
             }
             
