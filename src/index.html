@@ -438,8 +438,10 @@
 
                 <!-- Cash Raising Mode -->
                 <div id="cashRaisingMode" class="mode-content hidden">
-                    <p class="text-sm text-gray-600 mb-4">Specify the amount of cash you need to raise. The algorithm will find the most tax-efficient way to generate this cash.</p>
-                    <div class="mb-6">
+                    <p class="text-sm text-gray-600 mb-4">Specify the cash amount needed and set acceptable tax impact thresholds. The algorithm will optimize for the best tax outcome within your constraints.</p>
+                    
+                    <!-- Cash Amount -->
+                    <div class="mb-4">
                         <label for="cashAmount" class="block text-sm font-medium text-gray-700">Cash Amount Needed</label>
                         <div class="mt-1 relative rounded-md shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -448,7 +450,77 @@
                             <input type="number" id="cashAmount" placeholder="50000"
                                 class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">The algorithm will prioritize losses first, then smaller gains to minimize tax impact.</p>
+                    </div>
+
+                    <!-- Tax Impact Thresholds -->
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium text-gray-700 mb-3">Tax Impact Thresholds (Optional)</h3>
+                        <p class="text-xs text-gray-500 mb-3">Set maximum acceptable tax impact. Leave blank for no limits.</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="maxSTGain" class="block text-xs font-medium text-gray-600">Max Short-Term Gain</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-400 text-xs">$</span>
+                                    </div>
+                                    <input type="number" id="maxSTGain" placeholder="e.g., 10000"
+                                        class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs p-2">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="maxLTGain" class="block text-xs font-medium text-gray-600">Max Long-Term Gain</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-400 text-xs">$</span>
+                                    </div>
+                                    <input type="number" id="maxLTGain" placeholder="e.g., 25000"
+                                        class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs p-2">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="minSTLoss" class="block text-xs font-medium text-gray-600">Min Short-Term Loss</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-400 text-xs">-$</span>
+                                    </div>
+                                    <input type="number" id="minSTLoss" placeholder="e.g., 3000"
+                                        class="pl-8 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs p-2">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="minLTLoss" class="block text-xs font-medium text-gray-600">Min Long-Term Loss</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-400 text-xs">-$</span>
+                                    </div>
+                                    <input type="number" id="minLTLoss" placeholder="e.g., 5000"
+                                        class="pl-8 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-xs p-2">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Strategy Options -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-medium text-gray-700 mb-3">Optimization Strategy</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="cashStrategy" value="minimize_tax" checked
+                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                                <span class="ml-2 text-sm text-gray-700">Minimize Tax Impact (Prioritize losses, then LT gains)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="cashStrategy" value="balanced"
+                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                                <span class="ml-2 text-sm text-gray-700">Balanced Approach (Consider both tax impact and liquidity)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="cashStrategy" value="maximize_cash"
+                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                                <span class="ml-2 text-sm text-gray-700">Maximize Cash (Prioritize largest positions first)</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -1994,17 +2066,26 @@
             };
         }
 
-        // Cash Raising Mode - Generate recommendations to raise specific cash amount
+        // Advanced Cash Raising Mode - Sophisticated algorithm with tax thresholds
         function generateCashRaisingRecommendations(cashAmount) {
-            console.log('Generating cash raising recommendations for:', cashAmount);
-            console.log('Portfolio data length:', portfolioData.length);
+            console.log('=== ADVANCED CASH RAISING ALGORITHM ===');
+            console.log('Cash target:', cashAmount);
             
-            // Get all available positions that can be sold
+            // Get threshold parameters
+            const maxSTGain = parseFloat(document.getElementById('maxSTGain').value) || Infinity;
+            const maxLTGain = parseFloat(document.getElementById('maxLTGain').value) || Infinity;
+            const minSTLoss = parseFloat(document.getElementById('minSTLoss').value) || -Infinity;
+            const minLTLoss = parseFloat(document.getElementById('minLTLoss').value) || -Infinity;
+            const strategy = document.querySelector('input[name="cashStrategy"]:checked').value;
+            
+            console.log('Tax thresholds:', { maxSTGain, maxLTGain, minSTLoss: -Math.abs(minSTLoss), minLTLoss: -Math.abs(minLTLoss) });
+            console.log('Strategy:', strategy);
+            
+            // Get all available positions
             const availablePositions = portfolioData.filter(lot => lot.includedInSelling);
-            console.log('Available positions for selling:', availablePositions.length);
+            console.log('Available positions:', availablePositions.length);
             
             if (availablePositions.length === 0) {
-                console.log('No positions available for selling');
                 return {
                     recommendations: [],
                     violations: [],
@@ -2015,84 +2096,185 @@
                         shortTermGainLoss: 0,
                         longTermGainLoss: 0,
                         cashTarget: cashAmount,
-                        cashExcess: -cashAmount
+                        cashExcess: -cashAmount,
+                        thresholdsMet: false,
+                        strategy: strategy
                     }
                 };
             }
             
-            // Sort positions by tax efficiency for cash raising:
-            // 1. Losses first (best for taxes)
-            // 2. Then smallest gains (minimize tax impact)
-            // 3. Consider holding period (prefer long-term gains over short-term)
-            const sortedPositions = availablePositions.map(lot => {
-                try {
-                    const currentPrice = parseFloat(lot.currentPrice || lot.price || 0);
-                    const costBasis = parseFloat(lot.costBasis || lot.costPerShare || 0);
-                    const quantity = parseFloat(lot.quantity || 0);
-                    const gainLoss = (currentPrice - costBasis) * quantity;
-                    const marketValue = currentPrice * quantity;
-                    const isLoss = gainLoss < 0;
-                    const isLongTerm = lot.term === 'Long-Term';
-                    
-                    // Tax efficiency score (higher is better for cash raising)
-                    let taxEfficiencyScore = 0;
-                    
-                    if (isLoss) {
-                        // Losses are best - bigger losses get higher scores
-                        taxEfficiencyScore = 1000 + Math.abs(gainLoss);
-                    } else {
-                        // For gains, prefer long-term over short-term, and smaller gains over larger
-                        if (isLongTerm) {
-                            taxEfficiencyScore = 500 - gainLoss; // Long-term gains
+            // Process and categorize positions
+            const processedPositions = availablePositions.map(lot => {
+                const currentPrice = parseFloat(lot.currentPrice || lot.price || 0);
+                const costBasis = parseFloat(lot.costBasis || lot.costPerShare || 0);
+                const quantity = parseFloat(lot.quantity || 0);
+                const gainLoss = (currentPrice - costBasis) * quantity;
+                const marketValue = currentPrice * quantity;
+                const isLongTerm = lot.term === 'Long-Term' || lot.term === 'Long';
+                
+                return {
+                    ...lot,
+                    currentPrice,
+                    costBasis,
+                    quantity,
+                    gainLoss,
+                    marketValue,
+                    isLongTerm,
+                    isShortTerm: !isLongTerm,
+                    isGain: gainLoss > 0,
+                    isLoss: gainLoss < 0
+                };
+            }).filter(pos => pos.marketValue > 0);
+            
+            // Categorize positions
+            const categories = {
+                stLosses: processedPositions.filter(p => p.isShortTerm && p.isLoss),
+                ltLosses: processedPositions.filter(p => p.isLongTerm && p.isLoss),
+                ltGains: processedPositions.filter(p => p.isLongTerm && p.isGain),
+                stGains: processedPositions.filter(p => p.isShortTerm && p.isGain)
+            };
+            
+            console.log('Position categories:', {
+                stLosses: categories.stLosses.length,
+                ltLosses: categories.ltLosses.length,
+                ltGains: categories.ltGains.length,
+                stGains: categories.stGains.length
+            });
+            
+            // Sort each category by strategy
+            const sortByStrategy = (positions, category) => {
+                switch (strategy) {
+                    case 'minimize_tax':
+                        if (category.includes('Loss')) {
+                            // For losses: prioritize larger losses (better tax benefit)
+                            return positions.sort((a, b) => a.gainLoss - b.gainLoss);
                         } else {
-                            taxEfficiencyScore = 100 - gainLoss; // Short-term gains (least preferred)
+                            // For gains: prioritize smaller gains (less tax impact)
+                            return positions.sort((a, b) => a.gainLoss - b.gainLoss);
                         }
-                    }
-                    
-                    return {
-                        ...lot,
-                        currentPrice,
-                        costBasis,
-                        quantity,
-                        gainLoss,
-                        marketValue,
-                        taxEfficiencyScore,
-                        isLoss
-                    };
-                } catch (error) {
-                    console.error('Error processing position:', lot, error);
-                    return {
-                        ...lot,
-                        gainLoss: 0,
-                        marketValue: 0,
-                        taxEfficiencyScore: 0,
-                        isLoss: false
-                    };
+                    case 'maximize_cash':
+                        // Prioritize larger positions for maximum cash
+                        return positions.sort((a, b) => b.marketValue - a.marketValue);
+                    case 'balanced':
+                    default:
+                        // Balance between tax efficiency and cash generation
+                        return positions.sort((a, b) => {
+                            const aScore = (a.marketValue / 1000) + (a.isLoss ? Math.abs(a.gainLoss) / 100 : -a.gainLoss / 100);
+                            const bScore = (b.marketValue / 1000) + (b.isLoss ? Math.abs(b.gainLoss) / 100 : -b.gainLoss / 100);
+                            return bScore - aScore;
+                        });
                 }
-            }).filter(pos => pos.marketValue > 0).sort((a, b) => b.taxEfficiencyScore - a.taxEfficiencyScore);
+            };
             
-            console.log('Sorted positions for cash raising:', sortedPositions.length);
+            // Sort all categories
+            categories.stLosses = sortByStrategy(categories.stLosses, 'stLosses');
+            categories.ltLosses = sortByStrategy(categories.ltLosses, 'ltLosses');
+            categories.ltGains = sortByStrategy(categories.ltGains, 'ltGains');
+            categories.stGains = sortByStrategy(categories.stGains, 'stGains');
             
-            // Select positions to meet cash target
+            // Advanced selection algorithm with constraint satisfaction
             const selectedPositions = [];
             let totalCashRaised = 0;
-            let totalGainLoss = 0;
-            let shortTermGainLoss = 0;
-            let longTermGainLoss = 0;
+            let currentSTGain = 0;
+            let currentLTGain = 0;
+            let currentSTLoss = 0;
+            let currentLTLoss = 0;
             
-            for (const position of sortedPositions) {
+            // Priority order based on tax efficiency
+            const selectionOrder = [
+                { category: 'stLosses', name: 'Short-Term Losses' },
+                { category: 'ltLosses', name: 'Long-Term Losses' },
+                { category: 'ltGains', name: 'Long-Term Gains' },
+                { category: 'stGains', name: 'Short-Term Gains' }
+            ];
+            
+            console.log('=== SELECTION PROCESS ===');
+            
+            for (const { category, name } of selectionOrder) {
+                console.log(`Processing ${name}:`, categories[category].length, 'positions');
+                
+                for (const position of categories[category]) {
+                    // Check if we've reached our cash target
+                    if (totalCashRaised >= cashAmount) {
+                        console.log('Cash target reached, stopping selection');
+                        break;
+                    }
+                    
+                    // Calculate what the new totals would be
+                    const newCashRaised = totalCashRaised + position.marketValue;
+                    const newSTGain = currentSTGain + (position.isShortTerm && position.isGain ? position.gainLoss : 0);
+                    const newLTGain = currentLTGain + (position.isLongTerm && position.isGain ? position.gainLoss : 0);
+                    const newSTLoss = currentSTLoss + (position.isShortTerm && position.isLoss ? position.gainLoss : 0);
+                    const newLTLoss = currentLTLoss + (position.isLongTerm && position.isLoss ? position.gainLoss : 0);
+                    
+                    // Check threshold constraints
+                    const withinSTGainLimit = newSTGain <= maxSTGain;
+                    const withinLTGainLimit = newLTGain <= maxLTGain;
+                    const withinSTLossLimit = newSTLoss >= -Math.abs(minSTLoss);
+                    const withinLTLossLimit = newLTLoss >= -Math.abs(minLTLoss);
+                    
+                    const meetsAllConstraints = withinSTGainLimit && withinLTGainLimit && withinSTLossLimit && withinLTLossLimit;
+                    
+                    if (meetsAllConstraints) {
+                        selectedPositions.push(position);
+                        totalCashRaised = newCashRaised;
+                        currentSTGain = newSTGain;
+                        currentLTGain = newLTGain;
+                        currentSTLoss = newSTLoss;
+                        currentLTLoss = newLTLoss;
+                        
+                        console.log(`Selected ${position.symbol}: $${position.marketValue.toFixed(0)} cash, $${position.gainLoss.toFixed(0)} gain/loss`);
+                    } else {
+                        console.log(`Skipped ${position.symbol}: would violate constraints`);
+                    }
+                }
+                
                 if (totalCashRaised >= cashAmount) break;
+            }
+            
+            // If we haven't reached the target and strategy allows, relax constraints
+            if (totalCashRaised < cashAmount && strategy !== 'minimize_tax') {
+                console.log('=== RELAXING CONSTRAINTS TO MEET CASH TARGET ===');
                 
-                selectedPositions.push(position);
-                totalCashRaised += position.marketValue;
-                totalGainLoss += position.gainLoss;
+                const remainingPositions = processedPositions.filter(p => !selectedPositions.includes(p));
+                const sortedRemaining = remainingPositions.sort((a, b) => {
+                    // Prioritize positions with least tax impact per dollar of cash
+                    const aTaxEfficiency = Math.abs(a.gainLoss) / a.marketValue;
+                    const bTaxEfficiency = Math.abs(b.gainLoss) / b.marketValue;
+                    return aTaxEfficiency - bTaxEfficiency;
+                });
                 
-                if (position.term === 'Short-Term') {
-                    shortTermGainLoss += position.gainLoss;
-                } else {
-                    longTermGainLoss += position.gainLoss;
+                for (const position of sortedRemaining) {
+                    if (totalCashRaised >= cashAmount) break;
+                    
+                    selectedPositions.push(position);
+                    totalCashRaised += position.marketValue;
+                    
+                    if (position.isShortTerm && position.isGain) currentSTGain += position.gainLoss;
+                    if (position.isLongTerm && position.isGain) currentLTGain += position.gainLoss;
+                    if (position.isShortTerm && position.isLoss) currentSTLoss += position.gainLoss;
+                    if (position.isLongTerm && position.isLoss) currentLTLoss += position.gainLoss;
+                    
+                    console.log(`Relaxed selection ${position.symbol}: $${position.marketValue.toFixed(0)} cash`);
                 }
             }
+            
+            // Calculate final metrics
+            const totalGainLoss = currentSTGain + currentLTGain + currentSTLoss + currentLTLoss;
+            const thresholdsMet = (
+                currentSTGain <= maxSTGain &&
+                currentLTGain <= maxLTGain &&
+                currentSTLoss >= -Math.abs(minSTLoss) &&
+                currentLTLoss >= -Math.abs(minLTLoss)
+            );
+            
+            console.log('=== FINAL RESULTS ===');
+            console.log('Cash raised:', totalCashRaised.toFixed(0), 'Target:', cashAmount);
+            console.log('ST Gain:', currentSTGain.toFixed(0), 'Limit:', maxSTGain);
+            console.log('LT Gain:', currentLTGain.toFixed(0), 'Limit:', maxLTGain);
+            console.log('ST Loss:', currentSTLoss.toFixed(0), 'Min:', -Math.abs(minSTLoss));
+            console.log('LT Loss:', currentLTLoss.toFixed(0), 'Min:', -Math.abs(minLTLoss));
+            console.log('Thresholds met:', thresholdsMet);
             
             // Define formatting function first
             const formatCurrencyWithSign = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD', signDisplay: 'auto' });
@@ -2141,10 +2323,22 @@
                 summary: {
                     totalCashRaised,
                     totalGainLoss,
-                    shortTermGainLoss,
-                    longTermGainLoss,
+                    shortTermGainLoss: currentSTGain + currentSTLoss,
+                    longTermGainLoss: currentLTGain + currentLTLoss,
+                    stGain: currentSTGain,
+                    ltGain: currentLTGain,
+                    stLoss: currentSTLoss,
+                    ltLoss: currentLTLoss,
                     cashTarget: cashAmount,
-                    cashExcess: totalCashRaised - cashAmount
+                    cashExcess: totalCashRaised - cashAmount,
+                    thresholdsMet,
+                    strategy,
+                    constraints: {
+                        maxSTGain,
+                        maxLTGain,
+                        minSTLoss: -Math.abs(minSTLoss),
+                        minLTLoss: -Math.abs(minLTLoss)
+                    }
                 }
             };
         }
@@ -2175,6 +2369,13 @@
                 cashAmount: targets.cashAmount,
                 cashRaised: summary.totalCashRaised,
                 cashExcess: summary.cashExcess,
+                thresholdsMet: summary.thresholdsMet,
+                strategy: summary.strategy,
+                constraints: summary.constraints,
+                stGain: summary.stGain,
+                ltGain: summary.ltGain,
+                stLoss: summary.stLoss,
+                ltLoss: summary.ltLoss,
                 mode: 'cashRaising'
             };
             
@@ -2391,23 +2592,37 @@
                         <p class="text-xs text-gray-500">${cashExcess > 0 ? `(+${formatCurrency(cashExcess)} excess)` : cashShortfall > 0 ? `(-${formatCurrency(cashShortfall)} shortfall)` : '(Target met)'}</p>
                     </div>
                     <div class="text-center">
-                        <p class="text-sm text-gray-500">Tax Impact - Short Term</p>
-                        <p class="text-lg font-medium ${targets.realizedST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedST)} → ${formatCurrencyWithSign(finalST)}</p>
-                        <p class="text-sm text-gray-500">Tax Impact - Long Term</p>
-                        <p class="text-lg font-medium ${targets.realizedLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedLT)} → ${formatCurrencyWithSign(finalLT)}</p>
-                        <p class="text-xs text-gray-500">Current → Final</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-sm text-gray-500">Total Tax Impact</p>
-                        <p class="text-xl font-bold ${totalGainFromTrades < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(totalGainFromTrades)}</p>
-                        <p class="text-xs text-gray-500">(${recommendations.length} lots)</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-sm text-gray-500">Strategy Efficiency</p>
-                        <p class="text-xl font-bold ${totalGainFromTrades <= 0 ? 'text-green-700' : 'text-orange-600'}">
-                            ${totalGainFromTrades <= 0 ? 'Excellent' : totalGainFromTrades < targets.cashAmount * 0.1 ? 'Good' : 'Fair'}
+                        <p class="text-sm text-gray-500">Short-Term Impact</p>
+                        <p class="text-lg font-medium">
+                            <span class="${targets.stGain > 0 ? 'text-orange-600' : 'text-gray-500'}">${formatCurrencyWithSign(targets.stGain || 0)} gain</span>
+                            <span class="text-gray-400 mx-1">+</span>
+                            <span class="${targets.stLoss < 0 ? 'text-green-600' : 'text-gray-500'}">${formatCurrencyWithSign(targets.stLoss || 0)} loss</span>
                         </p>
-                        <p class="text-xs text-gray-500">${totalGainFromTrades <= 0 ? 'Tax losses generated' : 'Minimal tax impact'}</p>
+                        <p class="text-xs text-gray-500">
+                            ${targets.constraints && targets.constraints.maxSTGain < Infinity ? `Max gain: ${formatCurrency(targets.constraints.maxSTGain)}` : 'No gain limit'}
+                            ${targets.constraints && targets.constraints.minSTLoss > -Infinity ? ` | Min loss: ${formatCurrencyWithSign(targets.constraints.minSTLoss)}` : ''}
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Long-Term Impact</p>
+                        <p class="text-lg font-medium">
+                            <span class="${targets.ltGain > 0 ? 'text-orange-600' : 'text-gray-500'}">${formatCurrencyWithSign(targets.ltGain || 0)} gain</span>
+                            <span class="text-gray-400 mx-1">+</span>
+                            <span class="${targets.ltLoss < 0 ? 'text-green-600' : 'text-gray-500'}">${formatCurrencyWithSign(targets.ltLoss || 0)} loss</span>
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            ${targets.constraints && targets.constraints.maxLTGain < Infinity ? `Max gain: ${formatCurrency(targets.constraints.maxLTGain)}` : 'No gain limit'}
+                            ${targets.constraints && targets.constraints.minLTLoss > -Infinity ? ` | Min loss: ${formatCurrencyWithSign(targets.constraints.minLTLoss)}` : ''}
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Optimization Result</p>
+                        <p class="text-xl font-bold ${targets.thresholdsMet ? 'text-green-700' : 'text-orange-600'}">
+                            ${targets.thresholdsMet ? 'Constraints Met' : 'Constraints Relaxed'}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            Strategy: ${targets.strategy === 'minimize_tax' ? 'Minimize Tax' : targets.strategy === 'maximize_cash' ? 'Maximize Cash' : 'Balanced'}
+                        </p>
                     </div>
                 `;
             } else {
