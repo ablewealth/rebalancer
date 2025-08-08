@@ -2071,12 +2071,17 @@
             console.log('=== ADVANCED CASH RAISING ALGORITHM ===');
             console.log('Cash target:', cashAmount);
             
-            // Get threshold parameters
+            // Get threshold parameters with error handling
             const maxSTGain = parseFloat(document.getElementById('maxSTGain').value) || Infinity;
             const maxLTGain = parseFloat(document.getElementById('maxLTGain').value) || Infinity;
             const minSTLoss = parseFloat(document.getElementById('minSTLoss').value) || -Infinity;
             const minLTLoss = parseFloat(document.getElementById('minLTLoss').value) || -Infinity;
-            const strategy = document.querySelector('input[name="cashStrategy"]:checked').value;
+            
+            // Get strategy with fallback
+            const strategyElement = document.querySelector('input[name="cashStrategy"]:checked');
+            const strategy = strategyElement ? strategyElement.value : 'minimize_tax';
+            
+            console.log('Strategy element found:', !!strategyElement);
             
             console.log('Tax thresholds:', { maxSTGain, maxLTGain, minSTLoss: -Math.abs(minSTLoss), minLTLoss: -Math.abs(minLTLoss) });
             console.log('Strategy:', strategy);
@@ -2103,28 +2108,42 @@
                 };
             }
             
-            // Process and categorize positions
-            const processedPositions = availablePositions.map(lot => {
-                const currentPrice = parseFloat(lot.currentPrice || lot.price || 0);
-                const costBasis = parseFloat(lot.costBasis || lot.costPerShare || 0);
-                const quantity = parseFloat(lot.quantity || 0);
-                const gainLoss = (currentPrice - costBasis) * quantity;
-                const marketValue = currentPrice * quantity;
-                const isLongTerm = lot.term === 'Long-Term' || lot.term === 'Long';
-                
-                return {
-                    ...lot,
-                    currentPrice,
-                    costBasis,
-                    quantity,
-                    gainLoss,
-                    marketValue,
-                    isLongTerm,
-                    isShortTerm: !isLongTerm,
-                    isGain: gainLoss > 0,
-                    isLoss: gainLoss < 0
-                };
-            }).filter(pos => pos.marketValue > 0);
+            // Process and categorize positions with error handling
+            const processedPositions = [];
+            
+            for (const lot of availablePositions) {
+                try {
+                    const currentPrice = parseFloat(lot.currentPrice || lot.price || 0);
+                    const costBasis = parseFloat(lot.costBasis || lot.costPerShare || 0);
+                    const quantity = parseFloat(lot.quantity || 0);
+                    
+                    if (currentPrice <= 0 || quantity <= 0) {
+                        console.warn('Skipping position with invalid price/quantity:', lot.symbol, { currentPrice, quantity });
+                        continue;
+                    }
+                    
+                    const gainLoss = (currentPrice - costBasis) * quantity;
+                    const marketValue = currentPrice * quantity;
+                    const isLongTerm = lot.term === 'Long-Term' || lot.term === 'Long';
+                    
+                    processedPositions.push({
+                        ...lot,
+                        currentPrice,
+                        costBasis,
+                        quantity,
+                        gainLoss,
+                        marketValue,
+                        isLongTerm,
+                        isShortTerm: !isLongTerm,
+                        isGain: gainLoss > 0,
+                        isLoss: gainLoss < 0
+                    });
+                } catch (error) {
+                    console.error('Error processing position:', lot.symbol, error);
+                }
+            }
+            
+            console.log('Processed positions:', processedPositions.length);
             
             // Categorize positions
             const categories = {
@@ -2141,28 +2160,40 @@
                 stGains: categories.stGains.length
             });
             
-            // Sort each category by strategy
+            // Sort each category by strategy with error handling
             const sortByStrategy = (positions, category) => {
-                switch (strategy) {
-                    case 'minimize_tax':
-                        if (category.includes('Loss')) {
-                            // For losses: prioritize larger losses (better tax benefit)
-                            return positions.sort((a, b) => a.gainLoss - b.gainLoss);
-                        } else {
-                            // For gains: prioritize smaller gains (less tax impact)
-                            return positions.sort((a, b) => a.gainLoss - b.gainLoss);
-                        }
-                    case 'maximize_cash':
-                        // Prioritize larger positions for maximum cash
-                        return positions.sort((a, b) => b.marketValue - a.marketValue);
-                    case 'balanced':
-                    default:
-                        // Balance between tax efficiency and cash generation
-                        return positions.sort((a, b) => {
-                            const aScore = (a.marketValue / 1000) + (a.isLoss ? Math.abs(a.gainLoss) / 100 : -a.gainLoss / 100);
-                            const bScore = (b.marketValue / 1000) + (b.isLoss ? Math.abs(b.gainLoss) / 100 : -b.gainLoss / 100);
-                            return bScore - aScore;
-                        });
+                try {
+                    console.log(`Sorting ${positions.length} positions for category ${category} with strategy ${strategy}`);
+                    
+                    switch (strategy) {
+                        case 'minimize_tax':
+                            if (category.includes('Loss')) {
+                                // For losses: prioritize larger losses (better tax benefit)
+                                return positions.sort((a, b) => a.gainLoss - b.gainLoss);
+                            } else {
+                                // For gains: prioritize smaller gains (less tax impact)
+                                return positions.sort((a, b) => a.gainLoss - b.gainLoss);
+                            }
+                        case 'maximize_cash':
+                            // Prioritize larger positions for maximum cash
+                            return positions.sort((a, b) => b.marketValue - a.marketValue);
+                        case 'balanced':
+                        default:
+                            // Balance between tax efficiency and cash generation
+                            return positions.sort((a, b) => {
+                                try {
+                                    const aScore = (a.marketValue / 1000) + (a.isLoss ? Math.abs(a.gainLoss) / 100 : -a.gainLoss / 100);
+                                    const bScore = (b.marketValue / 1000) + (b.isLoss ? Math.abs(b.gainLoss) / 100 : -b.gainLoss / 100);
+                                    return bScore - aScore;
+                                } catch (sortError) {
+                                    console.error('Error in balanced sort:', sortError, { a, b });
+                                    return 0;
+                                }
+                            });
+                    }
+                } catch (error) {
+                    console.error('Error in sortByStrategy:', error);
+                    return positions; // Return unsorted if error
                 }
             };
             
@@ -2190,47 +2221,62 @@
             
             console.log('=== SELECTION PROCESS ===');
             
+            let selectionCount = 0;
+            const maxSelections = 1000; // Prevent infinite loops
+            
             for (const { category, name } of selectionOrder) {
                 console.log(`Processing ${name}:`, categories[category].length, 'positions');
                 
                 for (const position of categories[category]) {
+                    selectionCount++;
+                    if (selectionCount > maxSelections) {
+                        console.error('Selection process exceeded maximum iterations, breaking');
+                        break;
+                    }
+                    
                     // Check if we've reached our cash target
                     if (totalCashRaised >= cashAmount) {
                         console.log('Cash target reached, stopping selection');
                         break;
                     }
                     
-                    // Calculate what the new totals would be
-                    const newCashRaised = totalCashRaised + position.marketValue;
-                    const newSTGain = currentSTGain + (position.isShortTerm && position.isGain ? position.gainLoss : 0);
-                    const newLTGain = currentLTGain + (position.isLongTerm && position.isGain ? position.gainLoss : 0);
-                    const newSTLoss = currentSTLoss + (position.isShortTerm && position.isLoss ? position.gainLoss : 0);
-                    const newLTLoss = currentLTLoss + (position.isLongTerm && position.isLoss ? position.gainLoss : 0);
-                    
-                    // Check threshold constraints
-                    const withinSTGainLimit = newSTGain <= maxSTGain;
-                    const withinLTGainLimit = newLTGain <= maxLTGain;
-                    const withinSTLossLimit = newSTLoss >= -Math.abs(minSTLoss);
-                    const withinLTLossLimit = newLTLoss >= -Math.abs(minLTLoss);
-                    
-                    const meetsAllConstraints = withinSTGainLimit && withinLTGainLimit && withinSTLossLimit && withinLTLossLimit;
-                    
-                    if (meetsAllConstraints) {
-                        selectedPositions.push(position);
-                        totalCashRaised = newCashRaised;
-                        currentSTGain = newSTGain;
-                        currentLTGain = newLTGain;
-                        currentSTLoss = newSTLoss;
-                        currentLTLoss = newLTLoss;
+                    try {
+                        // Calculate what the new totals would be
+                        const newCashRaised = totalCashRaised + (position.marketValue || 0);
+                        const newSTGain = currentSTGain + (position.isShortTerm && position.isGain ? (position.gainLoss || 0) : 0);
+                        const newLTGain = currentLTGain + (position.isLongTerm && position.isGain ? (position.gainLoss || 0) : 0);
+                        const newSTLoss = currentSTLoss + (position.isShortTerm && position.isLoss ? (position.gainLoss || 0) : 0);
+                        const newLTLoss = currentLTLoss + (position.isLongTerm && position.isLoss ? (position.gainLoss || 0) : 0);
                         
-                        console.log(`Selected ${position.symbol}: $${position.marketValue.toFixed(0)} cash, $${position.gainLoss.toFixed(0)} gain/loss`);
-                    } else {
-                        console.log(`Skipped ${position.symbol}: would violate constraints`);
+                        // Check threshold constraints with safe comparisons
+                        const withinSTGainLimit = isFinite(maxSTGain) ? newSTGain <= maxSTGain : true;
+                        const withinLTGainLimit = isFinite(maxLTGain) ? newLTGain <= maxLTGain : true;
+                        const withinSTLossLimit = isFinite(minSTLoss) ? newSTLoss >= -Math.abs(minSTLoss) : true;
+                        const withinLTLossLimit = isFinite(minLTLoss) ? newLTLoss >= -Math.abs(minLTLoss) : true;
+                        
+                        const meetsAllConstraints = withinSTGainLimit && withinLTGainLimit && withinSTLossLimit && withinLTLossLimit;
+                        
+                        if (meetsAllConstraints) {
+                            selectedPositions.push(position);
+                            totalCashRaised = newCashRaised;
+                            currentSTGain = newSTGain;
+                            currentLTGain = newLTGain;
+                            currentSTLoss = newSTLoss;
+                            currentLTLoss = newLTLoss;
+                            
+                            console.log(`Selected ${position.symbol}: $${(position.marketValue || 0).toFixed(0)} cash, $${(position.gainLoss || 0).toFixed(0)} gain/loss`);
+                        } else {
+                            console.log(`Skipped ${position.symbol}: would violate constraints`);
+                        }
+                    } catch (constraintError) {
+                        console.error('Error checking constraints for position:', position.symbol, constraintError);
                     }
                 }
                 
-                if (totalCashRaised >= cashAmount) break;
+                if (totalCashRaised >= cashAmount || selectionCount > maxSelections) break;
             }
+            
+            console.log(`Selection completed after ${selectionCount} iterations`);
             
             // If we haven't reached the target and strategy allows, relax constraints
             if (totalCashRaised < cashAmount && strategy !== 'minimize_tax') {
