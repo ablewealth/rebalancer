@@ -2114,22 +2114,64 @@
             for (const lot of availablePositions) {
                 try {
                     const currentPrice = parseFloat(lot.currentPrice || lot.price || 0);
-                    const costBasis = parseFloat(lot.costBasis || lot.costPerShare || 0);
                     const quantity = parseFloat(lot.quantity || 0);
+                    
+                    // Debug: Log the raw data to understand the structure
+                    console.log(`Processing ${lot.symbol}:`, {
+                        currentPrice: lot.currentPrice,
+                        price: lot.price,
+                        costBasis: lot.costBasis,
+                        costPerShare: lot.costPerShare,
+                        quantity: lot.quantity,
+                        term: lot.term
+                    });
                     
                     if (currentPrice <= 0 || quantity <= 0) {
                         console.warn('Skipping position with invalid price/quantity:', lot.symbol, { currentPrice, quantity });
                         continue;
                     }
                     
-                    const gainLoss = (currentPrice - costBasis) * quantity;
+                    // Determine if costBasis is per-share or total
+                    let costPerShare;
+                    let totalCostBasis;
+                    
+                    if (lot.costPerShare) {
+                        // If we have costPerShare, use it
+                        costPerShare = parseFloat(lot.costPerShare);
+                        totalCostBasis = costPerShare * quantity;
+                    } else if (lot.costBasis) {
+                        const costBasisValue = parseFloat(lot.costBasis);
+                        // Heuristic: if costBasis is much larger than currentPrice, it's probably total cost basis
+                        if (costBasisValue > currentPrice * 10) {
+                            // Likely total cost basis
+                            totalCostBasis = costBasisValue;
+                            costPerShare = costBasisValue / quantity;
+                        } else {
+                            // Likely per-share cost basis
+                            costPerShare = costBasisValue;
+                            totalCostBasis = costBasisValue * quantity;
+                        }
+                    } else {
+                        console.warn('No cost basis data found for', lot.symbol);
+                        continue;
+                    }
+                    
+                    const gainLoss = (currentPrice * quantity) - totalCostBasis;
                     const marketValue = currentPrice * quantity;
                     const isLongTerm = lot.term === 'Long-Term' || lot.term === 'Long';
+                    
+                    console.log(`${lot.symbol} calculation:`, {
+                        marketValue: marketValue.toFixed(2),
+                        totalCostBasis: totalCostBasis.toFixed(2),
+                        gainLoss: gainLoss.toFixed(2),
+                        costPerShare: costPerShare.toFixed(2)
+                    });
                     
                     processedPositions.push({
                         ...lot,
                         currentPrice,
-                        costBasis,
+                        costBasis: costPerShare, // Per-share cost basis
+                        totalCostBasis, // Total cost basis
                         quantity,
                         gainLoss,
                         marketValue,
@@ -2361,7 +2403,7 @@
                 symbol: position.symbol || 'Unknown',
                 quantity: position.quantity || 0,
                 currentPrice: position.currentPrice || 0,
-                costBasis: (position.costBasis || 0) * (position.quantity || 0), // Total cost basis
+                costBasis: position.totalCostBasis || 0, // Total cost basis
                 costPerShare: position.costBasis || 0, // Per-share cost basis
                 price: position.currentPrice || 0,
                 marketValue: position.marketValue || 0,
