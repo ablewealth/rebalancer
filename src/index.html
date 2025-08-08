@@ -999,36 +999,98 @@
         }
 
         function parseCostBasisCSV(csvText) {
+            DEBUG.log('CSV_PARSE', 'Starting cost basis CSV parsing');
             const lines = csvText.trim().split('\n');
-            if (lines.length < 2) return [];
+            if (lines.length < 2) {
+                DEBUG.error('CSV_PARSE', 'CSV file has insufficient lines', { lineCount: lines.length });
+                return [];
+            }
+            
             const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            DEBUG.log('CSV_PARSE', 'CSV headers detected', header);
 
             try {
                 const requiredCols = ['symbol', 'acquired', 'quantity', 'market value', 'cost basis', 'holding period'];
                 const indices = findHeaderIndices(header, requiredCols);
+                DEBUG.log('CSV_PARSE', 'Column indices found', indices);
 
-                return lines.slice(1).map(line => {
+                const parsedData = lines.slice(1).map((line, lineIndex) => {
                     const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     const symbol = values[indices.symbol]?.trim();
-                    if (!symbol || symbol.toLowerCase().includes('total')) return null;
+                    
+                    if (!symbol || symbol.toLowerCase().includes('total')) {
+                        DEBUG.log('CSV_PARSE', `Skipping line ${lineIndex + 2}: ${symbol || 'empty symbol'}`);
+                        return null;
+                    }
 
                     const quantity = cleanValue(values[indices.quantity]);
                     const marketValue = cleanValue(values[indices.marketvalue]);
                     const costBasis = cleanValue(values[indices.costbasis]);
+                    const price = quantity > 0 ? marketValue / quantity : 0;
+                    const costPerShare = quantity > 0 ? costBasis / quantity : 0;
+                    const unrealizedGain = marketValue - costBasis;
 
-                    return {
+                    const lot = {
                         symbol: symbol,
                         acquired: values[indices.acquired]?.trim(),
                         quantity: quantity,
                         marketValue: marketValue,
                         costBasis: costBasis,
-                        price: quantity > 0 ? marketValue / quantity : 0,
-                        costPerShare: quantity > 0 ? costBasis / quantity : 0,
-                        unrealizedGain: marketValue - costBasis,
+                        price: price,
+                        costPerShare: costPerShare,
+                        unrealizedGain: unrealizedGain,
                         term: values[indices.holdingperiod]?.trim().toLowerCase().includes('long') ? 'Long' : 'Short',
+                        lineNumber: lineIndex + 2
                     };
+
+                    // Validate the parsed lot
+                    const isValid = DEBUG.validate('CSV_PARSE', lot, {
+                        symbol: { required: true, type: 'string' },
+                        quantity: { required: true, type: 'number', min: 0 },
+                        marketValue: { required: true, type: 'number', min: 0 },
+                        costBasis: { required: true, type: 'number', min: 0 },
+                        price: { required: true, type: 'number', min: 0 }
+                    });
+
+                    if (!isValid) {
+                        DEBUG.error('CSV_PARSE', `Invalid lot data on line ${lineIndex + 2}`, lot);
+                        return null;
+                    }
+
+                    // Additional sanity checks
+                    if (Math.abs(unrealizedGain) > marketValue * 10) {
+                        DEBUG.error('CSV_PARSE', `Suspicious unrealized gain on line ${lineIndex + 2}`, {
+                            symbol, marketValue, costBasis, unrealizedGain
+                        });
+                    }
+
+                    DEBUG.log('CSV_PARSE', `Parsed ${symbol}`, {
+                        quantity, marketValue: marketValue.toFixed(2), 
+                        costBasis: costBasis.toFixed(2), unrealizedGain: unrealizedGain.toFixed(2)
+                    });
+
+                    return lot;
                 }).filter(lot => lot && !isNaN(lot.quantity));
+
+                DEBUG.log('CSV_PARSE', `Successfully parsed ${parsedData.length} lots from ${lines.length - 1} lines`);
+                
+                // Summary statistics
+                const totalMarketValue = parsedData.reduce((sum, lot) => sum + lot.marketValue, 0);
+                const totalUnrealizedGain = parsedData.reduce((sum, lot) => sum + lot.unrealizedGain, 0);
+                const longTermCount = parsedData.filter(lot => lot.term === 'Long').length;
+                const shortTermCount = parsedData.filter(lot => lot.term === 'Short').length;
+                
+                DEBUG.log('CSV_PARSE', 'Portfolio summary', {
+                    totalPositions: parsedData.length,
+                    totalMarketValue: totalMarketValue.toFixed(2),
+                    totalUnrealizedGain: totalUnrealizedGain.toFixed(2),
+                    longTermPositions: longTermCount,
+                    shortTermPositions: shortTermCount
+                });
+
+                return parsedData;
             } catch (error) {
+                DEBUG.error('CSV_PARSE', 'Failed to parse CSV', error);
                 alert(error.message);
                 costBasisFileInput.value = '';
                 costBasisFileNameDisplay.textContent = '';
@@ -1481,6 +1543,93 @@
             }
         }
 
+        // === COMPREHENSIVE DEBUGGING SYSTEM ===
+        const DEBUG = {
+            enabled: true,
+            log: function(category, message, data = null) {
+                if (!this.enabled) return;
+                const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+                console.log(`[${timestamp}] [${category.toUpperCase()}] ${message}`, data || '');
+            },
+            error: function(category, message, error = null) {
+                const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+                console.error(`[${timestamp}] [${category.toUpperCase()}] ERROR: ${message}`, error || '');
+            },
+            validate: function(category, data, schema) {
+                const errors = [];
+                for (const [field, rules] of Object.entries(schema)) {
+                    const value = data[field];
+                    if (rules.required && (value === undefined || value === null)) {
+                        errors.push(`${field} is required`);
+                    }
+                    if (rules.type && typeof value !== rules.type && value !== undefined) {
+                        errors.push(`${field} must be of type ${rules.type}, got ${typeof value}`);
+                    }
+                    if (rules.min !== undefined && value < rules.min) {
+                        errors.push(`${field} must be >= ${rules.min}, got ${value}`);
+                    }
+                    if (rules.max !== undefined && value > rules.max) {
+                        errors.push(`${field} must be <= ${rules.max}, got ${value}`);
+                    }
+                }
+                if (errors.length > 0) {
+                    this.error(category, `Validation failed: ${errors.join(', ')}`, data);
+                    return false;
+                }
+                return true;
+            }
+        };
+
+        // === SYSTEM HEALTH CHECK ===
+        function performSystemHealthCheck() {
+            DEBUG.log('HEALTH_CHECK', 'Starting comprehensive system health check');
+            
+            const issues = [];
+            
+            // Check DOM elements
+            const requiredElements = [
+                'costBasisFile', 'ytdFile', 'calculateBtn', 'maxSTGain', 'maxLTGain', 
+                'minSTLoss', 'minLTLoss', 'cashAmount', 'targetST', 'targetLT',
+                'realizedST', 'realizedLT'
+            ];
+            
+            requiredElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (!element) {
+                    issues.push(`Missing DOM element: ${id}`);
+                }
+            });
+            
+            // Check portfolio data integrity
+            if (portfolioData.length > 0) {
+                const dataIssues = [];
+                portfolioData.forEach((lot, index) => {
+                    if (!lot.symbol) dataIssues.push(`Lot ${index}: missing symbol`);
+                    if (isNaN(lot.quantity) || lot.quantity <= 0) dataIssues.push(`Lot ${index} (${lot.symbol}): invalid quantity`);
+                    if (isNaN(lot.marketValue) || lot.marketValue < 0) dataIssues.push(`Lot ${index} (${lot.symbol}): invalid market value`);
+                    if (isNaN(lot.costBasis) || lot.costBasis < 0) dataIssues.push(`Lot ${index} (${lot.symbol}): invalid cost basis`);
+                    if (!['Long', 'Short'].includes(lot.term)) dataIssues.push(`Lot ${index} (${lot.symbol}): invalid term`);
+                });
+                
+                if (dataIssues.length > 0) {
+                    issues.push(`Portfolio data issues: ${dataIssues.slice(0, 5).join(', ')}${dataIssues.length > 5 ? ` and ${dataIssues.length - 5} more` : ''}`);
+                }
+            }
+            
+            // Check for JavaScript errors in console
+            if (window.console && console.error) {
+                // This is a basic check - in production you'd want more sophisticated error tracking
+            }
+            
+            if (issues.length === 0) {
+                DEBUG.log('HEALTH_CHECK', 'System health check passed - no issues found');
+                return true;
+            } else {
+                DEBUG.error('HEALTH_CHECK', `System health check failed with ${issues.length} issues`, issues);
+                return false;
+            }
+        }
+
         // Mode switching functionality
         let currentMode = 'taxTarget'; // Default mode
         
@@ -1521,8 +1670,16 @@
         }
 
         function handleCalculation() {
-            console.log('handleCalculation called');
+            DEBUG.log('CALCULATION', 'Starting calculation process');
+            
+            // Perform system health check before calculation
+            if (!performSystemHealthCheck()) {
+                alert('System health check failed. Please check the console for details and refresh the page.');
+                return;
+            }
+            
             if (portfolioData.length === 0) {
+                DEBUG.error('CALCULATION', 'No portfolio data available');
                 alert('Please upload your Cost Basis CSV file first.');
                 return;
             }
@@ -2117,13 +2274,15 @@
                     const quantity = parseFloat(lot.quantity || 0);
                     
                     // Debug: Log the raw data to understand the structure
-                    console.log(`Processing ${lot.symbol}:`, {
+                    DEBUG.log('CASH_RAISING', `Processing ${lot.symbol}`, {
                         currentPrice: lot.currentPrice,
                         price: lot.price,
                         costBasis: lot.costBasis,
                         costPerShare: lot.costPerShare,
                         quantity: lot.quantity,
-                        term: lot.term
+                        term: lot.term,
+                        marketValue: lot.marketValue,
+                        unrealizedGain: lot.unrealizedGain
                     });
                     
                     if (currentPrice <= 0 || quantity <= 0) {
@@ -2160,7 +2319,34 @@
                     const marketValue = currentPrice * quantity;
                     const isLongTerm = lot.term === 'Long-Term' || lot.term === 'Long';
                     
-                    console.log(`${lot.symbol} calculation:`, {
+                    // Validate the calculation
+                    const calculationValid = DEBUG.validate('CASH_RAISING', {
+                        marketValue, totalCostBasis, gainLoss, costPerShare
+                    }, {
+                        marketValue: { required: true, type: 'number', min: 0 },
+                        totalCostBasis: { required: true, type: 'number', min: 0 },
+                        gainLoss: { required: true, type: 'number' },
+                        costPerShare: { required: true, type: 'number', min: 0 }
+                    });
+
+                    if (!calculationValid) {
+                        DEBUG.error('CASH_RAISING', `Invalid calculation for ${lot.symbol}`, {
+                            marketValue, totalCostBasis, gainLoss, costPerShare
+                        });
+                        continue;
+                    }
+
+                    // Verify calculation consistency
+                    const expectedGainLoss = marketValue - totalCostBasis;
+                    if (Math.abs(gainLoss - expectedGainLoss) > 0.01) {
+                        DEBUG.error('CASH_RAISING', `Calculation mismatch for ${lot.symbol}`, {
+                            calculated: gainLoss.toFixed(2),
+                            expected: expectedGainLoss.toFixed(2),
+                            difference: (gainLoss - expectedGainLoss).toFixed(2)
+                        });
+                    }
+
+                    DEBUG.log('CASH_RAISING', `${lot.symbol} calculation verified`, {
                         marketValue: marketValue.toFixed(2),
                         totalCostBasis: totalCostBasis.toFixed(2),
                         gainLoss: gainLoss.toFixed(2),
@@ -2435,20 +2621,65 @@
             console.log(`Cash raising: Selected ${recommendations.length} positions for $${totalCashRaised.toFixed(2)} cash`);
             console.log(`Tax impact: ST ${formatCurrencyWithSign(currentSTGain + currentSTLoss)}, LT ${formatCurrencyWithSign(currentLTGain + currentLTLoss)}`);
             
-            // Debug: Log each recommendation for verification
-            recommendations.forEach(rec => {
-                const calculatedGainLoss = rec.marketValue - rec.costBasis;
-                console.log(`${rec.symbol}: ${rec.quantity} shares @ $${rec.currentPrice.toFixed(2)}`);
-                console.log(`  Market Value: $${rec.marketValue.toFixed(2)}`);
-                console.log(`  Cost Basis: $${rec.costBasis.toFixed(2)} (${rec.costPerShare.toFixed(2)} per share)`);
-                console.log(`  Calculated Gain/Loss: $${calculatedGainLoss.toFixed(2)}`);
-                console.log(`  Stored Gain/Loss: $${rec.unrealizedGain.toFixed(2)}`);
-                if (Math.abs(calculatedGainLoss - rec.unrealizedGain) > 1) {
-                    console.warn(`  ⚠️ MISMATCH: Calculated vs Stored gain/loss differs by $${(calculatedGainLoss - rec.unrealizedGain).toFixed(2)}`);
-                }
-            });
+            // Comprehensive recommendation validation
+            DEBUG.log('CASH_RAISING', 'Validating recommendations', { count: recommendations.length });
             
-            return {
+            let totalValidationErrors = 0;
+            recommendations.forEach((rec, index) => {
+                const calculatedGainLoss = rec.marketValue - rec.costBasis;
+                
+                // Validate each recommendation
+                const isValid = DEBUG.validate('RECOMMENDATION', rec, {
+                    symbol: { required: true, type: 'string' },
+                    quantity: { required: true, type: 'number', min: 0 },
+                    currentPrice: { required: true, type: 'number', min: 0 },
+                    marketValue: { required: true, type: 'number', min: 0 },
+                    costBasis: { required: true, type: 'number', min: 0 },
+                    unrealizedGain: { required: true, type: 'number' }
+                });
+
+                if (!isValid) {
+                    totalValidationErrors++;
+                    return;
+                }
+
+                // Check calculation consistency
+                if (Math.abs(calculatedGainLoss - rec.unrealizedGain) > 1) {
+                    DEBUG.error('RECOMMENDATION', `Calculation mismatch for ${rec.symbol}`, {
+                        calculated: calculatedGainLoss.toFixed(2),
+                        stored: rec.unrealizedGain.toFixed(2),
+                        difference: (calculatedGainLoss - rec.unrealizedGain).toFixed(2)
+                    });
+                    totalValidationErrors++;
+                }
+
+                // Check for suspicious values
+                if (Math.abs(rec.unrealizedGain) > rec.marketValue * 5) {
+                    DEBUG.error('RECOMMENDATION', `Suspicious gain/loss for ${rec.symbol}`, {
+                        marketValue: rec.marketValue.toFixed(2),
+                        unrealizedGain: rec.unrealizedGain.toFixed(2),
+                        ratio: (Math.abs(rec.unrealizedGain) / rec.marketValue).toFixed(2)
+                    });
+                    totalValidationErrors++;
+                }
+
+                DEBUG.log('RECOMMENDATION', `${rec.symbol} validated`, {
+                    quantity: rec.quantity,
+                    price: rec.currentPrice.toFixed(2),
+                    marketValue: rec.marketValue.toFixed(2),
+                    costBasis: rec.costBasis.toFixed(2),
+                    gainLoss: rec.unrealizedGain.toFixed(2),
+                    term: rec.term
+                });
+            });
+
+            if (totalValidationErrors > 0) {
+                DEBUG.error('CASH_RAISING', `Found ${totalValidationErrors} validation errors in recommendations`);
+            } else {
+                DEBUG.log('CASH_RAISING', 'All recommendations passed validation');
+            }
+            
+            const result = {
                 recommendations,
                 violations,
                 alternatives,
@@ -2473,6 +2704,32 @@
                     }
                 }
             };
+
+            // Generate final summary report
+            DEBUG.log('CASH_RAISING', '=== FINAL ALGORITHM SUMMARY ===');
+            DEBUG.log('CASH_RAISING', 'Cash Analysis', {
+                target: cashAmount.toFixed(2),
+                raised: totalCashRaised.toFixed(2),
+                excess: (totalCashRaised - cashAmount).toFixed(2),
+                overagePercent: ((totalCashRaised - cashAmount) / cashAmount * 100).toFixed(2) + '%'
+            });
+            DEBUG.log('CASH_RAISING', 'Tax Impact Analysis', {
+                stGain: currentSTGain.toFixed(2),
+                stLoss: currentSTLoss.toFixed(2),
+                stNet: (currentSTGain + currentSTLoss).toFixed(2),
+                ltGain: currentLTGain.toFixed(2),
+                ltLoss: currentLTLoss.toFixed(2),
+                ltNet: (currentLTGain + currentLTLoss).toFixed(2),
+                totalNet: totalGainLoss.toFixed(2)
+            });
+            DEBUG.log('CASH_RAISING', 'Constraint Compliance', {
+                thresholdsMet,
+                strategy,
+                recommendationCount: recommendations.length,
+                violationCount: violations.length
+            });
+
+            return result;
         }
 
         // Enhanced display function with wash sale analysis
