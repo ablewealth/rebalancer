@@ -1997,15 +1997,26 @@
         // Cash Raising Mode - Generate recommendations to raise specific cash amount
         function generateCashRaisingRecommendations(cashAmount) {
             console.log('Generating cash raising recommendations for:', cashAmount);
+            console.log('Portfolio data length:', portfolioData.length);
             
             // Get all available positions that can be sold
             const availablePositions = portfolioData.filter(lot => lot.includedInSelling);
+            console.log('Available positions for selling:', availablePositions.length);
             
             if (availablePositions.length === 0) {
+                console.log('No positions available for selling');
                 return {
                     recommendations: [],
                     violations: [],
-                    alternatives: []
+                    alternatives: [],
+                    summary: {
+                        totalCashRaised: 0,
+                        totalGainLoss: 0,
+                        shortTermGainLoss: 0,
+                        longTermGainLoss: 0,
+                        cashTarget: cashAmount,
+                        cashExcess: -cashAmount
+                    }
                 };
             }
             
@@ -2014,36 +2025,53 @@
             // 2. Then smallest gains (minimize tax impact)
             // 3. Consider holding period (prefer long-term gains over short-term)
             const sortedPositions = availablePositions.map(lot => {
-                const currentPrice = lot.currentPrice || 0;
-                const costBasis = lot.costBasis || 0;
-                const gainLoss = (currentPrice - costBasis) * lot.quantity;
-                const marketValue = currentPrice * lot.quantity;
-                const isLoss = gainLoss < 0;
-                const isLongTerm = lot.term === 'Long-Term';
-                
-                // Tax efficiency score (higher is better for cash raising)
-                let taxEfficiencyScore = 0;
-                
-                if (isLoss) {
-                    // Losses are best - bigger losses get higher scores
-                    taxEfficiencyScore = 1000 + Math.abs(gainLoss);
-                } else {
-                    // For gains, prefer long-term over short-term, and smaller gains over larger
-                    if (isLongTerm) {
-                        taxEfficiencyScore = 500 - gainLoss; // Long-term gains
+                try {
+                    const currentPrice = parseFloat(lot.currentPrice || lot.price || 0);
+                    const costBasis = parseFloat(lot.costBasis || lot.costPerShare || 0);
+                    const quantity = parseFloat(lot.quantity || 0);
+                    const gainLoss = (currentPrice - costBasis) * quantity;
+                    const marketValue = currentPrice * quantity;
+                    const isLoss = gainLoss < 0;
+                    const isLongTerm = lot.term === 'Long-Term';
+                    
+                    // Tax efficiency score (higher is better for cash raising)
+                    let taxEfficiencyScore = 0;
+                    
+                    if (isLoss) {
+                        // Losses are best - bigger losses get higher scores
+                        taxEfficiencyScore = 1000 + Math.abs(gainLoss);
                     } else {
-                        taxEfficiencyScore = 100 - gainLoss; // Short-term gains (least preferred)
+                        // For gains, prefer long-term over short-term, and smaller gains over larger
+                        if (isLongTerm) {
+                            taxEfficiencyScore = 500 - gainLoss; // Long-term gains
+                        } else {
+                            taxEfficiencyScore = 100 - gainLoss; // Short-term gains (least preferred)
+                        }
                     }
+                    
+                    return {
+                        ...lot,
+                        currentPrice,
+                        costBasis,
+                        quantity,
+                        gainLoss,
+                        marketValue,
+                        taxEfficiencyScore,
+                        isLoss
+                    };
+                } catch (error) {
+                    console.error('Error processing position:', lot, error);
+                    return {
+                        ...lot,
+                        gainLoss: 0,
+                        marketValue: 0,
+                        taxEfficiencyScore: 0,
+                        isLoss: false
+                    };
                 }
-                
-                return {
-                    ...lot,
-                    gainLoss,
-                    marketValue,
-                    taxEfficiencyScore,
-                    isLoss
-                };
-            }).sort((a, b) => b.taxEfficiencyScore - a.taxEfficiencyScore);
+            }).filter(pos => pos.marketValue > 0).sort((a, b) => b.taxEfficiencyScore - a.taxEfficiencyScore);
+            
+            console.log('Sorted positions for cash raising:', sortedPositions.length);
             
             // Select positions to meet cash target
             const selectedPositions = [];
@@ -2066,27 +2094,42 @@
                 }
             }
             
+            // Define formatting function first
+            const formatCurrencyWithSign = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD', signDisplay: 'auto' });
+            
             // Convert to recommendation format
             const recommendations = selectedPositions.map(position => ({
-                symbol: position.symbol,
-                quantity: position.quantity,
-                currentPrice: position.currentPrice,
-                costBasis: position.costBasis,
-                marketValue: position.marketValue,
-                unrealizedGain: position.gainLoss,
-                term: position.term,
-                acquiredDate: position.acquiredDate,
+                symbol: position.symbol || 'Unknown',
+                quantity: position.quantity || 0,
+                currentPrice: position.currentPrice || 0,
+                costBasis: position.costBasis || 0,
+                costPerShare: position.costBasis || 0,
+                price: position.currentPrice || 0,
+                marketValue: position.marketValue || 0,
+                unrealizedGain: position.gainLoss || 0,
+                term: position.term || 'Short-Term',
+                acquired: position.acquiredDate || position.acquired || 'Unknown',
+                acquiredDate: position.acquiredDate || position.acquired || 'Unknown',
                 reason: position.isLoss ? 
-                    `Tax loss harvesting (${formatCurrencyWithSign(position.gainLoss)})` :
-                    `Cash generation (${formatCurrencyWithSign(position.gainLoss)} ${position.term.toLowerCase()} gain)`
+                    `Tax loss harvesting (${formatCurrencyWithSign(position.gainLoss || 0)})` :
+                    `Cash generation (${formatCurrencyWithSign(position.gainLoss || 0)} ${(position.term || 'short-term').toLowerCase()} gain)`
             }));
             
-            // Check for wash sale violations
-            const violations = detectWashSaleViolations(recommendations);
-            const alternatives = violations.length > 0 ? 
-                violations.map(v => findWashSaleAlternatives(v.symbol)).flat() : [];
+            console.log('Generated recommendations:', recommendations.length);
             
-            const formatCurrencyWithSign = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD', signDisplay: 'auto' });
+            // Check for wash sale violations
+            let violations = [];
+            let alternatives = [];
+            
+            try {
+                violations = detectWashSaleViolations(recommendations);
+                alternatives = violations.length > 0 ? 
+                    violations.map(v => findWashSaleAlternatives(v.symbol)).flat() : [];
+            } catch (error) {
+                console.error('Error in wash sale detection:', error);
+                violations = [];
+                alternatives = [];
+            }
             
             console.log(`Cash raising: Selected ${recommendations.length} positions for $${totalCashRaised.toFixed(2)} cash`);
             console.log(`Tax impact: ST ${formatCurrencyWithSign(shortTermGainLoss)}, LT ${formatCurrencyWithSign(longTermGainLoss)}`);
