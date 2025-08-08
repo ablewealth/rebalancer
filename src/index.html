@@ -2234,15 +2234,23 @@
                         break;
                     }
                     
-                    // Check if we've reached our cash target
-                    if (totalCashRaised >= cashAmount) {
-                        console.log('Cash target reached, stopping selection');
-                        break;
-                    }
-                    
                     try {
                         // Calculate what the new totals would be
                         const newCashRaised = totalCashRaised + (position.marketValue || 0);
+                        
+                        // Check if adding this position would exceed target by more than 1%
+                        const maxAcceptableCash = cashAmount * 1.01; // Allow 1% overage
+                        if (newCashRaised > maxAcceptableCash) {
+                            console.log(`Skipping ${position.symbol}: would exceed cash target by too much ($${newCashRaised.toFixed(0)} > $${maxAcceptableCash.toFixed(0)})`);
+                            continue;
+                        }
+                        
+                        // Check if we've already met our cash target
+                        if (totalCashRaised >= cashAmount) {
+                            console.log('Cash target already met, stopping selection');
+                            break;
+                        }
+                        
                         const newSTGain = currentSTGain + (position.isShortTerm && position.isGain ? (position.gainLoss || 0) : 0);
                         const newLTGain = currentLTGain + (position.isLongTerm && position.isGain ? (position.gainLoss || 0) : 0);
                         const newSTLoss = currentSTLoss + (position.isShortTerm && position.isLoss ? (position.gainLoss || 0) : 0);
@@ -2278,30 +2286,53 @@
             
             console.log(`Selection completed after ${selectionCount} iterations`);
             
-            // If we haven't reached the target and strategy allows, relax constraints
-            if (totalCashRaised < cashAmount && strategy !== 'minimize_tax') {
-                console.log('=== RELAXING CONSTRAINTS TO MEET CASH TARGET ===');
+            // If we haven't reached the target, try to get closer with remaining positions
+            if (totalCashRaised < cashAmount) {
+                console.log('=== TRYING TO GET CLOSER TO CASH TARGET ===');
+                console.log(`Current: $${totalCashRaised.toFixed(0)}, Target: $${cashAmount.toFixed(0)}, Shortfall: $${(cashAmount - totalCashRaised).toFixed(0)}`);
                 
                 const remainingPositions = processedPositions.filter(p => !selectedPositions.includes(p));
+                const shortfall = cashAmount - totalCashRaised;
+                const maxAcceptableOverage = cashAmount * 0.01; // 1% overage
+                
+                // Sort by how close they get us to the target without going over too much
                 const sortedRemaining = remainingPositions.sort((a, b) => {
-                    // Prioritize positions with least tax impact per dollar of cash
-                    const aTaxEfficiency = Math.abs(a.gainLoss) / a.marketValue;
-                    const bTaxEfficiency = Math.abs(b.gainLoss) / b.marketValue;
-                    return aTaxEfficiency - bTaxEfficiency;
+                    const aOverage = Math.max(0, a.marketValue - shortfall);
+                    const bOverage = Math.max(0, b.marketValue - shortfall);
+                    
+                    // If both would cause acceptable overage, prefer the one with better tax efficiency
+                    if (aOverage <= maxAcceptableOverage && bOverage <= maxAcceptableOverage) {
+                        const aTaxEfficiency = Math.abs(a.gainLoss) / a.marketValue;
+                        const bTaxEfficiency = Math.abs(b.gainLoss) / b.marketValue;
+                        return aTaxEfficiency - bTaxEfficiency;
+                    }
+                    
+                    // Otherwise, prefer the one that gets us closer without excessive overage
+                    return aOverage - bOverage;
                 });
                 
                 for (const position of sortedRemaining) {
-                    if (totalCashRaised >= cashAmount) break;
+                    const newTotal = totalCashRaised + position.marketValue;
+                    const overage = newTotal - cashAmount;
+                    const overagePercent = (overage / cashAmount) * 100;
                     
-                    selectedPositions.push(position);
-                    totalCashRaised += position.marketValue;
-                    
-                    if (position.isShortTerm && position.isGain) currentSTGain += position.gainLoss;
-                    if (position.isLongTerm && position.isGain) currentLTGain += position.gainLoss;
-                    if (position.isShortTerm && position.isLoss) currentSTLoss += position.gainLoss;
-                    if (position.isLongTerm && position.isLoss) currentLTLoss += position.gainLoss;
-                    
-                    console.log(`Relaxed selection ${position.symbol}: $${position.marketValue.toFixed(0)} cash`);
+                    // Only add if overage is acceptable (≤1%) or if we're still short
+                    if (overage <= 0 || overagePercent <= 1.0) {
+                        selectedPositions.push(position);
+                        totalCashRaised = newTotal;
+                        
+                        if (position.isShortTerm && position.isGain) currentSTGain += position.gainLoss;
+                        if (position.isLongTerm && position.isGain) currentLTGain += position.gainLoss;
+                        if (position.isShortTerm && position.isLoss) currentSTLoss += position.gainLoss;
+                        if (position.isLongTerm && position.isLoss) currentLTLoss += position.gainLoss;
+                        
+                        console.log(`Added ${position.symbol}: $${position.marketValue.toFixed(0)} cash (${overagePercent.toFixed(1)}% overage)`);
+                        
+                        // Stop if we're close enough to target
+                        if (totalCashRaised >= cashAmount) break;
+                    } else {
+                        console.log(`Skipped ${position.symbol}: would cause ${overagePercent.toFixed(1)}% overage`);
+                    }
                 }
             }
             
@@ -2364,7 +2395,15 @@
             
             // Debug: Log each recommendation for verification
             recommendations.forEach(rec => {
-                console.log(`${rec.symbol}: ${rec.quantity} shares @ $${rec.currentPrice.toFixed(2)} = $${rec.marketValue.toFixed(2)} market value, $${rec.unrealizedGain.toFixed(2)} gain/loss`);
+                const calculatedGainLoss = rec.marketValue - rec.costBasis;
+                console.log(`${rec.symbol}: ${rec.quantity} shares @ $${rec.currentPrice.toFixed(2)}`);
+                console.log(`  Market Value: $${rec.marketValue.toFixed(2)}`);
+                console.log(`  Cost Basis: $${rec.costBasis.toFixed(2)} (${rec.costPerShare.toFixed(2)} per share)`);
+                console.log(`  Calculated Gain/Loss: $${calculatedGainLoss.toFixed(2)}`);
+                console.log(`  Stored Gain/Loss: $${rec.unrealizedGain.toFixed(2)}`);
+                if (Math.abs(calculatedGainLoss - rec.unrealizedGain) > 1) {
+                    console.warn(`  ⚠️ MISMATCH: Calculated vs Stored gain/loss differs by $${(calculatedGainLoss - rec.unrealizedGain).toFixed(2)}`);
+                }
             });
             
             return {
