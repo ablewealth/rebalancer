@@ -98,6 +98,28 @@
         .content-area .px-6 { padding-left: 0.8rem; padding-right: 0.8rem; }
         
         .content-area .mb-2 { margin-bottom: 0.3rem; }
+
+        /* Mode Toggle Styles */
+        .mode-toggle-btn {
+            background-color: transparent;
+            color: #6b7280;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mode-toggle-btn.active {
+            background-color: white;
+            color: #1f2937;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .mode-toggle-btn:hover:not(.active) {
+            color: #374151;
+        }
+
+        .mode-content {
+            transition: all 0.3s ease-in-out;
+        }
         .content-area .mb-3 { margin-bottom: 0.5rem; }
         .content-area .mb-4 { margin-bottom: 0.6rem; }
         .content-area .mb-6 { margin-bottom: 0.8rem; }
@@ -375,21 +397,58 @@
 
             <!-- Target Section -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                <h2 class="text-2xl font-semibold mb-4 border-b pb-3">2. Set Annual Targets</h2>
-                <p class="text-sm text-gray-600 mb-4">Define your desired total capital gain or loss for the year.</p>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label for="targetST" class="block text-sm font-medium text-gray-700">Target Short-Term
-                            Gain/(Loss)</label>
-                        <input type="number" id="targetST" placeholder="e.g., 2000"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-3">2. Choose Your Strategy</h2>
+                
+                <!-- Mode Toggle -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-center space-x-1 bg-gray-100 rounded-lg p-1">
+                        <button id="taxTargetModeBtn" class="mode-toggle-btn active flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            Tax Target Mode
+                        </button>
+                        <button id="cashRaisingModeBtn" class="mode-toggle-btn flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                            Cash Raising Mode
+                        </button>
                     </div>
-                    <div>
-                        <label for="targetLT" class="block text-sm font-medium text-gray-700">Target Long-Term
-                            Gain/(Loss)</label>
-                        <input type="number" id="targetLT" placeholder="e.g., 5000"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                </div>
+
+                <!-- Tax Target Mode -->
+                <div id="taxTargetMode" class="mode-content">
+                    <p class="text-sm text-gray-600 mb-4">Define your desired total capital gain or loss for the year.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="targetST" class="block text-sm font-medium text-gray-700">Target Short-Term
+                                Gain/(Loss)</label>
+                            <input type="number" id="targetST" placeholder="e.g., 2000"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        </div>
+                        <div>
+                            <label for="targetLT" class="block text-sm font-medium text-gray-700">Target Long-Term
+                                Gain/(Loss)</label>
+                            <input type="number" id="targetLT" placeholder="e.g., 5000"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cash Raising Mode -->
+                <div id="cashRaisingMode" class="mode-content hidden">
+                    <p class="text-sm text-gray-600 mb-4">Specify the amount of cash you need to raise. The algorithm will find the most tax-efficient way to generate this cash.</p>
+                    <div class="mb-6">
+                        <label for="cashAmount" class="block text-sm font-medium text-gray-700">Cash Amount Needed</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">$</span>
+                            </div>
+                            <input type="number" id="cashAmount" placeholder="50000"
+                                class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">The algorithm will prioritize losses first, then smaller gains to minimize tax impact.</p>
                     </div>
                 </div>
 
@@ -791,6 +850,10 @@
         calculateBtn.addEventListener('click', handleCalculation);
         washSaleCheckBtn.addEventListener('click', handleWashSaleCheck);
         exportBtn.addEventListener('click', handleExport);
+        
+        // Mode switching event listeners
+        document.getElementById('taxTargetModeBtn').addEventListener('click', () => switchMode('taxTarget'));
+        document.getElementById('cashRaisingModeBtn').addEventListener('click', () => switchMode('cashRaising'));
         proceedToBuyBtn.addEventListener('click', handleProceedToBuy);
         demoWashSaleBtn.addEventListener('click', handleDemoWashSale);
         recommendationsTable.addEventListener('click', handleRowToggle);
@@ -1346,6 +1409,45 @@
             }
         }
 
+        // Mode switching functionality
+        let currentMode = 'taxTarget'; // Default mode
+        
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Update button states
+            const taxTargetBtn = document.getElementById('taxTargetModeBtn');
+            const cashRaisingBtn = document.getElementById('cashRaisingModeBtn');
+            const taxTargetMode = document.getElementById('taxTargetMode');
+            const cashRaisingMode = document.getElementById('cashRaisingMode');
+            const calculateBtn = document.getElementById('calculateBtn');
+            
+            if (mode === 'taxTarget') {
+                taxTargetBtn.classList.add('active');
+                cashRaisingBtn.classList.remove('active');
+                taxTargetMode.classList.remove('hidden');
+                cashRaisingMode.classList.add('hidden');
+                calculateBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 00-1 1v1a1 1 0 001 1h6a1 1 0 001-1V5a1 1 0 00-1-1H7zm6 6a1 1 0 01-1 1H8a1 1 0 110-2h4a1 1 0 011 1zm-3 4a1 1 0 100-2H8a1 1 0 100 2h2z" clip-rule="evenodd" />
+                    </svg>
+                    Generate Tax Recommendations
+                `;
+            } else {
+                cashRaisingBtn.classList.add('active');
+                taxTargetBtn.classList.remove('active');
+                cashRaisingMode.classList.remove('hidden');
+                taxTargetMode.classList.add('hidden');
+                calculateBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                    </svg>
+                    Generate Cash Raising Plan
+                `;
+            }
+        }
+
         function handleCalculation() {
             console.log('handleCalculation called');
             if (portfolioData.length === 0) {
@@ -1367,29 +1469,63 @@
 
             const realizedST = parseFloat(document.getElementById('realizedST').value) || 0;
             const realizedLT = parseFloat(document.getElementById('realizedLT').value) || 0;
-            const targetST = parseFloat(document.getElementById('targetST').value);
-            const targetLT = parseFloat(document.getElementById('targetLT').value);
+            
+            let neededST, neededLT, targetST, targetLT;
+            
+            if (currentMode === 'taxTarget') {
+                // Tax Target Mode - use specified targets
+                targetST = parseFloat(document.getElementById('targetST').value);
+                targetLT = parseFloat(document.getElementById('targetLT').value);
 
-            if (isNaN(targetST) || isNaN(targetLT)) {
-                alert('Please enter valid numerical targets for both Short-Term and Long-Term gains.');
-                loader.classList.add('hidden');
-                return;
+                if (isNaN(targetST) || isNaN(targetLT)) {
+                    alert('Please enter valid numerical targets for both Short-Term and Long-Term gains.');
+                    loader.classList.add('hidden');
+                    return;
+                }
+
+                neededST = targetST - realizedST;
+                neededLT = targetLT - realizedLT;
+            } else {
+                // Cash Raising Mode - optimize for cash generation
+                const cashAmount = parseFloat(document.getElementById('cashAmount').value);
+                
+                if (isNaN(cashAmount) || cashAmount <= 0) {
+                    alert('Please enter a valid cash amount greater than 0.');
+                    loader.classList.add('hidden');
+                    return;
+                }
+                
+                // For cash raising, we'll use the algorithm to find optimal trades
+                // Set targets to undefined to trigger cash raising logic
+                targetST = undefined;
+                targetLT = undefined;
+                neededST = undefined;
+                neededLT = undefined;
             }
 
-            const neededST = targetST - realizedST;
-            const neededLT = targetLT - realizedLT;
-
             setTimeout(() => {
-                console.log('Starting calculation with neededST:', neededST, 'neededLT:', neededLT);
                 const excludedPositions = portfolioData.filter(lot => !lot.includedInSelling);
+                let analysisResult;
                 
-                // Use enhanced recommendation system with wash sale detection
-                const analysisResult = generateAdvancedRecommendationsWithWashSaleCheck(neededST, neededLT);
+                if (currentMode === 'taxTarget') {
+                    console.log('Starting tax target calculation with neededST:', neededST, 'neededLT:', neededLT);
+                    analysisResult = generateAdvancedRecommendationsWithWashSaleCheck(neededST, neededLT);
+                } else {
+                    const cashAmount = parseFloat(document.getElementById('cashAmount').value);
+                    console.log('Starting cash raising calculation for amount:', cashAmount);
+                    analysisResult = generateCashRaisingRecommendations(cashAmount);
+                }
+                
                 console.log('Analysis result:', analysisResult);
                 lastRecommendations = analysisResult.recommendations;
                 
                 // Display results with wash sale warnings
-                displayResultsWithWashSaleAnalysis(analysisResult, { realizedST, realizedLT, targetST, targetLT }, excludedPositions);
+                if (currentMode === 'taxTarget') {
+                    displayResultsWithWashSaleAnalysis(analysisResult, { realizedST, realizedLT, targetST, targetLT }, excludedPositions);
+                } else {
+                    const cashAmount = parseFloat(document.getElementById('cashAmount').value);
+                    displayCashRaisingResults(analysisResult, { realizedST, realizedLT, cashAmount }, excludedPositions);
+                }
                 
                 loader.classList.add('hidden');
                 recommendationsDiv.classList.remove('hidden');
@@ -1858,12 +1994,149 @@
             };
         }
 
+        // Cash Raising Mode - Generate recommendations to raise specific cash amount
+        function generateCashRaisingRecommendations(cashAmount) {
+            console.log('Generating cash raising recommendations for:', cashAmount);
+            
+            // Get all available positions that can be sold
+            const availablePositions = portfolioData.filter(lot => lot.includedInSelling);
+            
+            if (availablePositions.length === 0) {
+                return {
+                    recommendations: [],
+                    violations: [],
+                    alternatives: []
+                };
+            }
+            
+            // Sort positions by tax efficiency for cash raising:
+            // 1. Losses first (best for taxes)
+            // 2. Then smallest gains (minimize tax impact)
+            // 3. Consider holding period (prefer long-term gains over short-term)
+            const sortedPositions = availablePositions.map(lot => {
+                const currentPrice = lot.currentPrice || 0;
+                const costBasis = lot.costBasis || 0;
+                const gainLoss = (currentPrice - costBasis) * lot.quantity;
+                const marketValue = currentPrice * lot.quantity;
+                const isLoss = gainLoss < 0;
+                const isLongTerm = lot.term === 'Long-Term';
+                
+                // Tax efficiency score (higher is better for cash raising)
+                let taxEfficiencyScore = 0;
+                
+                if (isLoss) {
+                    // Losses are best - bigger losses get higher scores
+                    taxEfficiencyScore = 1000 + Math.abs(gainLoss);
+                } else {
+                    // For gains, prefer long-term over short-term, and smaller gains over larger
+                    if (isLongTerm) {
+                        taxEfficiencyScore = 500 - gainLoss; // Long-term gains
+                    } else {
+                        taxEfficiencyScore = 100 - gainLoss; // Short-term gains (least preferred)
+                    }
+                }
+                
+                return {
+                    ...lot,
+                    gainLoss,
+                    marketValue,
+                    taxEfficiencyScore,
+                    isLoss
+                };
+            }).sort((a, b) => b.taxEfficiencyScore - a.taxEfficiencyScore);
+            
+            // Select positions to meet cash target
+            const selectedPositions = [];
+            let totalCashRaised = 0;
+            let totalGainLoss = 0;
+            let shortTermGainLoss = 0;
+            let longTermGainLoss = 0;
+            
+            for (const position of sortedPositions) {
+                if (totalCashRaised >= cashAmount) break;
+                
+                selectedPositions.push(position);
+                totalCashRaised += position.marketValue;
+                totalGainLoss += position.gainLoss;
+                
+                if (position.term === 'Short-Term') {
+                    shortTermGainLoss += position.gainLoss;
+                } else {
+                    longTermGainLoss += position.gainLoss;
+                }
+            }
+            
+            // Convert to recommendation format
+            const recommendations = selectedPositions.map(position => ({
+                symbol: position.symbol,
+                quantity: position.quantity,
+                currentPrice: position.currentPrice,
+                costBasis: position.costBasis,
+                marketValue: position.marketValue,
+                unrealizedGain: position.gainLoss,
+                term: position.term,
+                acquiredDate: position.acquiredDate,
+                reason: position.isLoss ? 
+                    `Tax loss harvesting (${formatCurrencyWithSign(position.gainLoss)})` :
+                    `Cash generation (${formatCurrencyWithSign(position.gainLoss)} ${position.term.toLowerCase()} gain)`
+            }));
+            
+            // Check for wash sale violations
+            const violations = detectWashSaleViolations(recommendations);
+            const alternatives = violations.length > 0 ? 
+                violations.map(v => findWashSaleAlternatives(v.symbol)).flat() : [];
+            
+            const formatCurrencyWithSign = (num) => num.toLocaleString('en-US', { style: 'currency', currency: 'USD', signDisplay: 'auto' });
+            
+            console.log(`Cash raising: Selected ${recommendations.length} positions for $${totalCashRaised.toFixed(2)} cash`);
+            console.log(`Tax impact: ST ${formatCurrencyWithSign(shortTermGainLoss)}, LT ${formatCurrencyWithSign(longTermGainLoss)}`);
+            
+            return {
+                recommendations,
+                violations,
+                alternatives,
+                summary: {
+                    totalCashRaised,
+                    totalGainLoss,
+                    shortTermGainLoss,
+                    longTermGainLoss,
+                    cashTarget: cashAmount,
+                    cashExcess: totalCashRaised - cashAmount
+                }
+            };
+        }
+
         // Enhanced display function with wash sale analysis
         function displayResultsWithWashSaleAnalysis(analysisResult, targets, excludedPositions = []) {
             const { recommendations, violations, alternatives } = analysisResult;
             
             // First display standard results
             displayResults(recommendations, targets, excludedPositions);
+            
+            // Add wash sale warnings if any violations found
+            if (violations.length > 0) {
+                displayWashSaleWarnings(violations, alternatives);
+            }
+        }
+
+        // Display cash raising results
+        function displayCashRaisingResults(analysisResult, targets, excludedPositions = []) {
+            const { recommendations, violations, alternatives, summary } = analysisResult;
+            
+            // Create custom targets object for cash raising mode
+            const cashTargets = {
+                realizedST: targets.realizedST,
+                realizedLT: targets.realizedLT,
+                targetST: summary.shortTermGainLoss + targets.realizedST, // Final ST after trades
+                targetLT: summary.longTermGainLoss + targets.realizedLT,  // Final LT after trades
+                cashAmount: targets.cashAmount,
+                cashRaised: summary.totalCashRaised,
+                cashExcess: summary.cashExcess,
+                mode: 'cashRaising'
+            };
+            
+            // Display standard results with cash raising context
+            displayResults(recommendations, cashTargets, excludedPositions);
             
             // Add wash sale warnings if any violations found
             if (violations.length > 0) {
@@ -2059,32 +2332,70 @@
                 targetLT: targets.targetLT,
             };
 
-            let summaryHTML = `
-                <div class="text-center">
-                    <p class="text-sm text-gray-500">Current ST Gain/Loss</p>
-                    <p class="text-lg font-medium ${targets.realizedST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedST)}</p>
-                    <p class="text-sm text-gray-500">Projected Final ST Gain/Loss</p>
-                    <p class="text-xl font-bold ${finalST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalST)}</p>
-                    <p class="text-xs text-gray-500">(Target: ${formatCurrencyWithSign(targets.targetST)})</p>
-                </div>
-                <div class="text-center">
-                    <p class="text-sm text-gray-500">Current LT Gain/Loss</p>
-                    <p class="text-lg font-medium ${targets.realizedLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedLT)}</p>
-                    <p class="text-sm text-gray-500">Projected Final LT Gain/Loss</p>
-                    <p class="text-xl font-bold ${finalLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalLT)}</p>
-                    <p class="text-xs text-gray-500">(Target: ${formatCurrencyWithSign(targets.targetLT)})</p>
-                </div>
-                <div class="text-center">
-                    <p class="text-sm text-gray-500">Total Gain/Loss from Trades</p>
-                    <p class="text-xl font-bold ${totalGainFromTrades < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(totalGainFromTrades)}</p>
-                    <p class="text-xs text-gray-500">(${recommendations.length} lots)</p>
-                </div>
-                <div class="text-center">
-                    <p class="text-sm text-gray-500">Total Market Value of Trades</p>
-                    <p class="text-xl font-bold text-gray-800">${formatCurrency(totalMarketValueFromTrades)}</p>
-                    <p class="text-xs text-gray-400">&nbsp;</p> <!-- Placeholder for alignment -->
-                </div>
-            `;
+            let summaryHTML;
+            
+            if (targets.mode === 'cashRaising') {
+                // Cash Raising Mode Summary
+                const cashShortfall = Math.max(0, targets.cashAmount - targets.cashRaised);
+                const cashExcess = Math.max(0, targets.cashRaised - targets.cashAmount);
+                
+                summaryHTML = `
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Cash Target</p>
+                        <p class="text-lg font-medium text-blue-600">${formatCurrency(targets.cashAmount)}</p>
+                        <p class="text-sm text-gray-500">Cash Generated</p>
+                        <p class="text-xl font-bold ${targets.cashRaised >= targets.cashAmount ? 'text-green-700' : 'text-orange-600'}">${formatCurrency(targets.cashRaised)}</p>
+                        <p class="text-xs text-gray-500">${cashExcess > 0 ? `(+${formatCurrency(cashExcess)} excess)` : cashShortfall > 0 ? `(-${formatCurrency(cashShortfall)} shortfall)` : '(Target met)'}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Tax Impact - Short Term</p>
+                        <p class="text-lg font-medium ${targets.realizedST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedST)} → ${formatCurrencyWithSign(finalST)}</p>
+                        <p class="text-sm text-gray-500">Tax Impact - Long Term</p>
+                        <p class="text-lg font-medium ${targets.realizedLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedLT)} → ${formatCurrencyWithSign(finalLT)}</p>
+                        <p class="text-xs text-gray-500">Current → Final</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Total Tax Impact</p>
+                        <p class="text-xl font-bold ${totalGainFromTrades < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(totalGainFromTrades)}</p>
+                        <p class="text-xs text-gray-500">(${recommendations.length} lots)</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Strategy Efficiency</p>
+                        <p class="text-xl font-bold ${totalGainFromTrades <= 0 ? 'text-green-700' : 'text-orange-600'}">
+                            ${totalGainFromTrades <= 0 ? 'Excellent' : totalGainFromTrades < targets.cashAmount * 0.1 ? 'Good' : 'Fair'}
+                        </p>
+                        <p class="text-xs text-gray-500">${totalGainFromTrades <= 0 ? 'Tax losses generated' : 'Minimal tax impact'}</p>
+                    </div>
+                `;
+            } else {
+                // Tax Target Mode Summary (original)
+                summaryHTML = `
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Current ST Gain/Loss</p>
+                        <p class="text-lg font-medium ${targets.realizedST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedST)}</p>
+                        <p class="text-sm text-gray-500">Projected Final ST Gain/Loss</p>
+                        <p class="text-xl font-bold ${finalST < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalST)}</p>
+                        <p class="text-xs text-gray-500">(Target: ${formatCurrencyWithSign(targets.targetST)})</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Current LT Gain/Loss</p>
+                        <p class="text-lg font-medium ${targets.realizedLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(targets.realizedLT)}</p>
+                        <p class="text-sm text-gray-500">Projected Final LT Gain/Loss</p>
+                        <p class="text-xl font-bold ${finalLT < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(finalLT)}</p>
+                        <p class="text-xs text-gray-500">(Target: ${formatCurrencyWithSign(targets.targetLT)})</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Total Gain/Loss from Trades</p>
+                        <p class="text-xl font-bold ${totalGainFromTrades < 0 ? 'text-red-600' : 'text-green-700'}">${formatCurrencyWithSign(totalGainFromTrades)}</p>
+                        <p class="text-xs text-gray-500">(${recommendations.length} lots)</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500">Total Market Value of Trades</p>
+                        <p class="text-xl font-bold text-gray-800">${formatCurrency(totalMarketValueFromTrades)}</p>
+                        <p class="text-xs text-gray-400">&nbsp;</p> <!-- Placeholder for alignment -->
+                    </div>
+                `;
+            }
 
             // Add excluded positions summary if any
             if (excludedPositions.length > 0) {
@@ -2336,19 +2647,16 @@
             const accountNumber = document.getElementById('accountNumber').value;
             const realizedST = parseFloat(document.getElementById('realizedST').value) || 0;
             const realizedLT = parseFloat(document.getElementById('realizedLT').value) || 0;
-            const targetST = parseFloat(document.getElementById('targetST').value) || 0;
-            const targetLT = parseFloat(document.getElementById('targetLT').value) || 0;
-
-            const reportData = {
+            
+            let reportData = {
                 client: {
                     name: clientName,
                     custodian: custodian,
                     accountNumber: accountNumber
                 },
+                mode: currentMode,
                 realizedST: realizedST,
                 realizedLT: realizedLT,
-                targetST: targetST,
-                targetLT: targetLT,
                 finalST: lastSummaryData.finalST || 0,
                 finalLT: lastSummaryData.finalLT || 0,
                 totalGainLoss: lastSummaryData.totalGainFromTrades || 0,
@@ -2359,6 +2667,18 @@
                 excludedPositions: portfolioData.filter(lot => !lot.includedInSelling).length,
                 timestamp: new Date().toISOString()
             };
+            
+            if (currentMode === 'taxTarget') {
+                const targetST = parseFloat(document.getElementById('targetST').value) || 0;
+                const targetLT = parseFloat(document.getElementById('targetLT').value) || 0;
+                reportData.targetST = targetST;
+                reportData.targetLT = targetLT;
+            } else {
+                const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+                reportData.cashAmount = cashAmount;
+                reportData.cashRaised = lastSummaryData.totalMarketValueFromTrades || 0;
+                reportData.cashExcess = (lastSummaryData.totalMarketValueFromTrades || 0) - cashAmount;
+            }
 
             localStorage.setItem('taxHarvestingReport', JSON.stringify(reportData));
         }
