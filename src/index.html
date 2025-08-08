@@ -2707,27 +2707,43 @@
 
             // Generate final summary report
             DEBUG.log('CASH_RAISING', '=== FINAL ALGORITHM SUMMARY ===');
-            DEBUG.log('CASH_RAISING', 'Cash Analysis', {
-                target: cashAmount.toFixed(2),
-                raised: totalCashRaised.toFixed(2),
-                excess: (totalCashRaised - cashAmount).toFixed(2),
-                overagePercent: ((totalCashRaised - cashAmount) / cashAmount * 100).toFixed(2) + '%'
+            console.log('=== CASH RAISING FINAL SUMMARY ===');
+            console.log('💰 CASH ANALYSIS:');
+            console.log(`  Target: $${cashAmount.toFixed(2)}`);
+            console.log(`  Raised: $${totalCashRaised.toFixed(2)}`);
+            console.log(`  Excess: $${(totalCashRaised - cashAmount).toFixed(2)}`);
+            console.log(`  Overage: ${((totalCashRaised - cashAmount) / cashAmount * 100).toFixed(2)}%`);
+            
+            console.log('📊 TAX IMPACT ANALYSIS:');
+            console.log(`  ST Gain: $${currentSTGain.toFixed(2)}`);
+            console.log(`  ST Loss: $${currentSTLoss.toFixed(2)}`);
+            console.log(`  ST Net:  $${(currentSTGain + currentSTLoss).toFixed(2)}`);
+            console.log(`  LT Gain: $${currentLTGain.toFixed(2)}`);
+            console.log(`  LT Loss: $${currentLTLoss.toFixed(2)}`);
+            console.log(`  LT Net:  $${(currentLTGain + currentLTLoss).toFixed(2)}`);
+            console.log(`  Total Net: $${totalGainLoss.toFixed(2)}`);
+            
+            console.log('✅ CONSTRAINT COMPLIANCE:');
+            console.log(`  Thresholds Met: ${thresholdsMet}`);
+            console.log(`  Strategy: ${strategy}`);
+            console.log(`  Recommendations: ${recommendations.length}`);
+            console.log(`  Wash Sale Violations: ${violations.length}`);
+            
+            console.log('📋 SELECTED POSITIONS:');
+            recommendations.forEach((rec, i) => {
+                console.log(`  ${i+1}. ${rec.symbol}: ${rec.quantity} shares, $${rec.marketValue.toFixed(2)} value, $${rec.unrealizedGain.toFixed(2)} gain/loss (${rec.term})`);
             });
-            DEBUG.log('CASH_RAISING', 'Tax Impact Analysis', {
-                stGain: currentSTGain.toFixed(2),
-                stLoss: currentSTLoss.toFixed(2),
-                stNet: (currentSTGain + currentSTLoss).toFixed(2),
-                ltGain: currentLTGain.toFixed(2),
-                ltLoss: currentLTLoss.toFixed(2),
-                ltNet: (currentLTGain + currentLTLoss).toFixed(2),
-                totalNet: totalGainLoss.toFixed(2)
-            });
-            DEBUG.log('CASH_RAISING', 'Constraint Compliance', {
-                thresholdsMet,
-                strategy,
-                recommendationCount: recommendations.length,
-                violationCount: violations.length
-            });
+            
+            // Final validation summary
+            const totalRecommendedValue = recommendations.reduce((sum, rec) => sum + rec.marketValue, 0);
+            const totalRecommendedGainLoss = recommendations.reduce((sum, rec) => sum + rec.unrealizedGain, 0);
+            
+            console.log('🎯 FINAL VALIDATION:');
+            console.log(`  Total Recommended Value: $${totalRecommendedValue.toFixed(2)}`);
+            console.log(`  Total Recommended Gain/Loss: $${totalRecommendedGainLoss.toFixed(2)}`);
+            console.log(`  Cash Target Achievement: ${((totalRecommendedValue / cashAmount) * 100).toFixed(1)}%`);
+            console.log(`  Algorithm Status: ${thresholdsMet ? '✅ SUCCESS' : '⚠️ CONSTRAINTS RELAXED'}`);
+            console.log('=====================================');
 
             return result;
         }
