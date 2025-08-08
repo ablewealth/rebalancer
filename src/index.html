@@ -2330,17 +2330,17 @@
                 symbol: position.symbol || 'Unknown',
                 quantity: position.quantity || 0,
                 currentPrice: position.currentPrice || 0,
-                costBasis: position.costBasis || 0,
-                costPerShare: position.costBasis || 0,
+                costBasis: (position.costBasis || 0) * (position.quantity || 0), // Total cost basis
+                costPerShare: position.costBasis || 0, // Per-share cost basis
                 price: position.currentPrice || 0,
                 marketValue: position.marketValue || 0,
                 unrealizedGain: position.gainLoss || 0,
-                term: position.term || 'Short-Term',
+                term: position.isLongTerm ? 'Long-Term' : 'Short-Term',
                 acquired: position.acquiredDate || position.acquired || 'Unknown',
                 acquiredDate: position.acquiredDate || position.acquired || 'Unknown',
                 reason: position.isLoss ? 
                     `Tax loss harvesting (${formatCurrencyWithSign(position.gainLoss || 0)})` :
-                    `Cash generation (${formatCurrencyWithSign(position.gainLoss || 0)} ${(position.term || 'short-term').toLowerCase()} gain)`
+                    `Cash generation (${formatCurrencyWithSign(position.gainLoss || 0)} ${position.isLongTerm ? 'long-term' : 'short-term'} gain)`
             }));
             
             console.log('Generated recommendations:', recommendations.length);
@@ -2361,6 +2361,11 @@
             
             console.log(`Cash raising: Selected ${recommendations.length} positions for $${totalCashRaised.toFixed(2)} cash`);
             console.log(`Tax impact: ST ${formatCurrencyWithSign(currentSTGain + currentSTLoss)}, LT ${formatCurrencyWithSign(currentLTGain + currentLTLoss)}`);
+            
+            // Debug: Log each recommendation for verification
+            recommendations.forEach(rec => {
+                console.log(`${rec.symbol}: ${rec.quantity} shares @ $${rec.currentPrice.toFixed(2)} = $${rec.marketValue.toFixed(2)} market value, $${rec.unrealizedGain.toFixed(2)} gain/loss`);
+            });
             
             return {
                 recommendations,
