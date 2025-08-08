@@ -2350,7 +2350,7 @@
             let alternatives = [];
             
             try {
-                violations = detectWashSaleViolations(recommendations);
+                violations = checkWashSaleViolations(recommendations);
                 alternatives = violations.length > 0 ? 
                     violations.map(v => findWashSaleAlternatives(v.symbol)).flat() : [];
             } catch (error) {
@@ -2360,7 +2360,7 @@
             }
             
             console.log(`Cash raising: Selected ${recommendations.length} positions for $${totalCashRaised.toFixed(2)} cash`);
-            console.log(`Tax impact: ST ${formatCurrencyWithSign(shortTermGainLoss)}, LT ${formatCurrencyWithSign(longTermGainLoss)}`);
+            console.log(`Tax impact: ST ${formatCurrencyWithSign(currentSTGain + currentSTLoss)}, LT ${formatCurrencyWithSign(currentLTGain + currentLTLoss)}`);
             
             return {
                 recommendations,
