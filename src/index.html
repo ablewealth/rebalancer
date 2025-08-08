@@ -3372,6 +3372,167 @@
         function generateMockAiAnalysis() {
             const totalTrades = lastRecommendations.length;
             const totalGain = lastSummaryData.totalGainFromTrades || 0;
+            const totalMarketValue = lastSummaryData.totalMarketValueFromTrades || 0;
+            
+            // Check for wash sale violations in current recommendations
+            const washSaleAnalysis = checkWashSaleViolations(lastRecommendations);
+            
+            let analysis = '';
+            
+            // Mode-specific introduction and strategy overview
+            if (currentMode === 'cashRaising') {
+                analysis += `Based on your cash raising requirements and tax optimization strategy, here's my comprehensive assessment:\n\n`;
+                
+                const cashTarget = parseFloat(document.getElementById('cashAmount').value) || 0;
+                const overage = totalMarketValue - cashTarget;
+                const overagePercent = cashTarget > 0 ? (overage / cashTarget * 100) : 0;
+                const strategy = document.querySelector('input[name="cashStrategy"]:checked')?.value || 'minimize_tax';
+                
+                analysis += `💰 CASH RAISING STRATEGY OVERVIEW:\n`;
+                analysis += `• Cash Target: $${cashTarget.toLocaleString()}\n`;
+                analysis += `• Cash Generated: $${totalMarketValue.toLocaleString()}\n`;
+                analysis += `• Overage: $${overage.toLocaleString()} (${overagePercent.toFixed(1)}%)\n`;
+                analysis += `• Strategy: ${strategy === 'minimize_tax' ? 'Minimize Tax Impact' : strategy === 'maximize_cash' ? 'Maximize Cash' : 'Balanced Approach'}\n`;
+                analysis += `• Selected ${totalTrades} positions for optimal tax-efficient cash generation\n`;
+                analysis += `• Net Tax Impact: ${totalGain >= 0 ? 'Gain' : 'Loss'} of $${Math.abs(totalGain).toLocaleString()}\n\n`;
+                
+                // Cash target achievement analysis
+                if (overagePercent <= 1.0) {
+                    analysis += `🎯 CASH TARGET ACHIEVEMENT: EXCELLENT\n`;
+                    analysis += `Outstanding precision! Generated cash is within 1% of target, demonstrating optimal position selection with minimal unnecessary tax impact.\n\n`;
+                } else if (overagePercent <= 5.0) {
+                    analysis += `⚠️ CASH TARGET ACHIEVEMENT: ACCEPTABLE\n`;
+                    analysis += `Moderate overage detected. The algorithm balanced available position sizes with your cash needs.\n\n`;
+                } else {
+                    analysis += `🔴 CASH TARGET ACHIEVEMENT: REVIEW NEEDED\n`;
+                    analysis += `Significant overage detected. Consider adjusting position selection or cash target to minimize unnecessary sales.\n\n`;
+                }
+                
+                // Tax efficiency analysis for cash raising
+                if (totalGain <= 0) {
+                    analysis += `✅ TAX EFFICIENCY ANALYSIS: OPTIMAL\n`;
+                    analysis += `Excellent tax optimization! The algorithm successfully prioritized loss positions, generating valuable tax benefits while raising your required cash.\n`;
+                    analysis += `• Net Tax Loss: $${Math.abs(totalGain).toLocaleString()}\n`;
+                    analysis += `• This loss can offset other capital gains or up to $3,000 of ordinary income annually\n`;
+                    analysis += `• Unused losses carry forward indefinitely to future tax years\n\n`;
+                } else {
+                    const taxEfficiencyRatio = totalGain / totalMarketValue;
+                    if (taxEfficiencyRatio < 0.05) {
+                        analysis += `✅ TAX EFFICIENCY ANALYSIS: GOOD\n`;
+                        analysis += `Minimal tax impact relative to cash raised (${(taxEfficiencyRatio * 100).toFixed(1)}% tax cost). Well-optimized selection.\n\n`;
+                    } else if (taxEfficiencyRatio < 0.15) {
+                        analysis += `⚠️ TAX EFFICIENCY ANALYSIS: MODERATE\n`;
+                        analysis += `Moderate tax impact (${(taxEfficiencyRatio * 100).toFixed(1)}% of cash raised). Consider if timing allows for better optimization.\n\n`;
+                    } else {
+                        analysis += `🔴 TAX EFFICIENCY ANALYSIS: HIGH IMPACT\n`;
+                        analysis += `Significant tax cost relative to cash raised (${(taxEfficiencyRatio * 100).toFixed(1)}%). Consider alternative positions or timing.\n\n`;
+                    }
+                }
+                
+            } else {
+                // Tax Target Mode (original logic with improvements)
+                analysis += `Based on your portfolio analysis and tax optimization targets, here's my comprehensive assessment:\n\n`;
+                
+                const targetST = parseFloat(document.getElementById('targetST').value) || 0;
+                const targetLT = parseFloat(document.getElementById('targetLT').value) || 0;
+                const realizedST = parseFloat(document.getElementById('realizedST').value) || 0;
+                const realizedLT = parseFloat(document.getElementById('realizedLT').value) || 0;
+                const finalST = lastSummaryData.finalST || (realizedST + totalGain);
+                const finalLT = lastSummaryData.finalLT || (realizedLT + totalGain);
+                
+                analysis += `🎯 TAX TARGET STRATEGY OVERVIEW:\n`;
+                analysis += `• Target Short-Term: $${targetST.toLocaleString()}\n`;
+                analysis += `• Target Long-Term: $${targetLT.toLocaleString()}\n`;
+                analysis += `• Current Realized ST: $${realizedST.toLocaleString()}\n`;
+                analysis += `• Current Realized LT: $${realizedLT.toLocaleString()}\n`;
+                analysis += `• Projected Final ST: $${finalST.toLocaleString()}\n`;
+                analysis += `• Projected Final LT: $${finalLT.toLocaleString()}\n`;
+                analysis += `• Selected ${totalTrades} positions to optimize tax outcome\n`;
+                analysis += `• Total Tax Impact: ${totalGain >= 0 ? 'Gain' : 'Loss'} of $${Math.abs(totalGain).toLocaleString()}\n\n`;
+            }
+            
+            // Common wash sale analysis for both modes
+            if (washSaleAnalysis.length > 0) {
+                analysis += `🚨 WASH SALE RISK ANALYSIS:\n`;
+                analysis += `CRITICAL WARNING: ${washSaleAnalysis.length} potential wash sale violation(s) detected!\n\n`;
+                washSaleAnalysis.forEach((violation, index) => {
+                    analysis += `${index + 1}. ${violation.riskTier.level} Risk: Selling ${violation.soldSymbol} while holding/buying ${violation.purchasedSymbol}\n`;
+                    analysis += `   • Similarity Score: ${violation.similarityScore}/100 - ${violation.riskTier.description}\n`;
+                    analysis += `   • Potential Disallowed Loss: $${violation.disallowedLoss.toLocaleString()}\n`;
+                    analysis += `   • IRS Section 1091 may defer tax benefits\n\n`;
+                });
+                analysis += `⚠️ IMMEDIATE ACTION REQUIRED: Review alternative ETFs provided to avoid triggering wash sale rules.\n\n`;
+            } else {
+                analysis += `✅ WASH SALE COMPLIANCE:\n`;
+                analysis += `Excellent! No wash sale violations detected. Your proposed trades comply with IRS Section 1091 requirements.\n\n`;
+            }
+            
+            // Tax benefits analysis (common to both modes)
+            if (totalGain < 0) {
+                analysis += `💰 TAX BENEFITS ANALYSIS:\n`;
+                analysis += `• Realized losses of $${Math.abs(totalGain).toLocaleString()} can offset other capital gains\n`;
+                analysis += `• Up to $3,000 of excess losses can offset ordinary income annually\n`;
+                analysis += `• Unused losses carry forward indefinitely to future tax years\n`;
+                analysis += `• ${currentMode === 'cashRaising' ? 'Bonus: You\'re raising cash while generating tax benefits!' : 'Optimal tax loss harvesting achieved'}\n`;
+                if (washSaleAnalysis.length > 0) {
+                    analysis += `• ⚠️ However, wash sale violations could defer these tax benefits\n`;
+                }
+                analysis += `\n`;
+            } else if (totalGain > 0) {
+                analysis += `📊 TAX IMPACT ANALYSIS:\n`;
+                analysis += `• Realized gains of $${totalGain.toLocaleString()} will be subject to capital gains tax\n`;
+                analysis += `• Consider timing: Long-term gains (>1 year) are taxed more favorably than short-term\n`;
+                analysis += `• ${currentMode === 'cashRaising' ? 'Tax cost is the price of liquidity - ensure the cash need justifies the tax impact' : 'Gains may be offset by other losses in your portfolio'}\n\n`;
+            }
+            
+            // Position breakdown
+            analysis += `📋 PORTFOLIO IMPACT SUMMARY:\n`;
+            analysis += `• Total Positions Selected: ${totalTrades}\n`;
+            analysis += `• Total Market Value: $${totalMarketValue.toLocaleString()}\n`;
+            analysis += `• Net Tax Impact: $${totalGain.toLocaleString()}\n`;
+            
+            // Calculate ST/LT breakdown from recommendations
+            let stImpact = 0, ltImpact = 0;
+            lastRecommendations.forEach(rec => {
+                if (rec.term === 'Short-Term' || rec.term === 'Short') {
+                    stImpact += rec.unrealizedGain || 0;
+                } else {
+                    ltImpact += rec.unrealizedGain || 0;
+                }
+            });
+            
+            analysis += `• Short-Term Impact: $${stImpact.toLocaleString()}\n`;
+            analysis += `• Long-Term Impact: $${ltImpact.toLocaleString()}\n\n`;
+            
+            // Next steps
+            analysis += `🚀 RECOMMENDED NEXT STEPS:\n`;
+            if (washSaleAnalysis.length > 0) {
+                analysis += `1. 🚨 RESOLVE WASH SALE ISSUES FIRST - Select alternative ETFs\n`;
+                analysis += `2. Review alternative recommendations provided in the wash sale analysis\n`;
+                analysis += `3. Verify compliance across all accounts before proceeding\n`;
+            } else {
+                analysis += `1. ✅ Review and approve the recommended trades\n`;
+                analysis += `2. Export the trade list for execution with your broker\n`;
+                analysis += `3. ${currentMode === 'cashRaising' ? 'Confirm the cash amount meets your liquidity needs' : 'Verify the tax impact aligns with your year-end planning'}\n`;
+            }
+            analysis += `4. Coordinate execution timing with your tax advisor\n`;
+            analysis += `5. Monitor the 61-day period to avoid future wash sale violations\n`;
+            analysis += `6. Update your tax planning spreadsheet with projected impacts\n\n`;
+            
+            // Legal disclaimer
+            analysis += `⚖️ LEGAL DISCLAIMER:\n`;
+            analysis += `This analysis is for informational purposes only and does not constitute tax, legal, or investment advice. `;
+            analysis += `Wash sale determinations depend on specific facts and circumstances across all accounts. `;
+            analysis += `Tax implications vary based on individual situations. `;
+            analysis += `Always consult with your qualified tax advisor and financial professional before executing any trades. `;
+            analysis += `Past performance does not guarantee future results.`;
+            
+            return analysis;
+        }
+
+        function generateMockAiAnalysis_OLD() {
+            const totalTrades = lastRecommendations.length;
+            const totalGain = lastSummaryData.totalGainFromTrades || 0;
             const stGain = lastSummaryData.finalST - (lastSummaryData.targetST - lastSummaryData.finalST + totalGain);
             const ltGain = lastSummaryData.finalLT - (lastSummaryData.targetLT - lastSummaryData.finalLT + totalGain);
             
