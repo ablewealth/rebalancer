@@ -532,17 +532,17 @@
         // Dynamic model portfolios data - loaded from CSV files
         let modelPortfolios = {};
 
-        // Function to load all model portfolios from data/models/ directory
+        // Function to load all model portfolios from data/models/ directory AND localStorage
         async function loadModelPortfolios() {
-            // Only include files that actually exist in the data/models directory
+            modelPortfolios = {}; // Clear existing data
+            
+            // First, load CSV files from data/models directory
             const modelFiles = [
                 'AWM Model - All Equity.csv',
                 'AWM Model - Fixed_D.csv', 
                 'AWM Model - Fixed_T.csv',
                 'AWM Model_Tactical Equity.csv'
             ];
-
-            modelPortfolios = {}; // Clear existing data
 
             for (const filename of modelFiles) {
                 try {
@@ -581,6 +581,29 @@
                     console.warn(`Could not load model portfolio: ${filename}`, error);
                 }
             }
+            
+            // Second, load saved portfolios from localStorage (from Model Portfolios Manager)
+            console.log('Loading saved portfolios from localStorage...');
+            let savedCount = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('portfolio_')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        if (data && data.name && data.holdings) {
+                            // Use a special prefix to distinguish saved portfolios from CSV files
+                            const portfolioKey = `saved_${key}`;
+                            modelPortfolios[portfolioKey] = `📁 ${data.name}`;
+                            savedCount++;
+                            console.log(`Loaded saved portfolio: ${data.name}`);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing saved portfolio:', key, e);
+                    }
+                }
+            }
+            
+            console.log(`Loaded ${savedCount} saved portfolios from localStorage`);
             console.log('Final modelPortfolios:', modelPortfolios);
             return Object.keys(modelPortfolios).length > 0;
         }
@@ -699,14 +722,45 @@
                 // Clear current options except the first one
                 portfolioSelect.innerHTML = '<option value="">Select a model portfolio...</option>';
                 
-                // Add available model portfolios
-                const portfolioCount = Object.keys(modelPortfolios).length;
+                // Separate CSV models and saved portfolios
+                const csvModels = {};
+                const savedPortfolios = {};
+                
                 for (const [filename, displayName] of Object.entries(modelPortfolios)) {
-                    const option = document.createElement('option');
-                    option.value = filename;
-                    option.textContent = displayName;
-                    portfolioSelect.appendChild(option);
+                    if (filename.startsWith('saved_')) {
+                        savedPortfolios[filename] = displayName;
+                    } else {
+                        csvModels[filename] = displayName;
+                    }
                 }
+                
+                // Add CSV models first
+                if (Object.keys(csvModels).length > 0) {
+                    const csvGroup = document.createElement('optgroup');
+                    csvGroup.label = 'Standard Models';
+                    for (const [filename, displayName] of Object.entries(csvModels)) {
+                        const option = document.createElement('option');
+                        option.value = filename;
+                        option.textContent = displayName;
+                        csvGroup.appendChild(option);
+                    }
+                    portfolioSelect.appendChild(csvGroup);
+                }
+                
+                // Add saved portfolios second
+                if (Object.keys(savedPortfolios).length > 0) {
+                    const savedGroup = document.createElement('optgroup');
+                    savedGroup.label = 'Custom Portfolios';
+                    for (const [filename, displayName] of Object.entries(savedPortfolios)) {
+                        const option = document.createElement('option');
+                        option.value = filename;
+                        option.textContent = displayName;
+                        savedGroup.appendChild(option);
+                    }
+                    portfolioSelect.appendChild(savedGroup);
+                }
+                
+                const portfolioCount = Object.keys(modelPortfolios).length;
                 
                 // Small delay to show the refresh animation
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -742,7 +796,29 @@
             }
 
             try {
-                // Load the selected model portfolio with multiple path options
+                // Check if this is a saved portfolio from localStorage
+                if (selectedFile.startsWith('saved_')) {
+                    // Extract the localStorage key
+                    const localStorageKey = selectedFile.replace('saved_', '');
+                    const savedData = localStorage.getItem(localStorageKey);
+                    
+                    if (!savedData) {
+                        throw new Error('Saved portfolio not found in localStorage');
+                    }
+                    
+                    const portfolioInfo = JSON.parse(savedData);
+                    portfolioData = portfolioInfo.holdings || [];
+                    
+                    // Clear file input and update display
+                    portfolioFileInput.value = '';
+                    portfolioFileNameDisplay.textContent = `Selected model: ${portfolioInfo.name}`;
+                    
+                    showNotification(`Loaded saved portfolio: ${portfolioInfo.name} (${portfolioData.length} holdings)`, 'success');
+                    console.log('Loaded Saved Portfolio Data:', portfolioData);
+                    return;
+                }
+                
+                // Otherwise, load from CSV file in data/models directory
                 const possiblePaths = [
                     `/data/models/${selectedFile}`,
                     `../data/models/${selectedFile}`,
