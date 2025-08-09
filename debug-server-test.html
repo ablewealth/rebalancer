@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Debug Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .pass { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .warn { background-color: #fff3cd; border: 1px solid #ffeaa7; }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+        .server-info { background: #e7f3ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Portfolio Management Site Server Debug Report</h1>
+    
+    <div class="server-info">
+        <strong>Server Mode Active</strong> - Full fetch() testing enabled
+    </div>
+    
+    <h2>Server Health</h2>
+    <div id="serverTests"></div>
+    
+    <h2>Page Accessibility Tests</h2>
+    <div id="pageTests"></div>
+    
+    <h2>Navigation Tests</h2>
+    <div id="navTests"></div>
+    
+    <h2>Data Persistence Tests</h2>
+    <div id="dataTests"></div>
+    
+    <h2>Model Portfolio Tests</h2>
+    <div id="modelTests"></div>
+
+    <script>
+        async function runServerDebugTests() {
+            const results = {
+                serverTests: [],
+                pageTests: [],
+                navTests: [],
+                dataTests: [],
+                modelTests: []
+            };
+
+            // Test server health
+            try {
+                const response = await fetch('/health');
+                if (response.ok) {
+                    const health = await response.json();
+                    results.serverTests.push({ test: 'Server health check', status: 'pass', info: health.message });
+                } else {
+                    results.serverTests.push({ test: 'Server health check', status: 'fail', error: response.statusText });
+                }
+            } catch (error) {
+                results.serverTests.push({ test: 'Server health check', status: 'fail', error: error.message });
+            }
+
+            // Test file discovery endpoint
+            try {
+                const response = await fetch('/api/files');
+                if (response.ok) {
+                    const files = await response.json();
+                    results.serverTests.push({ 
+                        test: 'File discovery API', 
+                        status: 'pass', 
+                        info: `Found ${files.pages?.length || 0} pages, ${files.scripts?.length || 0} scripts, ${files.models?.length || 0} models`
+                    });
+                } else {
+                    results.serverTests.push({ test: 'File discovery API', status: 'fail', error: response.statusText });
+                }
+            } catch (error) {
+                results.serverTests.push({ test: 'File discovery API', status: 'fail', error: error.message });
+            }
+
+            // Test page accessibility with full fetch support
+            const pages = [
+                'src/index.html',
+                'src/model-portfolios.html', 
+                'src/buy-orders.html',
+                'src/price-manager.html',
+                'src/report.html'
+            ];
+
+            for (const page of pages) {
+                try {
+                    const response = await fetch(page);
+                    if (response.ok) {
+                        const content = await response.text();
+                        if (content.includes('<html') && content.includes('</html>')) {
+                            results.pageTests.push({ test: `${page} accessible & valid`, status: 'pass' });
+                        } else {
+                            results.pageTests.push({ test: `${page} accessible & valid`, status: 'warn', error: 'HTML structure unclear' });
+                        }
+                    } else {
+                        results.pageTests.push({ test: `${page} accessible`, status: 'fail', error: response.statusText });
+                    }
+                } catch (error) {
+                    results.pageTests.push({ test: `${page} accessible`, status: 'fail', error: error.message });
+                }
+            }
+
+            // Test JavaScript files
+            const jsFiles = [
+                'src/js/navigation-persistence.js',
+                'src/js/module-loader.js',
+                'src/js/tax-harvesting-algorithm.js',
+                'src/js/tax-harvesting-utilities.js'
+            ];
+
+            for (const jsFile of jsFiles) {
+                try {
+                    const response = await fetch(jsFile);
+                    if (response.ok) {
+                        const content = await response.text();
+                        if (content.trim().length > 0) {
+                            results.navTests.push({ test: `${jsFile} loadable & non-empty`, status: 'pass' });
+                        } else {
+                            results.navTests.push({ test: `${jsFile} loadable`, status: 'warn', error: 'File is empty' });
+                        }
+                    } else {
+                        results.navTests.push({ test: `${jsFile} loadable`, status: 'fail', error: response.statusText });
+                    }
+                } catch (error) {
+                    results.navTests.push({ test: `${jsFile} loadable`, status: 'fail', error: error.message });
+                }
+            }
+
+            // Test model portfolio files with full content validation
+            const modelFiles = [
+                'src/data/models/AWM Model - All Equity.csv',
+                'src/data/models/AWM Model - Fixed_D.csv',
+                'src/data/models/AWM Model - Fixed_T csv.csv',
+                'src/data/models/AWM_Model_Tactical_Equity.csv'
+            ];
+
+            for (const modelFile of modelFiles) {
+                try {
+                    const response = await fetch(modelFile);
+                    if (response.ok) {
+                        const content = await response.text();
+                        const lines = content.trim().split('\n');
+                        const headers = lines[0]?.toLowerCase() || '';
+                        
+                        if (headers.includes('symbol') && (headers.includes('target') || headers.includes('percent'))) {
+                            results.modelTests.push({ 
+                                test: `${modelFile} format valid`, 
+                                status: 'pass',
+                                info: `${lines.length} lines, valid headers`
+                            });
+                        } else {
+                            results.modelTests.push({ 
+                                test: `${modelFile} format check`, 
+                                status: 'warn', 
+                                error: 'Headers may not match expected format'
+                            });
+                        }
+                    } else {
+                        results.modelTests.push({ test: `${modelFile} accessible`, status: 'fail', error: response.statusText });
+                    }
+                } catch (error) {
+                    results.modelTests.push({ test: `${modelFile} accessible`, status: 'fail', error: error.message });
+                }
+            }
+
+            // Test localStorage availability
+            try {
+                localStorage.setItem('debug-test', 'test');
+                localStorage.removeItem('debug-test');
+                results.dataTests.push({ test: 'localStorage available', status: 'pass' });
+            } catch (error) {
+                results.dataTests.push({ test: 'localStorage available', status: 'fail', error: error.message });
+            }
+
+            // Test sessionStorage
+            try {
+                sessionStorage.setItem('debug-test', 'test');
+                sessionStorage.removeItem('debug-test');
+                results.dataTests.push({ test: 'sessionStorage available', status: 'pass' });
+            } catch (error) {
+                results.dataTests.push({ test: 'sessionStorage available', status: 'fail', error: error.message });
+            }
+
+            // Display results
+            displayResults('serverTests', results.serverTests);
+            displayResults('pageTests', results.pageTests);
+            displayResults('navTests', results.navTests);
+            displayResults('dataTests', results.dataTests);
+            displayResults('modelTests', results.modelTests);
+        }
+
+        function displayResults(containerId, tests) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = tests.map(test => 
+                `<div class="test ${test.status}">
+                    <strong>${test.test}</strong>: ${test.status.toUpperCase()}
+                    ${test.error ? `<br>Error: ${test.error}` : ''}
+                    ${test.info ? `<br>Info: ${test.info}` : ''}
+                </div>`
+            ).join('');
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', runServerDebugTests);
+    </script>
+</body>
+</html>

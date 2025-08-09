@@ -1,0 +1,21 @@
+{
+  "name": "rebalancer-test-server",
+  "version": "1.0.0",
+  "description": "Simple test server for portfolio rebalancer frontend",
+  "main": "test-server.js",
+  "scripts": {
+    "test-server": "node test-server.js",
+    "start": "node test-server.js",
+    "debug": "node test-server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "keywords": [
+    "test-server",
+    "portfolio",
+    "rebalancer"
+  ],
+  "author": "",
+  "license": "ISC"
+}

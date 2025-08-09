@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Debug Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .pass { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .warn { background-color: #fff3cd; border: 1px solid #ffeaa7; }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Portfolio Management Site Debug Report</h1>
+    
+    <h2>Page Accessibility Tests</h2>
+    <div id="pageTests"></div>
+    
+    <h2>Navigation Tests</h2>
+    <div id="navTests"></div>
+    
+    <h2>Data Persistence Tests</h2>
+    <div id="dataTests"></div>
+    
+    <h2>Model Portfolio Tests</h2>
+    <div id="modelTests"></div>
+
+    <script>
+        async function runDebugTests() {
+            const results = {
+                pageTests: [],
+                navTests: [],
+                dataTests: [],
+                modelTests: []
+            };
+
+            // For local file system, we'll test by creating dynamic script/link tags
+            // and checking for load/error events instead of using fetch()
+            
+            // Test page accessibility using iframe method
+            const pages = [
+                'src/index.html',
+                'src/model-portfolios.html', 
+                'src/buy-orders.html',
+                'src/price-manager.html',
+                'src/report.html'
+            ];
+
+            for (const page of pages) {
+                try {
+                    const exists = await testFileExists(page);
+                    if (exists) {
+                        results.pageTests.push({ test: `${page} accessible`, status: 'pass' });
+                    } else {
+                        results.pageTests.push({ test: `${page} accessible`, status: 'fail', error: 'File not found' });
+                    }
+                } catch (error) {
+                    results.pageTests.push({ test: `${page} accessible`, status: 'fail', error: error.message });
+                }
+            }
+
+            // Test JavaScript files using dynamic script loading
+            const jsFiles = [
+                'src/js/navigation-persistence.js',
+                'src/js/module-loader.js'
+            ];
+
+            for (const jsFile of jsFiles) {
+                try {
+                    const loadable = await testScriptLoadable(jsFile);
+                    if (loadable) {
+                        results.navTests.push({ test: `${jsFile} loadable`, status: 'pass' });
+                    } else {
+                        results.navTests.push({ test: `${jsFile} loadable`, status: 'fail', error: 'Script load failed' });
+                    }
+                } catch (error) {
+                    results.navTests.push({ test: `${jsFile} loadable`, status: 'fail', error: error.message });
+                }
+            }
+
+            // Test model portfolio files - simulate presence check
+            const modelFiles = [
+                'src/data/models/AWM Model - All Equity.csv',
+                'src/data/models/AWM Model - Fixed_D.csv',
+                'src/data/models/AWM Model - Fixed_T csv.csv',
+                'src/data/models/AWM_Model_Tactical_Equity.csv'
+            ];
+
+            for (const modelFile of modelFiles) {
+                // For local testing, we'll assume files exist if the structure is correct
+                // In a real server environment, these would be tested with actual fetch
+                results.modelTests.push({ 
+                    test: `${modelFile} expected location`, 
+                    status: 'warn', 
+                    error: 'Cannot verify CSV content in local file mode - requires server'
+                });
+            }
+
+            // Test localStorage availability
+            try {
+                localStorage.setItem('debug-test', 'test');
+                localStorage.removeItem('debug-test');
+                results.dataTests.push({ test: 'localStorage available', status: 'pass' });
+            } catch (error) {
+                results.dataTests.push({ test: 'localStorage available', status: 'fail', error: error.message });
+            }
+
+            // Display results
+            displayResults('pageTests', results.pageTests);
+            displayResults('navTests', results.navTests);
+            displayResults('dataTests', results.dataTests);
+            displayResults('modelTests', results.modelTests);
+        }
+
+        // Helper function to test if a file exists using iframe method
+        function testFileExists(url) {
+            return new Promise((resolve) => {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.onload = () => {
+                    document.body.removeChild(iframe);
+                    resolve(true);
+                };
+                iframe.onerror = () => {
+                    document.body.removeChild(iframe);
+                    resolve(false);
+                };
+                iframe.src = url;
+                document.body.appendChild(iframe);
+                
+                // Timeout after 2 seconds
+                setTimeout(() => {
+                    if (iframe.parentNode) {
+                        document.body.removeChild(iframe);
+                        resolve(false);
+                    }
+                }, 2000);
+            });
+        }
+
+        // Helper function to test if a script is loadable
+        function testScriptLoadable(url) {
+            return new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.onload = () => {
+                    document.head.removeChild(script);
+                    resolve(true);
+                };
+                script.onerror = () => {
+                    document.head.removeChild(script);
+                    resolve(false);
+                };
+                script.src = url;
+                document.head.appendChild(script);
+                
+                // Timeout after 2 seconds
+                setTimeout(() => {
+                    if (script.parentNode) {
+                        document.head.removeChild(script);
+                        resolve(false);
+                    }
+                }, 2000);
+            });
+        }
+
+        function displayResults(containerId, tests) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = tests.map(test => 
+                `<div class="test ${test.status}">
+                    <strong>${test.test}</strong>: ${test.status.toUpperCase()}
+                    ${test.error ? `<br>Error: ${test.error}` : ''}
+                </div>`
+            ).join('');
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', runDebugTests);
+    </script>
+</body>
+</html>
