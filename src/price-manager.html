@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Price Manager - Centralized Symbol Pricing</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./js/navigation-persistence.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -113,12 +114,12 @@
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <!-- Navigation Bar -->
         <nav class="bg-white shadow-sm border-b border-gray-200 mb-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
+            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16 gap-4">
                     <!-- Logo/Brand -->
-                    <div class="flex items-center">
+                    <div class="flex items-center flex-shrink-0">
                         <div class="flex-shrink-0 flex items-center">
-                            <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-3">
+                            <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-6">
                         </div>
                     </div>
                     
@@ -922,6 +923,76 @@
                 console.error('Navigation initialization error:', error);
             }
         });
+
+        // Data Persistence Integration for Price Manager Page
+        window.saveCurrentPageData = function() {
+            try {
+                // Collect all price data from the table
+                const priceData = {};
+                const rows = document.querySelectorAll('#priceTable tbody tr');
+                rows.forEach(row => {
+                    const symbol = row.cells[0]?.textContent?.trim();
+                    const price = row.querySelector('input[type="number"]')?.value;
+                    const lastUpdated = row.cells[2]?.textContent?.trim();
+                    if (symbol && price) {
+                        priceData[symbol] = {
+                            price: parseFloat(price),
+                            lastUpdated: lastUpdated
+                        };
+                    }
+                });
+
+                const formData = {
+                    priceData: priceData,
+                    timestamp: new Date().toISOString()
+                };
+                
+                if (window.dataPersistence) {
+                    window.dataPersistence.saveData(window.STORAGE_KEYS.PRICE_MANAGER, formData);
+                    console.log('Price Manager data saved:', formData);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error saving Price Manager data:', error);
+                return false;
+            }
+        };
+
+        // Load saved data on page load
+        window.loadSavedPriceData = function() {
+            try {
+                if (window.dataPersistence) {
+                    const savedData = window.dataPersistence.loadData(window.STORAGE_KEYS.PRICE_MANAGER);
+                    if (savedData && savedData.priceData) {
+                        // Restore price data to centralized storage
+                        localStorage.setItem('centralizedPrices', JSON.stringify(savedData.priceData));
+                        
+                        // Refresh the price table if it exists
+                        const refreshBtn = document.querySelector('button[onclick*="refreshPrices"]');
+                        if (refreshBtn) {
+                            refreshBtn.click();
+                        }
+                        
+                        console.log('Price Manager data loaded from:', savedData.timestamp);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading saved Price Manager data:', error);
+            }
+        };
+
+        // Initialize data loading after the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    loadSavedPriceData();
+                }, 500);
+            });
+        } else {
+            setTimeout(() => {
+                loadSavedPriceData();
+            }, 500);
+        }
     </script>
 </body>
 

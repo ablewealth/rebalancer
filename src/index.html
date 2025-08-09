@@ -15,6 +15,7 @@
         console.log('Base directory:', window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1));
     </script>
     <script src="./js/module-loader.js"></script>
+    <script src="./js/navigation-persistence.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -206,12 +207,12 @@
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <!-- Navigation Bar -->
         <nav class="bg-white shadow-sm border-b border-gray-200 mb-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
+            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16 gap-4">
                     <!-- Logo/Brand -->
-                    <div class="flex items-center">
+                    <div class="flex items-center flex-shrink-0">
                         <div class="flex-shrink-0 flex items-center">
-                            <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-3">
+                            <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-6">
                         </div>
                     </div>
                     
@@ -3659,6 +3660,141 @@
                 console.error('Navigation initialization error:', error);
             }
         });
+
+        // Data Persistence Integration for Tax Harvesting Page
+        window.saveCurrentPageData = function() {
+            try {
+                // Collect all form data
+                const formData = {
+                    // Cost basis CSV
+                    costBasisCSV: document.querySelector('textarea[placeholder*="Symbol,Account,Quantity,Cost Basis"]')?.value || '',
+                    
+                    // YTD Gains CSV
+                    ytdGainsCSV: document.querySelector('textarea[placeholder*="Symbol,YTD Gain/Loss"]')?.value || '',
+                    
+                    // Target amounts
+                    targetGains: document.querySelector('input[placeholder="Target gains amount"]')?.value || '',
+                    targetLosses: document.querySelector('input[placeholder="Target losses amount"]')?.value || '',
+                    
+                    // Preferences
+                    minimumSaleValue: document.querySelector('input[placeholder="Minimum sale value"]')?.value || '100',
+                    maximumPercentage: document.querySelector('input[placeholder="Maximum percentage to sell"]')?.value || '50',
+                    
+                    // Cash raising options
+                    raiseCash: document.querySelector('input[type="checkbox"]#raise-cash')?.checked || false,
+                    cashTarget: document.querySelector('input[placeholder="Cash target amount"]')?.value || '',
+                    
+                    // Additional preferences from checkboxes/selects if they exist
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Save to localStorage
+                if (window.dataPersistence) {
+                    window.dataPersistence.saveData(window.STORAGE_KEYS.TAX_HARVESTING, formData);
+                    console.log('Tax Harvesting data saved:', formData);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error saving Tax Harvesting data:', error);
+                return false;
+            }
+        };
+
+        // Load saved data on page load
+        window.loadSavedData = function() {
+            try {
+                if (window.dataPersistence) {
+                    const savedData = window.dataPersistence.loadData(window.STORAGE_KEYS.TAX_HARVESTING);
+                    if (savedData) {
+                        // Restore cost basis CSV
+                        const costBasisTextarea = document.querySelector('textarea[placeholder*="Symbol,Account,Quantity,Cost Basis"]');
+                        if (costBasisTextarea && savedData.costBasisCSV) {
+                            costBasisTextarea.value = savedData.costBasisCSV;
+                        }
+                        
+                        // Restore YTD gains CSV
+                        const ytdTextarea = document.querySelector('textarea[placeholder*="Symbol,YTD Gain/Loss"]');
+                        if (ytdTextarea && savedData.ytdGainsCSV) {
+                            ytdTextarea.value = savedData.ytdGainsCSV;
+                        }
+                        
+                        // Restore target amounts
+                        const targetGainsInput = document.querySelector('input[placeholder="Target gains amount"]');
+                        if (targetGainsInput && savedData.targetGains) {
+                            targetGainsInput.value = savedData.targetGains;
+                        }
+                        
+                        const targetLossesInput = document.querySelector('input[placeholder="Target losses amount"]');
+                        if (targetLossesInput && savedData.targetLosses) {
+                            targetLossesInput.value = savedData.targetLosses;
+                        }
+                        
+                        // Restore preferences
+                        const minSaleInput = document.querySelector('input[placeholder="Minimum sale value"]');
+                        if (minSaleInput && savedData.minimumSaleValue) {
+                            minSaleInput.value = savedData.minimumSaleValue;
+                        }
+                        
+                        const maxPercentInput = document.querySelector('input[placeholder="Maximum percentage to sell"]');
+                        if (maxPercentInput && savedData.maximumPercentage) {
+                            maxPercentInput.value = savedData.maximumPercentage;
+                        }
+                        
+                        // Restore cash raising options
+                        const raiseCashCheckbox = document.querySelector('input[type="checkbox"]#raise-cash');
+                        if (raiseCashCheckbox && savedData.raiseCash !== undefined) {
+                            raiseCashCheckbox.checked = savedData.raiseCash;
+                        }
+                        
+                        const cashTargetInput = document.querySelector('input[placeholder="Cash target amount"]');
+                        if (cashTargetInput && savedData.cashTarget) {
+                            cashTargetInput.value = savedData.cashTarget;
+                        }
+                        
+                        console.log('Tax Harvesting data loaded from:', savedData.timestamp);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading saved data:', error);
+            }
+        };
+
+        // Auto-save on input changes
+        function setupAutoSave() {
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('change', () => {
+                    if (window.dataPersistence) {
+                        window.dataPersistence.markUnsaved();
+                    }
+                });
+                input.addEventListener('input', () => {
+                    if (window.dataPersistence) {
+                        window.dataPersistence.markUnsaved();
+                    }
+                });
+            });
+            
+            // Start auto-save timer
+            if (window.dataPersistence) {
+                window.dataPersistence.startAutoSave(window.saveCurrentPageData, 30000); // Auto-save every 30 seconds
+            }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    loadSavedData();
+                    setupAutoSave();
+                }, 500); // Small delay to ensure navigation is loaded
+            });
+        } else {
+            setTimeout(() => {
+                loadSavedData();
+                setupAutoSave();
+            }, 500);
+        }
     </script>
 </div> <!-- End content-area -->
 </body>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Rebalancing - Buy Orders</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./js/navigation-persistence.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -139,12 +140,12 @@
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <!-- Navigation Bar -->
         <nav class="bg-white shadow-sm border-b border-gray-200 mb-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
+            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16 gap-4">
                     <!-- Logo/Brand -->
-                    <div class="flex items-center">
+                    <div class="flex items-center flex-shrink-0">
                         <div class="flex-shrink-0 flex items-center">
-                            <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-3">
+                            <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-6">
                         </div>
                     </div>
                     
@@ -1950,6 +1951,69 @@
 
         // Make test function available globally for console testing
         window.testWashSaleDetection = testWashSaleDetection;
+
+        // Data Persistence Integration for Buy Orders Page
+        window.saveCurrentPageData = function() {
+            try {
+                const formData = {
+                    portfolioData: document.querySelector('textarea[placeholder*="Enter your portfolio data"]')?.value || '',
+                    cashAvailable: document.querySelector('input[placeholder="Available cash"]')?.value || '',
+                    selectedAccount: document.querySelector('select')?.value || '',
+                    timestamp: new Date().toISOString()
+                };
+                
+                if (window.dataPersistence) {
+                    window.dataPersistence.saveData(window.STORAGE_KEYS.BUY_ORDERS, formData);
+                    console.log('Buy Orders data saved:', formData);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error saving Buy Orders data:', error);
+                return false;
+            }
+        };
+
+        // Load saved data on page load
+        window.loadSavedBuyOrdersData = function() {
+            try {
+                if (window.dataPersistence) {
+                    const savedData = window.dataPersistence.loadData(window.STORAGE_KEYS.BUY_ORDERS);
+                    if (savedData) {
+                        const portfolioTextarea = document.querySelector('textarea[placeholder*="Enter your portfolio data"]');
+                        if (portfolioTextarea && savedData.portfolioData) {
+                            portfolioTextarea.value = savedData.portfolioData;
+                        }
+                        
+                        const cashInput = document.querySelector('input[placeholder="Available cash"]');
+                        if (cashInput && savedData.cashAvailable) {
+                            cashInput.value = savedData.cashAvailable;
+                        }
+                        
+                        const accountSelect = document.querySelector('select');
+                        if (accountSelect && savedData.selectedAccount) {
+                            accountSelect.value = savedData.selectedAccount;
+                        }
+                        
+                        console.log('Buy Orders data loaded from:', savedData.timestamp);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading saved Buy Orders data:', error);
+            }
+        };
+
+        // Initialize data loading after the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    loadSavedBuyOrdersData();
+                }, 500);
+            });
+        } else {
+            setTimeout(() => {
+                loadSavedBuyOrdersData();
+            }, 500);
+        }
     </script>
     </div> <!-- End content-area -->
 </body>

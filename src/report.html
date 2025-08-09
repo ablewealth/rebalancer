@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tax Harvesting & Rebalancing Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./js/navigation-persistence.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -116,9 +117,9 @@
     <!-- Navigation (No Print) -->
     <div class="no-print bg-white shadow-sm border-b border-gray-200 mb-6">
         <div class="container mx-auto px-4 py-3">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center">
-                    <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-6 w-auto mr-3">
+            <div class="flex justify-between items-center gap-4">
+                <div class="flex items-center flex-shrink-0">
+                    <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-6 w-auto mr-6">
                 </div>
                 <div class="hidden md:flex space-x-6">
                     <a href="index.html" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-sm transition-colors duration-200 flex items-center">
@@ -657,6 +658,54 @@
             setTimeout(() => {
                 alert('No report data found. Please complete the tax harvesting and buy orders process first.');
             }, 1000);
+        }
+
+        // Data Persistence Integration for Reports Page
+        window.saveCurrentPageData = function() {
+            try {
+                // Reports page typically displays data rather than collecting it
+                // But we can save any report settings or filters
+                const formData = {
+                    reportGenerated: document.getElementById('reportContainer') !== null,
+                    timestamp: new Date().toISOString()
+                };
+                
+                if (window.dataPersistence) {
+                    window.dataPersistence.saveData(window.STORAGE_KEYS.REPORTS, formData);
+                    console.log('Reports data saved:', formData);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error saving Reports data:', error);
+                return false;
+            }
+        };
+
+        // Load saved data on page load
+        window.loadSavedReportsData = function() {
+            try {
+                if (window.dataPersistence) {
+                    const savedData = window.dataPersistence.loadData(window.STORAGE_KEYS.REPORTS);
+                    if (savedData) {
+                        console.log('Reports data loaded from:', savedData.timestamp);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading saved Reports data:', error);
+            }
+        };
+
+        // Initialize data loading after the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    loadSavedReportsData();
+                }, 500);
+            });
+        } else {
+            setTimeout(() => {
+                loadSavedReportsData();
+            }, 500);
         }
     </script>
 </body>

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Model Portfolios Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./js/navigation-persistence.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -89,12 +90,12 @@
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <!-- Navigation Bar -->
         <nav class="bg-white shadow-sm border-b border-gray-200 mb-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
+            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16 gap-4">
                     <!-- Logo/Brand -->
-                    <div class="flex items-center">
+                    <div class="flex items-center flex-shrink-0">
                         <div class="flex-shrink-0 flex items-center">
-                            <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-3">
+                            <img src="AWM-Logo.png" alt="AWM Portfolio Rebalancer" class="h-8 w-auto mr-6">
                         </div>
                     </div>
                     
@@ -446,24 +447,30 @@
         // Dynamic portfolio loading from CSV files
         let predefinedPortfolios = {};
 
-        // Function to load all model portfolios from data/models/ directory
+
+        // Function to dynamically discover and load all CSV files from data/models/ directory
         async function loadModelPortfolios() {
+            // Try to get list of files dynamically, but since we can't list directory contents via fetch,
+            // we'll try common filenames and also provide a way to add more
             const modelFiles = [
                 'AWM Model - All Equity.csv',
-                'AWM Model - Fixed_D.csv',
-                'AWM Model - Fixed_T.csv',
-                'AWM Model_Tactical Equity.csv',
-                'AWM_Model___All_Equity.csv'
+                'AWM Model - Fixed_D.csv',  
+                'AWM Model - Fixed_T csv.csv',
+                'AWM_Model_Tactical_Equity.csv'
             ];
+
+            console.log('Starting to load model portfolios...');
 
             for (const filename of modelFiles) {
                 try {
-                    console.log(`Attempting to load: ../data/models/${filename}`);
-                    const response = await fetch(`../data/models/${filename}`);
+                    console.log(`Attempting to load: ./data/models/${filename}`);
+                    const response = await fetch(`./data/models/${filename}`);
                     console.log(`Response for ${filename}:`, response.status, response.ok);
                     
                     if (response.ok) {
                         const csvText = await response.text();
+                        console.log(`Raw CSV content for ${filename}:`, csvText.substring(0, 200) + '...');
+                        
                         const portfolio = parseCSVPortfolio(csvText, filename);
                         if (portfolio) {
                             const key = filename.replace('.csv', '');
@@ -479,6 +486,7 @@
                     console.warn(`Could not load model portfolio: ${filename}`, error);
                 }
             }
+            
             console.log('Final predefinedPortfolios:', predefinedPortfolios);
         }
 
@@ -611,9 +619,22 @@
 
         // Function to generate portfolio options HTML
         function generatePortfolioOptions() {
-            return Object.keys(predefinedPortfolios).map(key =>
-                `<option value="${key}">${predefinedPortfolios[key].name}</option>`
-            ).join('');
+            let options = [];
+            
+            // Add saved portfolios first
+            const savedPortfolios = getSavedPortfolios();
+            if (savedPortfolios.length > 0) {
+                savedPortfolios.forEach(portfolio => {
+                    options.push(`<option value="saved_${portfolio.key}">${portfolio.name} (Saved)</option>`);
+                });
+            }
+            
+            // Add predefined/loaded model portfolios
+            Object.keys(predefinedPortfolios).forEach(key => {
+                options.push(`<option value="${key}">${predefinedPortfolios[key].name}</option>`);
+            });
+            
+            return options.join('');
         }
 
         // Function to refresh all blending dropdowns
@@ -1270,7 +1291,21 @@
             const blendedHoldings = new Map();
 
             normalizedPortfolios.forEach(({ portfolio, weight }) => {
-                const portfolioData = predefinedPortfolios[portfolio];
+                let portfolioData = null;
+                
+                // Check if it's a saved portfolio
+                if (portfolio.startsWith('saved_')) {
+                    const storageKey = portfolio.replace('saved_', '');
+                    try {
+                        portfolioData = JSON.parse(localStorage.getItem(storageKey));
+                    } catch (e) {
+                        console.error('Error loading saved portfolio for blending:', e);
+                    }
+                } else {
+                    // It's a predefined/loaded model portfolio
+                    portfolioData = predefinedPortfolios[portfolio];
+                }
+                
                 if (!portfolioData) return;
 
                 portfolioData.holdings.forEach(holding => {
@@ -1432,6 +1467,85 @@
                 console.error('Navigation initialization error:', error);
             }
         });
+
+        // Data Persistence Integration for Model Portfolios Page
+        window.saveCurrentPageData = function() {
+            try {
+                // Collect all saved portfolios from localStorage
+                const savedPortfolios = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('portfolio_')) {
+                        savedPortfolios[key] = localStorage.getItem(key);
+                    }
+                }
+                
+                // Also save the current portfolio if modified
+                const currentPortfolioData = {
+                    name: document.getElementById('portfolioName')?.value || '',
+                    holdings: currentPortfolio,
+                    modified: portfolioModified,
+                    timestamp: new Date().toISOString()
+                };
+                
+                const formData = {
+                    savedPortfolios: savedPortfolios,
+                    currentPortfolio: currentPortfolioData,
+                    selectedPortfolio: document.getElementById('portfolioSelect')?.value || '',
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Save to localStorage using the persistence module
+                if (window.dataPersistence) {
+                    window.dataPersistence.saveData(window.STORAGE_KEYS.MODEL_PORTFOLIOS, formData);
+                    console.log('Model Portfolios data saved:', formData);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error saving Model Portfolios data:', error);
+                return false;
+            }
+        };
+
+        // Load saved data on page load
+        window.loadSavedModelData = function() {
+            try {
+                if (window.dataPersistence) {
+                    const savedData = window.dataPersistence.loadData(window.STORAGE_KEYS.MODEL_PORTFOLIOS);
+                    if (savedData && savedData.savedPortfolios) {
+                        // Restore all saved portfolios
+                        Object.entries(savedData.savedPortfolios).forEach(([key, value]) => {
+                            localStorage.setItem(key, value);
+                        });
+                        
+                        // Repopulate the dropdown
+                        populatePortfolioDropdown();
+                        
+                        // If there was a selected portfolio, select it again
+                        if (savedData.selectedPortfolio) {
+                            document.getElementById('portfolioSelect').value = savedData.selectedPortfolio;
+                        }
+                        
+                        console.log('Model Portfolios data loaded from:', savedData.timestamp);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading saved Model Portfolios data:', error);
+            }
+        };
+
+        // Initialize data loading after the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    loadSavedModelData();
+                }, 500); // Small delay to ensure navigation is loaded
+            });
+        } else {
+            setTimeout(() => {
+                loadSavedModelData();
+            }, 500);
+        }
     </script>
 </body>
 
