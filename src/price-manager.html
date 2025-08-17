@@ -453,7 +453,7 @@
             
             // Test Financial Modeling Prep
             try {
-                const fmpUrl = `https://financialmodelingprep.com/api/v3/quote-short/${testSymbol}?apikey=demo`;
+                const fmpUrl = `https://financialmodelingprep.com/api/v3/quote-short/${testSymbol}?apikey=4vSrg5yI8kHhI5XUdjhbIVDBYYFS3ion`;
                 const response = await fetch(fmpUrl);
                 const data = await response.json();
                 
@@ -748,11 +748,13 @@
                 return;
             }
             
-            showNotification('Updating prices from multiple APIs (AlphaVantage → Yahoo → FMP → Google Sheets → Mock)...', 'info');
+            showNotification('Updating prices from multiple APIs (AlphaVantage → Financial Modeling Prep → Yahoo Finance → Google Sheets)...', 'info');
             const symbols = Array.from(symbolPrices.keys());
             console.log('Symbols to update prices for:', symbols);
+            console.log('Starting price update process...');
             
             let updatedCount = 0;
+            let debugInfo = { alphaVantage: 0, yahoo1: 0, fmp: 0, yahoo2: 0, yahooSummary: 0, yahooCors: 0, sheets: 0, failed: 0 };
             
             // Use a CORS proxy with Yahoo Finance or alternative API
             for (const symbol of symbols) {
@@ -779,6 +781,7 @@
                                 
                                 if (quote && quote['05. price']) {
                                     currentPrice = parseFloat(quote['05. price']);
+                                    debugInfo.alphaVantage++;
                                     console.log(`Alpha Vantage success for ${symbol}: $${currentPrice}`);
                                 }
                             }
@@ -801,6 +804,7 @@
                                     const result = data.chart.result[0];
                                     currentPrice = result.meta.regularMarketPrice;
                                     companyName = result.meta.longName || result.meta.shortName || symbol;
+                                    debugInfo.yahoo1++;
                                     console.log(`Yahoo Finance direct success for ${symbol}: $${currentPrice}`);
                                 }
                             }
@@ -809,10 +813,10 @@
                         }
                     }
                     
-                    // Method 3: Try Financial Modeling Prep API (free tier)
+                    // Method 3: Try Financial Modeling Prep API with your real API key
                     if (!currentPrice) {
                         try {
-                            const fmpUrl = `https://financialmodelingprep.com/api/v3/quote-short/${symbol}?apikey=demo`;
+                            const fmpUrl = `https://financialmodelingprep.com/api/v3/quote-short/${symbol}?apikey=4vSrg5yI8kHhI5XUdjhbIVDBYYFS3ion`;
                             const response = await fetch(fmpUrl);
                             
                             if (response.ok) {
@@ -820,6 +824,8 @@
                                 
                                 if (data && data.length > 0 && data[0].price) {
                                     currentPrice = parseFloat(data[0].price);
+                                    companyName = data[0].symbol || symbol;
+                                    debugInfo.fmp++;
                                     console.log(`Financial Modeling Prep success for ${symbol}: $${currentPrice}`);
                                 }
                             }
@@ -828,7 +834,50 @@
                         }
                     }
                     
-                    // Method 4: Try Yahoo Finance with CORS proxy as last resort
+                    // Method 4: Try AlphaVantage with a different function (REAL_TIME_QUOTE)
+                    if (!currentPrice) {
+                        try {
+                            const alphaUrl2 = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=GTHGBGWTP0NCSZ9U`;
+                            const response = await fetch(alphaUrl2);
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                
+                                if (data && !data.Information && data.Symbol === symbol) {
+                                    // This won't give us current price but let's try the simpler endpoint
+                                    console.log(`AlphaVantage OVERVIEW available for ${symbol}, but no current price`);
+                                }
+                            }
+                        } catch (error) {
+                            console.log(`AlphaVantage OVERVIEW failed for ${symbol}:`, error.message);
+                        }
+                    }
+                    
+                    // Method 5: Try a simpler Yahoo Finance endpoint
+                    if (!currentPrice) {
+                        try {
+                            // Try Yahoo Finance summary endpoint
+                            const yahooUrl2 = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price`;
+                            const response = await fetch(yahooUrl2);
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                
+                                if (data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0]) {
+                                    const priceData = data.quoteSummary.result[0].price;
+                                    if (priceData && priceData.regularMarketPrice) {
+                                        currentPrice = parseFloat(priceData.regularMarketPrice.raw);
+                                        companyName = priceData.longName || priceData.shortName || symbol;
+                                        console.log(`Yahoo Finance summary success for ${symbol}: $${currentPrice}`);
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            console.log(`Yahoo Finance summary failed for ${symbol}:`, error.message);
+                        }
+                    }
+                    
+                    // Method 6: Try Yahoo Finance with CORS proxy as backup
                     if (!currentPrice) {
                         try {
                             const corsProxy = 'https://cors-anywhere.herokuapp.com/';
@@ -851,7 +900,7 @@
                         }
                     }
                     
-                    // Method 5: Try Google Sheets portfolio data as fallback
+                    // Method 6: Try Google Sheets portfolio data as fallback
                     if (!currentPrice) {
                         try {
                             // Convert Google Sheets URL to CSV export format
