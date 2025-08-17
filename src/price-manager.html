@@ -302,6 +302,7 @@
                         </svg>
                         Save Changes
                     </button>
+                    <p class="text-xs text-gray-600 mt-1 mb-3">Saves prices to localStorage and downloads updated CSV files for you to replace in data/models/ folder</p>
                     <button id="updateModelsBtn"
                         class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
@@ -1247,7 +1248,76 @@
                 newValue: JSON.stringify(pricesData)
             }));
 
-            showNotification('Price changes saved and synced to other pages', 'success');
+            // Also update the CSV model files with new prices
+            updateCSVFilesWithNewPrices();
+
+            showNotification('Price changes saved to localStorage and CSV files generated for download', 'success');
+        }
+
+        async function updateCSVFilesWithNewPrices() {
+            if (Object.keys(modelPortfolios).length === 0) {
+                console.log('No model portfolios loaded to update');
+                return;
+            }
+
+            let updatedFiles = 0;
+
+            // Update each model portfolio with new prices
+            for (const [filename, portfolio] of Object.entries(modelPortfolios)) {
+                let modelUpdated = false;
+
+                // Update prices in the portfolio
+                portfolio.holdings.forEach(holding => {
+                    if (symbolPrices.has(holding.symbol)) {
+                        const newPrice = symbolPrices.get(holding.symbol).price;
+                        if (Math.abs(holding.price - newPrice) > 0.01) { // Only update if significantly different
+                            holding.price = newPrice;
+                            modelUpdated = true;
+                        }
+                    }
+                });
+
+                if (modelUpdated) {
+                    // Generate updated CSV content with original structure
+                    const updatedCSV = generateUpdatedCSV(portfolio, filename);
+                    
+                    // Create download for the updated model
+                    const blob = new Blob([updatedCSV], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', filename);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    updatedFiles++;
+                    console.log(`Generated updated CSV for: ${filename}`);
+                }
+            }
+
+            if (updatedFiles > 0) {
+                setTimeout(() => {
+                    showNotification(`📁 ${updatedFiles} updated CSV files downloaded. Save them to replace files in data/models/ folder to make prices permanent.`, 'info');
+                }, 1000);
+            }
+        }
+
+        function generateUpdatedCSV(portfolio, filename) {
+            // Try to preserve original CSV structure as much as possible
+            const headers = ['Model', 'Symbol', 'Name', 'Price', 'Target Percent'];
+            const modelName = portfolio.name || filename.replace('.csv', '');
+            
+            const rows = portfolio.holdings.map(holding => [
+                `"${modelName}"`,
+                `"${holding.symbol}"`,
+                `"${holding.name}"`,
+                holding.price.toFixed(2),
+                holding.weight.toFixed(1)
+            ]);
+
+            return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
         }
 
         async function updateAllModels() {
