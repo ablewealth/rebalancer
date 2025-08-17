@@ -669,10 +669,10 @@
                         console.log(`Yahoo Finance failed for ${symbol}:`, error.message);
                     }
                     
-                    // Method 2: If Yahoo fails, try Alpha Vantage free tier (demo key)
+                    // Method 2: If Yahoo fails, try Alpha Vantage with your API key
                     if (!currentPrice) {
                         try {
-                            const alphaUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=demo`;
+                            const alphaUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=GTHGBGWTP0NCSZ9U`;
                             const response = await fetch(alphaUrl);
                             
                             if (response.ok) {
@@ -788,7 +788,7 @@
             if (!success) {
                 try {
                     console.log('Testing Alpha Vantage...');
-                    const alphaUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${testSymbol}&apikey=demo`;
+                    const alphaUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${testSymbol}&apikey=GTHGBGWTP0NCSZ9U`;
                     const response = await fetch(alphaUrl);
                     
                     if (response.ok) {
