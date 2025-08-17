@@ -384,9 +384,8 @@
             const modelFiles = [
                 'AWM Model - All Equity.csv',
                 'AWM Model - Fixed_D.csv',
-                'AWM Model - Fixed_T.csv',
-                'AWM Model_Tactical Equity.csv',
-                'AWM_Model___All_Equity.csv'
+                'AWM Model - Fixed_T csv.csv',
+                'AWM_Model_Tactical_Equity.csv'
             ];
 
             // Add any custom models specified by the user
@@ -412,13 +411,16 @@
                         console.log(`Attempting to load model: ../data/models/${filename}`);
                         const response = await fetch(`../data/models/${filename}`);
                         
+                        console.log(`Response for ${filename}:`, response.status, response.statusText);
+                        
                         if (response.ok) {
                             const csvText = await response.text();
+                            console.log(`CSV text length for ${filename}:`, csvText.length);
                             const portfolio = parseCSVPortfolio(csvText, filename);
                             if (portfolio) {
                                 modelPortfolios[filename] = portfolio;
                                 foundModels.push(filename);
-                                console.log(`Successfully loaded model: ${filename}`);
+                                console.log(`Successfully loaded model: ${filename} with ${portfolio.holdings.length} holdings`);
 
                                 // Extract symbols and prices
                                 portfolio.holdings.forEach(holding => {
