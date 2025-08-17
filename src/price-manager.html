@@ -700,7 +700,7 @@
                 return;
             }
             
-            showNotification('Updating prices from market data...', 'info');
+            showNotification('Updating prices from AlphaVantage API (then Yahoo Finance fallback)...', 'info');
             const symbols = Array.from(symbolPrices.keys());
             console.log('Symbols to update prices for:', symbols);
             
@@ -715,44 +715,44 @@
                     let currentPrice = null;
                     let companyName = null;
                     
-                    // Method 1: Try Yahoo Finance with CORS proxy
+                    // Method 1: Try Alpha Vantage with your API key first (most reliable)
                     try {
-                        const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-                        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-                        
-                        const response = await fetch(corsProxy + yahooUrl);
+                        const alphaUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=GTHGBGWTP0NCSZ9U`;
+                        const response = await fetch(alphaUrl);
                         
                         if (response.ok) {
                             const data = await response.json();
+                            const quote = data['Global Quote'];
                             
-                            if (data.chart && data.chart.result && data.chart.result.length > 0) {
-                                const result = data.chart.result[0];
-                                currentPrice = result.meta.regularMarketPrice;
-                                companyName = result.meta.longName || result.meta.shortName || symbol;
-                                console.log(`Yahoo Finance success for ${symbol}: $${currentPrice}`);
+                            if (quote && quote['05. price']) {
+                                currentPrice = parseFloat(quote['05. price']);
+                                console.log(`Alpha Vantage success for ${symbol}: $${currentPrice}`);
                             }
                         }
                     } catch (error) {
-                        console.log(`Yahoo Finance failed for ${symbol}:`, error.message);
+                        console.log(`Alpha Vantage failed for ${symbol}:`, error.message);
                     }
                     
-                    // Method 2: If Yahoo fails, try Alpha Vantage with your API key
+                    // Method 2: If Alpha Vantage fails, try Yahoo Finance with CORS proxy
                     if (!currentPrice) {
                         try {
-                            const alphaUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=GTHGBGWTP0NCSZ9U`;
-                            const response = await fetch(alphaUrl);
+                            const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+                            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+                            
+                            const response = await fetch(corsProxy + yahooUrl);
                             
                             if (response.ok) {
                                 const data = await response.json();
-                                const quote = data['Global Quote'];
                                 
-                                if (quote && quote['05. price']) {
-                                    currentPrice = parseFloat(quote['05. price']);
-                                    console.log(`Alpha Vantage success for ${symbol}: $${currentPrice}`);
+                                if (data.chart && data.chart.result && data.chart.result.length > 0) {
+                                    const result = data.chart.result[0];
+                                    currentPrice = result.meta.regularMarketPrice;
+                                    companyName = result.meta.longName || result.meta.shortName || symbol;
+                                    console.log(`Yahoo Finance success for ${symbol}: $${currentPrice}`);
                                 }
                             }
                         } catch (error) {
-                            console.log(`Alpha Vantage failed for ${symbol}:`, error.message);
+                            console.log(`Yahoo Finance failed for ${symbol}:`, error.message);
                         }
                     }
                     
@@ -823,8 +823,8 @@
                     console.error(`Error fetching price for ${symbol}:`, error);
                 }
                 
-                // Add delay to respect rate limits
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Add delay to respect AlphaVantage rate limits (5 requests per minute for free tier)
+                await new Promise(resolve => setTimeout(resolve, 250));
             }
             
             renderPriceTable();
