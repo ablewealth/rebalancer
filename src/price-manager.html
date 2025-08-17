@@ -438,7 +438,6 @@
                                                 symbol: symbol,
                                                 name: holding.name || '',
                                                 price: holding.price || 0,
-                                                figi: '',
                                                 models: new Set([filename]),
                                                 lastUpdated: new Date().toISOString()
                                             });
@@ -721,32 +720,6 @@
                 console.error('Test request failed:', error);
                 showNotification(`Price API test failed: ${error.message}`, 'error');
             }
-        }
-            
-            try {
-                console.log('Testing OpenFIGI with AAPL via CORS proxy...');
-                
-                // Try with CORS proxy first
-                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-                const apiUrl = 'https://api.openfigi.com/v3/mapping';
-                
-                const response = await fetch(proxyUrl + apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-OPENFIGI-APIKEY': OPENFIGI_API_KEY,
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(testRequest)
-                });
-                
-                console.log('Test response status:', response.status);
-                console.log('Test response headers:', [...response.headers.entries()]);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Test response data:', data);
-                    showNotification('OpenFIGI API test successful via proxy!', 'success');
         }
 
         function handlePriceEdit(event) {
