@@ -375,8 +375,8 @@
         saveChangesBtn.addEventListener('click', saveChanges);
         updateModelsBtn.addEventListener('click', updateAllModels);
         searchInput.addEventListener('input', filterSymbols);
-    priceTable.addEventListener('input', handlePriceEdit);
-    document.getElementById('enrichFigiBtn').addEventListener('click', enrichWithOpenFIGI);
+        priceTable.addEventListener('input', handlePriceEdit);
+        document.getElementById('enrichFigiBtn').addEventListener('click', enrichWithOpenFIGI);
 
         // --- Functions ---
         async function scanAllModels() {
@@ -438,6 +438,7 @@
                                                 symbol: symbol,
                                                 name: holding.name || '',
                                                 price: holding.price || 0,
+                                                figi: '',
                                                 models: new Set([filename]),
                                                 lastUpdated: new Date().toISOString()
                                             });
@@ -755,11 +756,12 @@
                 return;
             }
 
-            const headers = ['Symbol', 'Name', 'Price', 'Used In Models', 'Last Updated'];
+            const headers = ['Symbol', 'Name', 'Price', 'FIGI', 'Used In Models', 'Last Updated'];
             const rows = Array.from(symbolPrices.values()).map(symbolData => [
                 `"${symbolData.symbol}"`,
                 `"${symbolData.name}"`,
                 symbolData.price.toFixed(2),
+                `"${symbolData.figi || ''}"`,
                 `"${Array.from(symbolData.models).join(', ')}"`,
                 `"${new Date(symbolData.lastUpdated).toLocaleString()}"`
             ]);
