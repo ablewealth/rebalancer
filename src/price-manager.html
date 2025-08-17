@@ -36,6 +36,36 @@
             border-color: #16a34a;
         }
 
+        .price-needs-update {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .price-failed-update {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+        }
+
+        .update-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .update-indicator.success {
+            background-color: #10b981;
+        }
+
+        .update-indicator.warning {
+            background-color: #f59e0b;
+        }
+
+        .update-indicator.error {
+            background-color: #ef4444;
+        }
+
         /* Navigation Styles */
         .nav-link {
             position: relative;
@@ -309,6 +339,25 @@
                     <button id="testFigiBtn" class="bg-gray-500 text-white font-bold py-1 px-3 rounded-lg hover:bg-gray-600 transition-all duration-200 ml-2" title="Test price update API">
                         Test Price API
                     </button>
+                </div>
+            </div>
+
+            <!-- Status Legend -->
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-700 mb-2">Price Update Status:</div>
+                <div class="flex flex-wrap gap-4 text-xs">
+                    <div class="flex items-center">
+                        <span class="update-indicator success mr-1"></span>
+                        <span class="text-gray-600">Live market data</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="update-indicator warning mr-1"></span>
+                        <span class="text-gray-600">Estimated price - verify manually</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="update-indicator error mr-1"></span>
+                        <span class="text-gray-600">Update failed - needs manual entry</span>
+                    </div>
                 </div>
             </div>
 
@@ -597,11 +646,29 @@
 
             const modelsArray = Array.from(symbolData.models);
             const modelsText = modelsArray.map(m => m.replace('.csv', '')).join(', ');
+            
+            // Determine update status and indicator
+            let updateIndicator = '';
+            let priceClass = 'editable-cell';
+            
+            if (symbolData.updateStatus === 'success') {
+                updateIndicator = '<span class="update-indicator success" title="Price updated successfully"></span>';
+                priceClass += ' price-updated';
+            } else if (symbolData.updateStatus === 'failed') {
+                updateIndicator = '<span class="update-indicator error" title="Price update failed - needs manual update"></span>';
+                priceClass += ' price-failed-update';
+            } else if (symbolData.updateStatus === 'mock') {
+                updateIndicator = '<span class="update-indicator warning" title="Using estimated price - verify manually"></span>';
+                priceClass += ' price-needs-update';
+            }
             const figi = symbolData.figi || '';
 
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="text-sm font-medium text-gray-900">${symbolData.symbol}</span>
+                    <div class="flex items-center">
+                        <span class="text-sm font-medium text-gray-900">${symbolData.symbol}</span>
+                        ${updateIndicator}
+                    </div>
                 </td>
                 <td class="px-6 py-4">
                     <input type="text" value="${symbolData.name}" 
@@ -612,7 +679,7 @@
                     <div class="flex items-center justify-end">
                         <span class="text-sm text-gray-500 mr-1">$</span>
                         <input type="number" value="${symbolData.price}" step="0.01" min="0"
-                               class="editable-cell w-24 px-2 py-1 text-sm text-gray-900 rounded border-0 text-right"
+                               class="${priceClass} w-24 px-2 py-1 text-sm text-gray-900 rounded border-0 text-right"
                                data-field="price" data-symbol="${symbolData.symbol}">
                     </div>
                 </td>
@@ -690,6 +757,7 @@
                     }
                     
                     // Method 3: If both fail, use mock/static prices for common symbols
+                    let isMockPrice = false;
                     if (!currentPrice) {
                         const mockPrices = {
                             'AAPL': 175.50,
@@ -715,6 +783,7 @@
                         if (mockPrices[symbol]) {
                             currentPrice = mockPrices[symbol];
                             companyName = companyName || symbol;
+                            isMockPrice = true;
                             console.log(`Using mock price for ${symbol}: $${currentPrice}`);
                         }
                     }
@@ -727,19 +796,28 @@
                         if (companyName) symbolData.name = companyName;
                         symbolData.lastUpdated = new Date().toISOString();
                         
-                        console.log(`Updated ${symbol}: $${oldPrice} → $${currentPrice} (${companyName || symbol})`);
+                        // Set update status based on data source
+                        if (isMockPrice) {
+                            symbolData.updateStatus = 'mock';
+                            console.log(`Updated ${symbol} with mock price: $${oldPrice} → $${currentPrice}`);
+                        } else {
+                            symbolData.updateStatus = 'success';
+                            console.log(`Updated ${symbol} with live data: $${oldPrice} → $${currentPrice} (${companyName || symbol})`);
+                        }
+                        
                         updatedCount++;
                         
                         // Add visual feedback
                         setTimeout(() => {
                             const priceInput = document.querySelector(`input[data-symbol="${symbol}"][data-field="price"]`);
                             if (priceInput) {
-                                priceInput.classList.add('price-updated');
                                 priceInput.value = currentPrice.toFixed(2);
                             }
                         }, symbols.indexOf(symbol) * 50);
                     } else {
                         console.warn(`No price data found for ${symbol}`);
+                        const symbolData = symbolPrices.get(symbol);
+                        symbolData.updateStatus = 'failed';
                     }
                 } catch (error) {
                     console.error(`Error fetching price for ${symbol}:`, error);
@@ -750,8 +828,27 @@
             }
             
             renderPriceTable();
-            console.log(`Updated prices for ${updatedCount} symbols`);
-            showNotification(`Updated prices for ${updatedCount} of ${symbols.length} symbols`, updatedCount > 0 ? 'success' : 'warning');
+            
+            // Count different update types for summary
+            let liveUpdates = 0;
+            let mockUpdates = 0;
+            let failedUpdates = 0;
+            
+            symbolPrices.forEach(symbolData => {
+                if (symbolData.updateStatus === 'success') liveUpdates++;
+                else if (symbolData.updateStatus === 'mock') mockUpdates++;
+                else if (symbolData.updateStatus === 'failed') failedUpdates++;
+            });
+            
+            console.log(`Price update summary: ${liveUpdates} live, ${mockUpdates} estimated, ${failedUpdates} failed`);
+            
+            let message = `Updated ${updatedCount} of ${symbols.length} symbols`;
+            if (mockUpdates > 0 || failedUpdates > 0) {
+                message += ` (${liveUpdates} live, ${mockUpdates} estimated, ${failedUpdates} failed)`;
+            }
+            
+            const notificationType = failedUpdates > 0 ? 'warning' : updatedCount > 0 ? 'success' : 'error';
+            showNotification(message, notificationType);
         }
 
         async function testOpenFIGI() {
