@@ -237,15 +237,25 @@
                     <div class="flex justify-between items-center mb-2">
                         <label for="portfolioSelect" class="block text-sm font-medium text-gray-700">Choose Existing
                             Portfolio</label>
-                        <button id="refreshPortfoliosBtn"
-                            class="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200"
-                            title="Refresh portfolio list">
-                            <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Refresh
-                        </button>
+                        <div class="flex space-x-2">
+                            <button id="addCustomFileBtn"
+                                class="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition-colors duration-200"
+                                title="Add custom CSV file name">
+                                <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                Add File
+                            </button>
+                            <button id="refreshPortfoliosBtn"
+                                class="text-sm bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors duration-200"
+                                title="Refresh portfolio list">
+                                <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
                     </div>
                     <select id="portfolioSelect"
                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2">
@@ -419,6 +429,7 @@
         const portfolioFile = document.getElementById('portfolioFile');
         const portfolioName = document.getElementById('portfolioName');
         const refreshPortfoliosBtn = document.getElementById('refreshPortfoliosBtn');
+        const addCustomFileBtn = document.getElementById('addCustomFileBtn');
         const totalWeight = document.getElementById('totalWeight');
         const weightProgress = document.getElementById('weightProgress');
         const weightStatus = document.getElementById('weightStatus');
@@ -449,7 +460,13 @@
 
 
         // Function to dynamically discover and load all CSV files from data/models/ directory
-        async function loadModelPortfolios() {
+        async function loadModelPortfolios(forceReload = false) {
+            // If forcing reload, clear the existing portfolios
+            if (forceReload) {
+                predefinedPortfolios = {};
+                console.log('Clearing existing portfolios for fresh reload...');
+            }
+            
             // Try to get list of files dynamically, but since we can't list directory contents via fetch,
             // we'll try common filenames and also provide a way to add more
             const modelFiles = [
@@ -458,10 +475,39 @@
                 'AWM Model - Fixed_T csv.csv',
                 'AWM_Model_Tactical_Equity.csv'
             ];
+            
+            // Also try some common naming patterns for new files
+            const additionalPatterns = [
+                'AWM Model - Conservative.csv',
+                'AWM Model - Aggressive.csv',
+                'AWM Model - Balanced.csv',
+                'AWM Model - Growth.csv',
+                'AWM Model - Income.csv',
+                'AWM Model - Tactical.csv',
+                'AWM_Model_Conservative.csv',
+                'AWM_Model_Aggressive.csv',
+                'AWM_Model_Balanced.csv',
+                'AWM_Model_Growth.csv',
+                'AWM_Model_Income.csv',
+                // Additional common patterns
+                'Model_Portfolio_Conservative.csv',
+                'Model_Portfolio_Aggressive.csv',
+                'Model_Portfolio_Balanced.csv',
+                'Conservative_Portfolio.csv',
+                'Aggressive_Portfolio.csv',
+                'Balanced_Portfolio.csv',
+                'Growth_Portfolio.csv',
+                'Income_Portfolio.csv'
+            ];
+            
+            // Check localStorage for any user-added file names
+            const userAddedFiles = JSON.parse(localStorage.getItem('userAddedModelFiles') || '[]');
+            
+            const allFiles = [...modelFiles, ...additionalPatterns, ...userAddedFiles];
 
             console.log('Starting to load model portfolios...');
 
-            for (const filename of modelFiles) {
+            for (const filename of allFiles) {
                 try {
                     console.log(`Attempting to load: ./data/models/${filename}`);
                     const response = await fetch(`./data/models/${filename}`);
@@ -650,6 +696,8 @@
         // --- Event Listeners ---
         loadPortfolioBtn.addEventListener('click', loadSelectedPortfolio);
         portfolioFile.addEventListener('change', handleFileUpload);
+        refreshPortfoliosBtn.addEventListener('click', refreshPortfolios);
+        addCustomFileBtn.addEventListener('click', addCustomFile);
         addHoldingBtn.addEventListener('click', addNewHolding);
         normalizeWeightsBtn.addEventListener('click', normalizeWeights);
         savePortfolioBtn.addEventListener('click', savePortfolio);
@@ -1396,6 +1444,52 @@
                 console.error('Navigation initialization error:', error);
             }
         });
+
+        // Function to refresh portfolios (for the refresh button)
+        async function refreshPortfolios() {
+            console.log('Refreshing portfolios...');
+            try {
+                await loadModelPortfolios(true); // Force reload
+                populatePortfolioDropdown();
+                refreshBlendingDropdowns();
+                showNotification('Portfolio list refreshed successfully', 'success');
+                console.log('Portfolios refreshed successfully');
+            } catch (error) {
+                console.error('Error refreshing portfolios:', error);
+                showNotification('Error refreshing portfolios. Check console for details.', 'error');
+            }
+        }
+
+        // Function to add custom CSV file name
+        function addCustomFile() {
+            const fileName = prompt('Enter the CSV file name (including .csv extension):\n\nExample: My_Custom_Portfolio.csv\n\nThis file should be located in the data/models/ directory.');
+            
+            if (fileName && fileName.trim()) {
+                const cleanFileName = fileName.trim();
+                
+                // Validate file name
+                if (!cleanFileName.endsWith('.csv')) {
+                    showNotification('File name must end with .csv extension', 'error');
+                    return;
+                }
+                
+                // Get existing user-added files
+                const userAddedFiles = JSON.parse(localStorage.getItem('userAddedModelFiles') || '[]');
+                
+                // Check if already exists
+                if (userAddedFiles.includes(cleanFileName)) {
+                    showNotification('This file name is already in the list', 'warning');
+                    return;
+                }
+                
+                // Add to list
+                userAddedFiles.push(cleanFileName);
+                localStorage.setItem('userAddedModelFiles', JSON.stringify(userAddedFiles));
+                
+                showNotification(`Added "${cleanFileName}" to the file list. Click Refresh to load it.`, 'success');
+                console.log('Added custom file:', cleanFileName);
+            }
+        }
 
         // Initialize portfolio dropdown after loading models
         async function initializePortfolios() {
