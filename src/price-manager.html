@@ -306,6 +306,9 @@
                     <button id="enrichFigiBtn" class="bg-orange-500 text-white font-bold py-1 px-3 rounded-lg hover:bg-orange-600 transition-all duration-200 ml-2" title="Enrich all symbols with OpenFIGI">
                         Enrich with OpenFIGI
                     </button>
+                    <button id="testFigiBtn" class="bg-gray-500 text-white font-bold py-1 px-3 rounded-lg hover:bg-gray-600 transition-all duration-200 ml-2" title="Test OpenFIGI API">
+                        Test API
+                    </button>
                 </div>
             </div>
 
@@ -377,6 +380,7 @@
         searchInput.addEventListener('input', filterSymbols);
         priceTable.addEventListener('input', handlePriceEdit);
         document.getElementById('enrichFigiBtn').addEventListener('click', enrichWithOpenFIGI);
+        document.getElementById('testFigiBtn').addEventListener('click', testOpenFIGI);
 
         // --- Functions ---
         async function scanAllModels() {
@@ -638,13 +642,21 @@
                 showNotification('No symbols loaded. Please scan models first.', 'warning');
                 return;
             }
+            
             showNotification('Enriching symbols with OpenFIGI...', 'info');
             const symbols = Array.from(symbolPrices.keys());
+            console.log('Symbols to enrich:', symbols);
+            
             const batchSize = 10;
             let enrichedCount = 0;
+            
             for (let i = 0; i < symbols.length; i += batchSize) {
                 const batch = symbols.slice(i, i + batchSize);
                 const requestBody = batch.map(symbol => ({ idType: 'TICKER', idValue: symbol }));
+                
+                console.log(`Processing batch ${i/batchSize + 1}:`, batch);
+                console.log('Request body:', JSON.stringify(requestBody, null, 2));
+                
                 try {
                     const response = await fetch('https://api.openfigi.com/v3/mapping', {
                         method: 'POST',
@@ -654,32 +666,88 @@
                         },
                         body: JSON.stringify(requestBody)
                     });
+                    
+                    console.log('Response status:', response.status);
+                    
                     if (response.ok) {
                         const data = await response.json();
+                        console.log('Response data:', data);
+                        
                         data.forEach((result, idx) => {
                             const symbol = batch[idx];
+                            console.log(`Processing result for ${symbol}:`, result);
+                            
                             if (result.data && result.data.length > 0) {
                                 const figi = result.data[0].figi;
                                 const name = result.data[0].name || symbolPrices.get(symbol).name;
                                 const securityType = result.data[0].securityType;
                                 const exchCode = result.data[0].exchCode;
+                                
+                                console.log(`Enriching ${symbol} with:`, { figi, name, securityType, exchCode });
+                                
                                 const symbolData = symbolPrices.get(symbol);
                                 symbolData.figi = figi;
                                 symbolData.name = name;
                                 symbolData.securityType = securityType;
                                 symbolData.exchCode = exchCode;
+                                symbolData.lastUpdated = new Date().toISOString();
                                 enrichedCount++;
+                            } else {
+                                console.log(`No data found for ${symbol}:`, result);
                             }
                         });
                     } else {
-                        showNotification('OpenFIGI API error: ' + response.status, 'error');
+                        const errorText = await response.text();
+                        console.error('OpenFIGI API error:', response.status, errorText);
+                        showNotification(`OpenFIGI API error: ${response.status} - ${errorText}`, 'error');
                     }
                 } catch (error) {
+                    console.error('OpenFIGI request failed:', error);
                     showNotification('OpenFIGI request failed: ' + error.message, 'error');
+                }
+                
+                // Add delay between batches to respect rate limits
+                if (i + batchSize < symbols.length) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
             }
             renderPriceTable();
-            showNotification(`Enriched ${enrichedCount} symbols with FIGI data.`, 'success');
+            console.log(`Final enriched count: ${enrichedCount}`);
+            showNotification(`Enriched ${enrichedCount} symbols with FIGI data.`, enrichedCount > 0 ? 'success' : 'warning');
+        }
+
+        async function testOpenFIGI() {
+            showNotification('Testing OpenFIGI API connection...', 'info');
+            
+            const testRequest = [{ idType: 'TICKER', idValue: 'AAPL' }];
+            
+            try {
+                console.log('Testing OpenFIGI with AAPL...');
+                const response = await fetch('https://api.openfigi.com/v3/mapping', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-OPENFIGI-APIKEY': OPENFIGI_API_KEY
+                    },
+                    body: JSON.stringify(testRequest)
+                });
+                
+                console.log('Test response status:', response.status);
+                console.log('Test response headers:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Test response data:', data);
+                    showNotification('OpenFIGI API test successful!', 'success');
+                } else {
+                    const errorText = await response.text();
+                    console.error('Test API error:', response.status, errorText);
+                    showNotification(`API test failed: ${response.status} - ${errorText}`, 'error');
+                }
+            } catch (error) {
+                console.error('Test request failed:', error);
+                showNotification(`API test failed: ${error.message}`, 'error');
+            }
         }
 
         function handlePriceEdit(event) {
