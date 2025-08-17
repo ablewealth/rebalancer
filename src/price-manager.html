@@ -36,11 +36,6 @@
             border-color: #16a34a;
         }
 
-        .price-needs-update {
-            background-color: #fef3c7;
-            border-color: #f59e0b;
-        }
-
         .price-failed-update {
             background-color: #fee2e2;
             border-color: #ef4444;
@@ -56,10 +51,6 @@
 
         .update-indicator.success {
             background-color: #10b981;
-        }
-
-        .update-indicator.warning {
-            background-color: #f59e0b;
         }
 
         .update-indicator.error {
@@ -348,15 +339,11 @@
                 <div class="flex flex-wrap gap-4 text-xs">
                     <div class="flex items-center">
                         <span class="update-indicator success mr-1"></span>
-                        <span class="text-gray-600">Live market data</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="update-indicator warning mr-1"></span>
-                        <span class="text-gray-600">Estimated price - verify manually</span>
+                        <span class="text-gray-600">Live market data updated</span>
                     </div>
                     <div class="flex items-center">
                         <span class="update-indicator error mr-1"></span>
-                        <span class="text-gray-600">Update failed - needs manual entry</span>
+                        <span class="text-gray-600">Update failed - using existing price</span>
                     </div>
                 </div>
             </div>
@@ -424,6 +411,70 @@
         priceTable.addEventListener('input', handlePriceEdit);
         document.getElementById('enrichFigiBtn').addEventListener('click', enrichWithOpenFIGI);
         document.getElementById('testFigiBtn').addEventListener('click', testOpenFIGI);
+
+        // Test API availability function
+        async function testAPIs() {
+            showNotification('Testing API availability...', 'info');
+            
+            const testSymbol = 'AAPL';
+            const results = {};
+            
+            // Test AlphaVantage
+            try {
+                const alphaUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${testSymbol}&apikey=GTHGBGWTP0NCSZ9U`;
+                const response = await fetch(alphaUrl);
+                const data = await response.json();
+                
+                if (data.Information && data.Information.includes('rate limit')) {
+                    results.alphavantage = 'Rate limit reached (25/day limit)';
+                } else if (data['Global Quote'] && data['Global Quote']['05. price']) {
+                    results.alphavantage = `✅ Working - Price: $${data['Global Quote']['05. price']}`;
+                } else {
+                    results.alphavantage = '❌ No data returned';
+                }
+            } catch (error) {
+                results.alphavantage = `❌ Error: ${error.message}`;
+            }
+            
+            // Test Yahoo Finance Direct
+            try {
+                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${testSymbol}`;
+                const response = await fetch(yahooUrl);
+                const data = await response.json();
+                
+                if (data.chart && data.chart.result && data.chart.result[0].meta.regularMarketPrice) {
+                    results.yahoo = `✅ Working - Price: $${data.chart.result[0].meta.regularMarketPrice}`;
+                } else {
+                    results.yahoo = '❌ No data returned';
+                }
+            } catch (error) {
+                results.yahoo = `❌ CORS blocked: ${error.message}`;
+            }
+            
+            // Test Financial Modeling Prep
+            try {
+                const fmpUrl = `https://financialmodelingprep.com/api/v3/quote-short/${testSymbol}?apikey=demo`;
+                const response = await fetch(fmpUrl);
+                const data = await response.json();
+                
+                if (data && data.length > 0 && data[0].price) {
+                    results.fmp = `✅ Working - Price: $${data[0].price}`;
+                } else {
+                    results.fmp = '❌ No data returned';
+                }
+            } catch (error) {
+                results.fmp = `❌ Error: ${error.message}`;
+            }
+            
+            console.log('API Test Results:', results);
+            
+            const message = `API Status for ${testSymbol}:\n` +
+                           `• AlphaVantage: ${results.alphavantage}\n` +
+                           `• Yahoo Finance: ${results.yahoo}\n` +
+                           `• Financial Modeling Prep: ${results.fmp}`;
+            
+            alert(message);
+        }
 
         // --- Functions ---
         async function scanAllModels() {
@@ -655,11 +706,8 @@
                 updateIndicator = '<span class="update-indicator success" title="Price updated successfully"></span>';
                 priceClass += ' price-updated';
             } else if (symbolData.updateStatus === 'failed') {
-                updateIndicator = '<span class="update-indicator error" title="Price update failed - needs manual update"></span>';
+                updateIndicator = '<span class="update-indicator error" title="Price update failed - using existing price"></span>';
                 priceClass += ' price-failed-update';
-            } else if (symbolData.updateStatus === 'mock') {
-                updateIndicator = '<span class="update-indicator warning" title="Using estimated price - verify manually"></span>';
-                priceClass += ' price-needs-update';
             }
             const figi = symbolData.figi || '';
 
@@ -700,7 +748,7 @@
                 return;
             }
             
-            showNotification('Updating prices from AlphaVantage API (then Yahoo Finance fallback)...', 'info');
+            showNotification('Updating prices from multiple APIs (AlphaVantage → Yahoo → FMP → Google Sheets → Mock)...', 'info');
             const symbols = Array.from(symbolPrices.keys());
             console.log('Symbols to update prices for:', symbols);
             
@@ -722,18 +770,65 @@
                         
                         if (response.ok) {
                             const data = await response.json();
-                            const quote = data['Global Quote'];
                             
-                            if (quote && quote['05. price']) {
-                                currentPrice = parseFloat(quote['05. price']);
-                                console.log(`Alpha Vantage success for ${symbol}: $${currentPrice}`);
+                            // Check for rate limit message
+                            if (data.Information && data.Information.includes('rate limit')) {
+                                console.log(`Alpha Vantage rate limit reached for ${symbol}`);
+                            } else {
+                                const quote = data['Global Quote'];
+                                
+                                if (quote && quote['05. price']) {
+                                    currentPrice = parseFloat(quote['05. price']);
+                                    console.log(`Alpha Vantage success for ${symbol}: $${currentPrice}`);
+                                }
                             }
                         }
                     } catch (error) {
                         console.log(`Alpha Vantage failed for ${symbol}:`, error.message);
                     }
                     
-                    // Method 2: If Alpha Vantage fails, try Yahoo Finance with CORS proxy
+                    // Method 2: If Alpha Vantage fails, try Yahoo Finance alternative methods
+                    if (!currentPrice) {
+                        try {
+                            // Try direct Yahoo Finance API without CORS proxy first
+                            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+                            const response = await fetch(yahooUrl);
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                
+                                if (data.chart && data.chart.result && data.chart.result.length > 0) {
+                                    const result = data.chart.result[0];
+                                    currentPrice = result.meta.regularMarketPrice;
+                                    companyName = result.meta.longName || result.meta.shortName || symbol;
+                                    console.log(`Yahoo Finance direct success for ${symbol}: $${currentPrice}`);
+                                }
+                            }
+                        } catch (error) {
+                            console.log(`Yahoo Finance direct failed for ${symbol}:`, error.message);
+                        }
+                    }
+                    
+                    // Method 3: Try Financial Modeling Prep API (free tier)
+                    if (!currentPrice) {
+                        try {
+                            const fmpUrl = `https://financialmodelingprep.com/api/v3/quote-short/${symbol}?apikey=demo`;
+                            const response = await fetch(fmpUrl);
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                
+                                if (data && data.length > 0 && data[0].price) {
+                                    currentPrice = parseFloat(data[0].price);
+                                    console.log(`Financial Modeling Prep success for ${symbol}: $${currentPrice}`);
+                                }
+                            }
+                        } catch (error) {
+                            console.log(`Financial Modeling Prep failed for ${symbol}:`, error.message);
+                        }
+                    }
+                    
+                    // Method 4: Try Yahoo Finance with CORS proxy as last resort
                     if (!currentPrice) {
                         try {
                             const corsProxy = 'https://cors-anywhere.herokuapp.com/';
@@ -748,79 +843,89 @@
                                     const result = data.chart.result[0];
                                     currentPrice = result.meta.regularMarketPrice;
                                     companyName = result.meta.longName || result.meta.shortName || symbol;
-                                    console.log(`Yahoo Finance success for ${symbol}: $${currentPrice}`);
+                                    console.log(`Yahoo Finance CORS proxy success for ${symbol}: $${currentPrice}`);
                                 }
                             }
                         } catch (error) {
-                            console.log(`Yahoo Finance failed for ${symbol}:`, error.message);
+                            console.log(`Yahoo Finance CORS proxy failed for ${symbol}:`, error.message);
                         }
                     }
                     
-                    // Method 3: If both fail, use mock/static prices for common symbols
-                    let isMockPrice = false;
+                    // Method 5: Try Google Sheets portfolio data as fallback
                     if (!currentPrice) {
-                        const mockPrices = {
-                            'AAPL': 175.50,
-                            'MSFT': 315.25,
-                            'GOOGL': 125.80,
-                            'AMZN': 145.30,
-                            'TSLA': 220.75,
-                            'SPY': 445.20,
-                            'QQQ': 375.40,
-                            'VTI': 225.15,
-                            'IWM': 198.65,
-                            'EFV': 63.85,
-                            'SPYG': 96.95,
-                            'DYNF': 55.20,
-                            'SPMO': 113.45,
-                            'AUSF': 44.30,
-                            'PVAL': 40.15,
-                            'DBEF': 43.90,
-                            'EDIV': 38.25,
-                            'IDMO': 50.80
-                        };
-                        
-                        if (mockPrices[symbol]) {
-                            currentPrice = mockPrices[symbol];
-                            companyName = companyName || symbol;
-                            isMockPrice = true;
-                            console.log(`Using mock price for ${symbol}: $${currentPrice}`);
+                        try {
+                            // Convert Google Sheets URL to CSV export format
+                            const sheetsId = '1vxJEkeFJzeFhyOiCsBVdmH-ZXDpvmdL-CD1Q6nxaU2k';
+                            const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetsId}/export?format=csv&gid=0`;
+                            
+                            const response = await fetch(csvUrl);
+                            
+                            if (response.ok) {
+                                const csvText = await response.text();
+                                const lines = csvText.split('\n');
+                                
+                                // Find the symbol in the CSV data
+                                for (let line of lines) {
+                                    const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+                                    
+                                    // Look for the symbol in the first column (adjust index as needed)
+                                    if (columns[0] && columns[0].toUpperCase() === symbol.toUpperCase()) {
+                                        // Try to find price in subsequent columns
+                                        for (let i = 1; i < columns.length; i++) {
+                                            const cleanValue = columns[i].replace(/[$\s,]/g, '');
+                                            const possiblePrice = parseFloat(cleanValue);
+                                            
+                                            // If it's a reasonable stock price (between $1 and $10,000)
+                                            if (possiblePrice && possiblePrice > 1 && possiblePrice < 10000) {
+                                                currentPrice = possiblePrice;
+                                                console.log(`Google Sheets success for ${symbol}: $${currentPrice}`);
+                                                break;
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            console.log(`Google Sheets failed for ${symbol}:`, error.message);
                         }
                     }
                     
-                    if (currentPrice && currentPrice > 0) {
-                        const symbolData = symbolPrices.get(symbol);
-                        const oldPrice = symbolData.price;
-                        
-                        symbolData.price = parseFloat(currentPrice.toFixed(2));
-                        if (companyName) symbolData.name = companyName;
-                        symbolData.lastUpdated = new Date().toISOString();
-                        
-                        // Set update status based on data source
-                        if (isMockPrice) {
-                            symbolData.updateStatus = 'mock';
-                            console.log(`Updated ${symbol} with mock price: $${oldPrice} → $${currentPrice}`);
-                        } else {
-                            symbolData.updateStatus = 'success';
-                            console.log(`Updated ${symbol} with live data: $${oldPrice} → $${currentPrice} (${companyName || symbol})`);
-                        }
-                        
-                        updatedCount++;
-                        
-                        // Add visual feedback
-                        setTimeout(() => {
-                            const priceInput = document.querySelector(`input[data-symbol="${symbol}"][data-field="price"]`);
-                            if (priceInput) {
-                                priceInput.value = currentPrice.toFixed(2);
-                            }
-                        }, symbols.indexOf(symbol) * 50);
-                    } else {
-                        console.warn(`No price data found for ${symbol}`);
+                    // If all APIs and Sheets fail, keep current price and mark as failed
+                    if (!currentPrice) {
+                        console.log(`All price sources failed for ${symbol}, keeping existing price`);
                         const symbolData = symbolPrices.get(symbol);
                         symbolData.updateStatus = 'failed';
+                        symbolData.lastUpdated = new Date().toISOString();
+                        continue; // Skip to next symbol
                     }
+                    
+                    // Update price with new data
+                    const symbolData = symbolPrices.get(symbol);
+                    const oldPrice = symbolData.price;
+                    
+                    symbolData.price = parseFloat(currentPrice.toFixed(2));
+                    if (companyName) symbolData.name = companyName;
+                    symbolData.lastUpdated = new Date().toISOString();
+                    symbolData.updateStatus = 'success';
+                    
+                    console.log(`Updated ${symbol} with live data: $${oldPrice} → $${currentPrice} (${companyName || symbol})`);
+                    updatedCount++;
+                    
+                    // Add visual feedback
+                    setTimeout(() => {
+                        const priceInput = document.querySelector(`input[data-symbol="${symbol}"][data-field="price"]`);
+                        if (priceInput) {
+                            priceInput.value = currentPrice.toFixed(2);
+                        }
+                    }, symbols.indexOf(symbol) * 50);
+                    
                 } catch (error) {
                     console.error(`Error fetching price for ${symbol}:`, error);
+                    // Mark as failed if there's an exception
+                    const symbolData = symbolPrices.get(symbol);
+                    symbolData.updateStatus = 'failed';
+                    symbolData.lastUpdated = new Date().toISOString();
                 }
                 
                 // Add delay to respect AlphaVantage rate limits (5 requests per minute for free tier)
@@ -831,20 +936,18 @@
             
             // Count different update types for summary
             let liveUpdates = 0;
-            let mockUpdates = 0;
             let failedUpdates = 0;
             
             symbolPrices.forEach(symbolData => {
                 if (symbolData.updateStatus === 'success') liveUpdates++;
-                else if (symbolData.updateStatus === 'mock') mockUpdates++;
                 else if (symbolData.updateStatus === 'failed') failedUpdates++;
             });
             
-            console.log(`Price update summary: ${liveUpdates} live, ${mockUpdates} estimated, ${failedUpdates} failed`);
+            console.log(`Price update summary: ${liveUpdates} live, ${failedUpdates} failed`);
             
             let message = `Updated ${updatedCount} of ${symbols.length} symbols`;
-            if (mockUpdates > 0 || failedUpdates > 0) {
-                message += ` (${liveUpdates} live, ${mockUpdates} estimated, ${failedUpdates} failed)`;
+            if (failedUpdates > 0) {
+                message += ` (${liveUpdates} updated, ${failedUpdates} failed)`;
             }
             
             const notificationType = failedUpdates > 0 ? 'warning' : updatedCount > 0 ? 'success' : 'error';
@@ -901,6 +1004,35 @@
                     }
                 } catch (error) {
                     console.log('Alpha Vantage test failed:', error.message);
+                }
+            }
+            
+            // Test Google Sheets fallback
+            if (!success) {
+                try {
+                    const sheetsId = '1vxJEkeFJzeFhyOiCsBVdmH-ZXDpvmdL-CD1Q6nxaU2k';
+                    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetsId}/export?format=csv&gid=0`;
+                    
+                    const response = await fetch(csvUrl);
+                    if (response.ok) {
+                        const csvText = await response.text();
+                        const lines = csvText.split('\n');
+                        
+                        // Look for any symbol in the first few lines to test connectivity
+                        for (let line of lines.slice(0, 10)) {
+                            const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+                            if (columns.length > 1) {
+                                const symbol = columns[0];
+                                if (symbol && symbol.length > 1 && symbol.length < 6) {
+                                    success = true;
+                                    showNotification(`Google Sheets API test successful! Found symbol: ${symbol}`, 'success');
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.log('Google Sheets test failed:', error.message);
                 }
             }
             
