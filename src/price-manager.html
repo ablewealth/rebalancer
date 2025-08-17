@@ -478,6 +478,13 @@
 
         // --- Functions ---
         async function scanAllModels() {
+            // Check if we're running from file:// protocol
+            const isFileProtocol = window.location.protocol === 'file:';
+            if (isFileProtocol) {
+                showNotification('⚠️ Running from file:// protocol. For CSV loading to work, please serve from a local web server (e.g., python -m http.server 8000)', 'warning');
+                console.warn('File protocol detected. Browser security may prevent CSV loading. Consider using a local web server.');
+            }
+            
             // Complete list of all known model portfolio files - must match EXACT filenames in directory
             const modelFiles = [
                 'AWM Model - All Equity.csv',
@@ -506,51 +513,76 @@
             try {
                 for (const filename of modelFiles) {
                     try {
-                        console.log(`Attempting to load model: ../data/models/${filename}`);
-                        const response = await fetch(`../data/models/${filename}`);
+                        console.log(`Attempting to load model: ${filename}`);
                         
-                        console.log(`Response for ${filename}:`, response.status, response.statusText);
+                        // Try multiple possible paths
+                        const possiblePaths = [
+                            `../data/models/${filename}`,
+                            `./data/models/${filename}`,
+                            `/Users/sethhodes/Documents/Kiro/rebalancer/data/models/${filename}`,
+                            `data/models/${filename}`
+                        ];
                         
-                        if (response.ok) {
-                            const csvText = await response.text();
-                            console.log(`CSV text length for ${filename}:`, csvText.length);
-                            const portfolio = parseCSVPortfolio(csvText, filename);
-                            if (portfolio) {
-                                modelPortfolios[filename] = portfolio;
-                                foundModels.push(filename);
-                                console.log(`Successfully loaded model: ${filename} with ${portfolio.holdings.length} holdings`);
-
-                                // Extract symbols and prices
-                                portfolio.holdings.forEach(holding => {
-                                    const symbol = holding.symbol;
-                                    if (symbol && symbol !== '') {
-                                        if (symbolPrices.has(symbol)) {
-                                            // Update existing entry
-                                            const existing = symbolPrices.get(symbol);
-                                            existing.models.add(filename);
-                                            // Use the most recent price if different
-                                            if (holding.price > 0) {
-                                                existing.price = holding.price;
-                                            }
-                                        } else {
-                                            // Create new entry
-                                            symbolPrices.set(symbol, {
-                                                symbol: symbol,
-                                                name: holding.name || '',
-                                                price: holding.price || 0,
-                                                models: new Set([filename]),
-                                                lastUpdated: new Date().toISOString()
-                                            });
-                                        }
-                                    }
-                                });
-                            } else {
-                                console.warn(`Failed to parse model portfolio: ${filename}`);
-                                notFoundModels.push(`${filename} (parsing error)`);
+                        let response = null;
+                        let workingPath = null;
+                        
+                        for (const path of possiblePaths) {
+                            try {
+                                console.log(`Trying path: ${path}`);
+                                response = await fetch(path);
+                                console.log(`Response for ${path}:`, response.status, response.statusText);
+                                
+                                if (response.ok) {
+                                    workingPath = path;
+                                    break;
+                                }
+                            } catch (pathError) {
+                                console.log(`Path ${path} failed:`, pathError.message);
                             }
+                        }
+                        
+                        if (!response || !response.ok) {
+                            console.warn(`All paths failed for ${filename}`);
+                            notFoundModels.push(`${filename} (no valid path found)`);
+                            continue;
+                        }
+                        
+                        console.log(`Successfully loaded from: ${workingPath}`);
+                        const csvText = await response.text();
+                        console.log(`CSV text length for ${filename}:`, csvText.length);
+                        const portfolio = parseCSVPortfolio(csvText, filename);
+                        if (portfolio) {
+                            modelPortfolios[filename] = portfolio;
+                            foundModels.push(filename);
+                            console.log(`Successfully loaded model: ${filename} with ${portfolio.holdings.length} holdings`);
+
+                            // Extract symbols and prices
+                            portfolio.holdings.forEach(holding => {
+                                const symbol = holding.symbol;
+                                if (symbol && symbol !== '') {
+                                    if (symbolPrices.has(symbol)) {
+                                        // Update existing entry
+                                        const existing = symbolPrices.get(symbol);
+                                        existing.models.add(filename);
+                                        // Use the most recent price if different
+                                        if (holding.price > 0) {
+                                            existing.price = holding.price;
+                                        }
+                                    } else {
+                                        // Create new entry
+                                        symbolPrices.set(symbol, {
+                                            symbol: symbol,
+                                            name: holding.name || '',
+                                            price: holding.price || 0,
+                                            models: new Set([filename]),
+                                            lastUpdated: new Date().toISOString()
+                                        });
+                                    }
+                                }
+                            });
                         } else {
-                            console.warn(`Failed to load ${filename}: ${response.status} ${response.statusText}`);
-                            notFoundModels.push(`${filename} (${response.status} ${response.statusText})`);
+                            console.warn(`Failed to parse model portfolio: ${filename}`);
+                            notFoundModels.push(`${filename} (parsing error)`);
                         }
                     } catch (error) {
                         console.error(`Error loading model portfolio: ${filename}`, error);
