@@ -303,6 +303,9 @@
                     <span id="symbolCount" class="text-sm text-gray-600">0 symbols</span>
                     <input type="text" id="searchInput" placeholder="Search symbols..."
                         class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="enrichFigiBtn" class="bg-orange-500 text-white font-bold py-1 px-3 rounded-lg hover:bg-orange-600 transition-all duration-200 ml-2" title="Enrich all symbols with OpenFIGI">
+                        Enrich with OpenFIGI
+                    </button>
                 </div>
             </div>
 
@@ -319,6 +322,9 @@
                             <th scope="col"
                                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Current Price</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                FIGI</th>
                             <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Used In Models</th>
@@ -357,9 +363,10 @@
         const symbolCount = document.getElementById('symbolCount');
         const searchInput = document.getElementById('searchInput');
 
-        let symbolPrices = new Map();
-        let originalPrices = new Map();
-        let modelPortfolios = {};
+    let symbolPrices = new Map();
+    let originalPrices = new Map();
+    let modelPortfolios = {};
+    const OPENFIGI_API_KEY = 'd29b021a-0c61-4d18-b6ea-fecf0120db4a';
 
         // --- Event Listeners ---
         scanModelsBtn.addEventListener('click', scanAllModels);
@@ -368,7 +375,8 @@
         saveChangesBtn.addEventListener('click', saveChanges);
         updateModelsBtn.addEventListener('click', updateAllModels);
         searchInput.addEventListener('input', filterSymbols);
-        priceTable.addEventListener('input', handlePriceEdit);
+    priceTable.addEventListener('input', handlePriceEdit);
+    document.getElementById('enrichFigiBtn').addEventListener('click', enrichWithOpenFIGI);
 
         // --- Functions ---
         async function scanAllModels() {
@@ -589,6 +597,7 @@
 
             const modelsArray = Array.from(symbolData.models);
             const modelsText = modelsArray.map(m => m.replace('.csv', '')).join(', ');
+            const figi = symbolData.figi || '';
 
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -608,6 +617,9 @@
                     </div>
                 </td>
                 <td class="px-6 py-4 text-center">
+                    <span class="text-xs text-gray-500" title="FIGI">${figi}</span>
+                </td>
+                <td class="px-6 py-4 text-center">
                     <span class="text-xs text-gray-500" title="${modelsText}">${modelsArray.length} models</span>
                 </td>
                 <td class="px-6 py-4 text-center">
@@ -616,6 +628,55 @@
             `;
 
             return row;
+        }
+
+        async function enrichWithOpenFIGI() {
+            if (symbolPrices.size === 0) {
+                showNotification('No symbols loaded. Please scan models first.', 'warning');
+                return;
+            }
+            showNotification('Enriching symbols with OpenFIGI...', 'info');
+            const symbols = Array.from(symbolPrices.keys());
+            const batchSize = 10;
+            let enrichedCount = 0;
+            for (let i = 0; i < symbols.length; i += batchSize) {
+                const batch = symbols.slice(i, i + batchSize);
+                const requestBody = batch.map(symbol => ({ idType: 'TICKER', idValue: symbol }));
+                try {
+                    const response = await fetch('https://api.openfigi.com/v3/mapping', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-OPENFIGI-APIKEY': OPENFIGI_API_KEY
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        data.forEach((result, idx) => {
+                            const symbol = batch[idx];
+                            if (result.data && result.data.length > 0) {
+                                const figi = result.data[0].figi;
+                                const name = result.data[0].name || symbolPrices.get(symbol).name;
+                                const securityType = result.data[0].securityType;
+                                const exchCode = result.data[0].exchCode;
+                                const symbolData = symbolPrices.get(symbol);
+                                symbolData.figi = figi;
+                                symbolData.name = name;
+                                symbolData.securityType = securityType;
+                                symbolData.exchCode = exchCode;
+                                enrichedCount++;
+                            }
+                        });
+                    } else {
+                        showNotification('OpenFIGI API error: ' + response.status, 'error');
+                    }
+                } catch (error) {
+                    showNotification('OpenFIGI request failed: ' + error.message, 'error');
+                }
+            }
+            renderPriceTable();
+            showNotification(`Enriched ${enrichedCount} symbols with FIGI data.`, 'success');
         }
 
         function handlePriceEdit(event) {
