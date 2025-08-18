@@ -8,6 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useToast } from '../components/Toast';
 import { apiClient } from '../utils/apiClient';
+import MarketDataManager from '../components/MarketDataManager';
 
 interface SymbolPrice {
   symbol: string;
@@ -290,6 +291,9 @@ const PriceManager: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Market Data Integration */}
+      <MarketDataManager />
 
       {/* Price Table */}
       {symbolPrices.length > 0 ? (

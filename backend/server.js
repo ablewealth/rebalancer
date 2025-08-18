@@ -39,6 +39,16 @@ try {
   const devRoutes = require('./routes/dev');
   app.use('/api', devRoutes);
   
+  // Load market data routes
+  console.log('📈 Loading market data API routes...');
+  const marketDataRoutes = require('./routes/marketData');
+  app.use('/api/market-data', marketDataRoutes);
+  
+  // Load advanced tax strategies routes
+  console.log('🧠 Loading advanced tax strategies API routes...');
+  const advancedTaxRoutes = require('./routes/advancedTaxStrategies');
+  app.use('/api/advanced-tax', advancedTaxRoutes);
+  
   // Add API info endpoint
   app.get('/api', (req, res) => {
     res.json({
@@ -50,7 +60,9 @@ try {
         portfolios: '/api/portfolios',
         models: '/api/models',
         prices: '/api/prices',
-        calculate: '/api/calculate'
+        calculate: '/api/calculate',
+        marketData: '/api/market-data',
+        advancedTax: '/api/advanced-tax'
       }
     });
   });

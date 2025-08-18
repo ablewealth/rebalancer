@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS price_history (
     price DECIMAL(10,4) NOT NULL,
     price_date DATE DEFAULT CURRENT_DATE,
     source VARCHAR(50) DEFAULT 'manual',
+    metadata JSONB, -- Store additional price data (volume, change, etc.)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
