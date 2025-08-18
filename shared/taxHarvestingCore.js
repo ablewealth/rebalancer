@@ -16,7 +16,13 @@ class TaxHarvestingCore {
       minTradeAmount: config.minTradeAmount || 50,
       precisionThreshold: config.precisionThreshold || 1,
       enableLogging: config.enableLogging !== false,
-      minTargetThreshold: config.minTargetThreshold || 100
+      minTargetThreshold: config.minTargetThreshold || 100,
+      maxTradesPerCategory: config.maxTradesPerCategory || 10,
+      portfolioValueThresholds: {
+        small: 100000,    // Under $100k
+        medium: 1000000,  // $100k - $1M
+        large: 10000000   // Over $1M
+      }
     };
   }
 
@@ -30,10 +36,14 @@ class TaxHarvestingCore {
   calculateTaxHarvesting(portfolio, targets, options = {}) {
     const startTime = performance.now();
     
+    // Calculate portfolio context for adaptive behavior
+    const portfolioContext = this.analyzePortfolioContext(portfolio);
+    
     if (this.config.enableLogging) {
       console.log('=== TAX HARVESTING CALCULATION START ===');
       console.log('Targets:', targets);
       console.log('Portfolio size:', portfolio.length);
+      console.log('Portfolio context:', portfolioContext);
     }
 
     // Validate inputs
@@ -65,8 +75,8 @@ class TaxHarvestingCore {
       console.log('Categories:', Object.keys(categories).map(k => `${k}: ${categories[k].length}`));
     }
 
-    // Generate recommendations
-    const recommendations = this.generateRecommendations(categories, neededST, neededLT);
+    // Generate recommendations with portfolio-aware logic
+    const recommendations = this.generateRecommendations(categories, neededST, neededLT, portfolioContext);
     
     // Calculate summary
     const summary = this.calculateSummary(recommendations, targets, options.ytdGains);
@@ -81,8 +91,34 @@ class TaxHarvestingCore {
         calculationTime: endTime - startTime,
         positionsAnalyzed: availablePositions.length,
         categoriesUsed: Object.keys(categories).filter(k => categories[k].length > 0),
+        portfolioContext,
         version: this.version
       }
+    };
+  }
+
+  /**
+   * Analyze portfolio context for adaptive algorithm behavior
+   */
+  analyzePortfolioContext(portfolio) {
+    const totalValue = portfolio.reduce((sum, pos) => sum + (pos.quantity * pos.price), 0);
+    const taxablePositions = portfolio.filter(pos => pos.accountType === 'taxable');
+    const avgPositionSize = taxablePositions.length > 0 ? totalValue / taxablePositions.length : 0;
+    
+    let sizeCategory = 'small';
+    if (totalValue >= this.config.portfolioValueThresholds.large) {
+      sizeCategory = 'large';
+    } else if (totalValue >= this.config.portfolioValueThresholds.medium) {
+      sizeCategory = 'medium';
+    }
+
+    return {
+      totalValue,
+      sizeCategory,
+      positionCount: taxablePositions.length,
+      avgPositionSize,
+      hasLargeLots: taxablePositions.some(pos => (pos.quantity * pos.price) > 50000),
+      hasSmallLots: taxablePositions.some(pos => (pos.quantity * pos.price) < 1000)
     };
   }
 
@@ -139,41 +175,116 @@ class TaxHarvestingCore {
   }
 
   /**
-   * Generate trading recommendations based on targets
+   * Generate trading recommendations based on targets with portfolio-aware logic
    */
-  generateRecommendations(categories, neededST, neededLT) {
+  generateRecommendations(categories, neededST, neededLT, portfolioContext) {
     const recommendations = [];
 
-    // Handle short-term targets - use lower threshold for individual trades
-    if (Math.abs(neededST) >= this.config.minTargetThreshold) {
+    // Adapt thresholds based on portfolio size and context
+    const adaptiveThresholds = this.calculateAdaptiveThresholds(portfolioContext);
+
+    // Handle short-term targets
+    if (Math.abs(neededST) >= adaptiveThresholds.minTarget) {
       if (neededST > 0) {
         // Need short-term gains
-        recommendations.push(...this.selectOptimalPositions(categories.stGains, neededST));
+        recommendations.push(...this.selectOptimalPositions(categories.stGains, neededST, portfolioContext));
       } else {
         // Need short-term losses
-        recommendations.push(...this.selectOptimalPositions(categories.stLosses, neededST));
+        recommendations.push(...this.selectOptimalPositions(categories.stLosses, neededST, portfolioContext));
       }
     }
 
-    // Handle long-term targets - use lower threshold for individual trades
-    if (Math.abs(neededLT) >= this.config.minTargetThreshold) {
+    // Handle long-term targets
+    if (Math.abs(neededLT) >= adaptiveThresholds.minTarget) {
       if (neededLT > 0) {
         // Need long-term gains
-        recommendations.push(...this.selectOptimalPositions(categories.ltGains, neededLT));
+        recommendations.push(...this.selectOptimalPositions(categories.ltGains, neededLT, portfolioContext));
       } else {
         // Need long-term losses
-        recommendations.push(...this.selectOptimalPositions(categories.ltLosses, neededLT));
+        recommendations.push(...this.selectOptimalPositions(categories.ltLosses, neededLT, portfolioContext));
       }
     }
 
-    return recommendations;
+    // Apply excessive trade prevention
+    return this.preventExcessiveTrades(recommendations, portfolioContext);
   }
 
   /**
-   * Select optimal positions using improved algorithm
+   * Calculate adaptive thresholds based on portfolio context
    */
-  selectOptimalPositions(positions, target) {
-    if (positions.length === 0 || Math.abs(target) < this.config.minTradeAmount) {
+  calculateAdaptiveThresholds(portfolioContext) {
+    const { sizeCategory, avgPositionSize, totalValue } = portfolioContext;
+    
+    let minTarget = this.config.minTargetThreshold;
+    let minTradeAmount = this.config.minTradeAmount;
+    let maxTrades = this.config.maxTradesPerCategory;
+
+    // Adjust based on portfolio size
+    switch (sizeCategory) {
+      case 'small':
+        // Smaller portfolios: lower thresholds, fewer trades
+        minTarget = Math.max(50, totalValue * 0.001); // 0.1% of portfolio or $50
+        minTradeAmount = Math.max(25, avgPositionSize * 0.05); // 5% of avg position or $25
+        maxTrades = Math.min(5, Math.floor(portfolioContext.positionCount * 0.3));
+        break;
+      case 'medium':
+        // Medium portfolios: moderate thresholds
+        minTarget = Math.max(500, totalValue * 0.0005); // 0.05% of portfolio or $500
+        minTradeAmount = Math.max(100, avgPositionSize * 0.1); // 10% of avg position or $100
+        maxTrades = Math.min(8, Math.floor(portfolioContext.positionCount * 0.4));
+        break;
+      case 'large':
+        // Large portfolios: higher thresholds, more trades allowed
+        minTarget = Math.max(2000, totalValue * 0.0002); // 0.02% of portfolio or $2000
+        minTradeAmount = Math.max(500, avgPositionSize * 0.15); // 15% of avg position or $500
+        maxTrades = Math.min(15, Math.floor(portfolioContext.positionCount * 0.5));
+        break;
+    }
+
+    return { minTarget, minTradeAmount, maxTrades };
+  }
+
+  /**
+   * Prevent excessive trades based on portfolio context
+   */
+  preventExcessiveTrades(recommendations, portfolioContext) {
+    const thresholds = this.calculateAdaptiveThresholds(portfolioContext);
+    
+    // Group by category (ST gains, ST losses, LT gains, LT losses)
+    const grouped = {
+      stGains: recommendations.filter(r => r.term === 'Short' && r.unrealizedGain > 0),
+      stLosses: recommendations.filter(r => r.term === 'Short' && r.unrealizedGain < 0),
+      ltGains: recommendations.filter(r => r.term === 'Long' && r.unrealizedGain > 0),
+      ltLosses: recommendations.filter(r => r.term === 'Long' && r.unrealizedGain < 0)
+    };
+
+    const filtered = [];
+    
+    // Limit trades per category and prioritize by efficiency
+    Object.values(grouped).forEach(categoryTrades => {
+      if (categoryTrades.length > thresholds.maxTrades) {
+        // Sort by efficiency (absolute gain per dollar invested)
+        const sorted = categoryTrades.sort((a, b) => {
+          const efficiencyA = Math.abs(a.unrealizedGain) / (a.quantity * a.price);
+          const efficiencyB = Math.abs(b.unrealizedGain) / (b.quantity * b.price);
+          return efficiencyB - efficiencyA;
+        });
+        filtered.push(...sorted.slice(0, thresholds.maxTrades));
+      } else {
+        filtered.push(...categoryTrades);
+      }
+    });
+
+    return filtered;
+  }
+
+  /**
+   * Select optimal positions using improved algorithm with portfolio context
+   */
+  selectOptimalPositions(positions, target, portfolioContext) {
+    const adaptiveThresholds = this.calculateAdaptiveThresholds(portfolioContext);
+    
+    if (positions.length === 0 || Math.abs(target) < adaptiveThresholds.minTradeAmount) {
       return [];
     }
 
@@ -189,20 +300,20 @@ class TaxHarvestingCore {
     });
 
     // Use dynamic programming approach for optimal selection
-    return this.dynamicProgrammingSelection(sortedPositions, target);
+    return this.dynamicProgrammingSelection(sortedPositions, target, adaptiveThresholds);
   }
 
   /**
    * Dynamic programming approach for optimal position selection
    */
-  dynamicProgrammingSelection(positions, target) {
+  dynamicProgrammingSelection(positions, target, adaptiveThresholds) {
     const n = positions.length;
     const targetAbs = Math.abs(target);
     const maxOvershoot = targetAbs * (this.config.maxOvershootPercent / 100);
     
     // For small targets, use greedy approach instead of DP
     if (targetAbs < 10000) {
-      return this.greedySelection(positions, target);
+      return this.greedySelection(positions, target, adaptiveThresholds);
     }
     
     // DP table: dp[i][w] = best combination for first i items with weight w
@@ -253,18 +364,24 @@ class TaxHarvestingCore {
   }
 
   /**
-   * Greedy selection for smaller targets
+   * Greedy selection for smaller targets with adaptive thresholds
    */
-  greedySelection(positions, target) {
+  greedySelection(positions, target, adaptiveThresholds) {
     const targetAbs = Math.abs(target);
     const selected = [];
     let currentTotal = 0;
+    let tradesCount = 0;
     
     for (const position of positions) {
       const positionValue = Math.abs(position.unrealizedGain);
       
-      // Add position if it helps us get closer to target
-      if (currentTotal < targetAbs && positionValue >= this.config.minTradeAmount) {
+      // Stop if we've reached max trades for this category
+      if (tradesCount >= adaptiveThresholds.maxTrades) {
+        break;
+      }
+      
+      // Add position if it helps us get closer to target and meets minimum threshold
+      if (currentTotal < targetAbs && positionValue >= adaptiveThresholds.minTradeAmount) {
         selected.push({
           ...position,
           action: 'sell',
@@ -272,6 +389,7 @@ class TaxHarvestingCore {
           proceeds: position.quantity * position.price
         });
         currentTotal += positionValue;
+        tradesCount++;
         
         // Stop if we've exceeded target by reasonable amount
         if (currentTotal >= targetAbs * 0.9) {
