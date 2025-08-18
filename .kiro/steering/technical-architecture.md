@@ -11,9 +11,10 @@
   - `src/report.html` - Comprehensive reporting
 
 ### Full-Stack Alternative (Node.js + React)
-- **Backend**: Express.js API with PostgreSQL integration
+- **Backend**: Express.js API with Enhanced Tax Harvesting Service v2.0.0
 - **Frontend**: React/TypeScript with Tailwind CSS
-- **Purpose**: Modern deployment alternative to HTML version
+- **Purpose**: Modern deployment alternative with enterprise-grade algorithms
+- **Latest**: Target-based optimization with precision matching capabilities
 
 ## Core Algorithms
 
@@ -48,6 +49,22 @@
 - IRS Section 1091 compliance
 ```
 
+### Enhanced Tax Harvesting Service v2.0.0 (Backend)
+```javascript
+// Location: backend/services/enhancedTaxHarvestingService.js
+// Key Improvements:
+- Target-based optimization (distance to target prioritized over efficiency)
+- Improved greedySelection algorithm with better lot combination logic
+- Enterprise-grade validation with Zod schema validation
+- Comprehensive error handling and logging
+- Async/await patterns for scalability
+- Modular architecture with clean separation of concerns
+
+// Example: Fixed $55k target optimization
+// Before: Selected AAPL ($75k, $20k overshoot)
+// After: Correctly selects MSFT ($50k, only $5k undershoot)
+```
+
 ## Data Flow
 
 ### Input Processing
@@ -72,6 +89,14 @@
 - **Real-time Validation**: Data consistency checks throughout
 - **Error Detection**: Suspicious value flagging and correction
 - **Audit Trail**: Complete algorithm decision tracking
+
+### Enhanced Debugging & Testing (Latest)
+- **Debug Scripts**: Comprehensive test suites for algorithm validation
+- **Target Analysis**: `debug-target-gains.js` for testing specific gain targets
+- **Combination Analysis**: `debug-combinations.js` for optimal selection verification
+- **Algorithm Comparison**: Side-by-side testing of original vs enhanced services
+- **Real-world Scenarios**: Portfolio simulations with realistic data
+- **Performance Metrics**: Algorithm efficiency and accuracy measurements
 
 ### User Experience
 - **Mode Toggle**: Seamless switching between Tax Target and Cash Raising
