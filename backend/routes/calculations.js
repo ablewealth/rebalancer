@@ -1,10 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const { query } = require('../config/database');
-const TaxHarvestingService = require('../services/taxHarvestingService');
+const { 
+  EnhancedTaxHarvestingService,
+  TaxHarvestingError,
+  InvalidPortfolioDataError,
+  NoLotsFoundError,
+  WashSaleViolationError 
+} = require('../services/enhancedTaxHarvestingService');
 
-// Initialize the tax harvesting service
-const taxService = new TaxHarvestingService();
+// Initialize the enhanced tax harvesting service
+const taxService = new EnhancedTaxHarvestingService({
+  enableLogging: process.env.NODE_ENV === 'development'
+});
 
 // POST /api/calculate - Run tax harvesting calculation
 router.post('/', async (req, res) => {
@@ -21,7 +29,13 @@ router.post('/', async (req, res) => {
       // Cash raising feature
       useCashRaising = false,
       cashNeeded = 0,
-      currentCash = 0
+      currentCash = 0,
+      // Enhanced service options
+      taxConfig = {},
+      washSaleConfig = {},
+      accountTypes = ['taxable'],
+      optimizationLevel = 'balanced',
+      performanceMode = null
     } = req.body;
     
     // Validate input
@@ -39,21 +53,40 @@ router.post('/', async (req, res) => {
       });
     }
     
-    console.log(`Starting tax harvesting calculation for ${portfolioData.length} positions`);
+    console.log(`Starting enhanced tax harvesting calculation for ${portfolioData.length} positions`);
     
-    // Run the tax harvesting calculation
-    const results = taxService.runTaxHarvesting(
+    // Configure options for enhanced service
+    const enhancedOptions = {
+      useCashRaising,
+      cashNeeded: parseFloat(cashNeeded) || 0,
+      currentCash: parseFloat(currentCash) || 0,
+      taxConfig: {
+        shortTermRate: 0.25,  // Default tax rates
+        longTermRate: 0.15,
+        stateRate: 0.05,
+        ...taxConfig  // Override with user provided rates
+      },
+      washSaleConfig: {
+        beforeDays: 30,
+        afterDays: 30,
+        strictMode: true,
+        ...washSaleConfig  // Override with user provided config
+      },
+      accountTypes,
+      optimizationLevel: portfolioData.length > 1000 ? 'fast' : optimizationLevel,
+      performanceMode: performanceMode !== null ? performanceMode : portfolioData.length > 1000,
+      validateInputs: true
+    };
+    
+    // Run the enhanced tax harvesting calculation
+    const results = await taxService.runTaxHarvesting(
       portfolioData,
       parseFloat(targetST) || 0,
       parseFloat(targetLT) || 0,
       parseFloat(realizedST) || 0,
       parseFloat(realizedLT) || 0,
       cashMaximizationMode,
-      {
-        useCashRaising,
-        cashNeeded: parseFloat(cashNeeded) || 0,
-        currentCash: parseFloat(currentCash) || 0
-      }
+      enhancedOptions
     );
     
     // Save calculation to database if portfolioId provided and database is available
@@ -88,11 +121,50 @@ router.post('/', async (req, res) => {
     res.json({
       success: true,
       data: results,
-      message: `Tax harvesting calculation completed. Generated ${results.recommendations.length} recommendations.`
+      message: `Enhanced tax harvesting calculation completed. Generated ${results.recommendations.length} recommendations.`
     });
     
   } catch (error) {
-    console.error('Error running tax harvesting calculation:', error);
+    console.error('Error running enhanced tax harvesting calculation:', error);
+    
+    // Handle specific enhanced service errors
+    if (error instanceof InvalidPortfolioDataError) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid portfolio data provided',
+        details: error.details,
+        message: error.message
+      });
+    }
+    
+    if (error instanceof NoLotsFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: 'No lots available for harvesting',
+        details: error.details,
+        message: error.message
+      });
+    }
+    
+    if (error instanceof WashSaleViolationError) {
+      return res.status(422).json({
+        success: false,
+        error: 'Wash sale violation detected',
+        details: error.details,
+        message: error.message
+      });
+    }
+    
+    if (error instanceof TaxHarvestingError) {
+      return res.status(422).json({
+        success: false,
+        error: 'Tax harvesting calculation error',
+        details: error.details,
+        message: error.message
+      });
+    }
+    
+    // Generic error handling
     res.status(500).json({
       success: false,
       error: 'Failed to run tax harvesting calculation',

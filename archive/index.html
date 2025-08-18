@@ -369,7 +369,67 @@
             return indices;
         }
 
+        function preprocessCostBasisCSV(csvText) {
+            console.log('Starting CSV preprocessing');
+            
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 8) {
+                console.log('Not template format - insufficient lines for template');
+                return csvText;
+            }
+            
+            // Check if this matches the template format
+            // Template format indicators:
+            // - Line 1: Account number (just digits)
+            // - Line 2: Export record count
+            // - Line 3: "CostBasis for Single Account as of..."
+            // - Line 8: Headers starting with "Symbol,Name,Acquired/Opened..."
+            
+            const line1 = lines[0].trim();
+            const line2 = lines[1].trim();
+            const line3 = lines[2].trim();
+            const line8 = lines[7].trim();
+            
+            const isTemplateFormat = (
+                /^\d+$/.test(line1) && // Line 1 is just digits (account number)
+                /\d+\s+Records exported/.test(line2) && // Line 2 mentions records exported
+                line3.includes('CostBasis for Single Account') && // Line 3 has the title
+                line8.toLowerCase().includes('symbol') && line8.toLowerCase().includes('name') // Line 8 has headers
+            );
+            
+            if (!isTemplateFormat) {
+                console.log('Not template format - keeping original CSV');
+                return csvText;
+            }
+            
+            console.log('Template format detected - removing rows 1-7 and columns 11-14');
+            
+            // Remove rows 1-7 (keep from line 8 onwards, which is index 7)
+            const filteredLines = lines.slice(7);
+            
+            // Remove columns 11-14 from each line
+            const processedLines = filteredLines.map(line => {
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                
+                // Keep columns 0-10, skip columns 11-14 (indices 10, 11, 12, 13), keep the rest
+                const filteredValues = values.filter((value, index) => {
+                    return index < 10 || index > 13;
+                });
+                
+                return filteredValues.join(',');
+            });
+            
+            const processedCSV = processedLines.join('\n');
+            console.log(`Processed CSV: removed 7 header rows and columns 11-14`);
+            console.log(`Original lines: ${lines.length}, Processed lines: ${processedLines.length}`);
+            
+            return processedCSV;
+        }
+
         function parseCostBasisCSV(csvText) {
+            // Preprocess CSV to handle template format
+            csvText = preprocessCostBasisCSV(csvText);
+            
             const lines = csvText.trim().split('\n');
             if (lines.length < 2) return [];
             const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));

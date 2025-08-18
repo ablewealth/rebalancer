@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Harvesting System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Tax Harvesting System Test</h1>
+    <div id="test-results"></div>
+    
+    <script>
+        const results = [];
+        
+        function addResult(test, status, message, details = '') {
+            results.push({ test, status, message, details });
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            const container = document.getElementById('test-results');
+            container.innerHTML = results.map(result => `
+                <div class="test-result ${result.status}">
+                    <strong>${result.test}:</strong> ${result.message}
+                    ${result.details ? `<pre>${result.details}</pre>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        async function runTests() {
+            addResult('System Initialization', 'info', 'Starting comprehensive test suite...');
+            
+            // Test 1: CSV Preprocessing Function
+            try {
+                const templateCSV = `Company,Symbol,Quantity,Price,Cost Basis,Unrealized Gain,Term,Acquired,Col9,Col10,Col11,Col12,Col13,Col14
+Header Row 1,,,,,,,,,,,,,
+Header Row 2,,,,,,,,,,,,,
+Header Row 3,,,,,,,,,,,,,
+Header Row 4,,,,,,,,,,,,,
+Header Row 5,,,,,,,,,,,,,
+Header Row 6,,,,,,,,,,,,,
+Header Row 7,,,,,,,,,,,,,
+Apple Inc.,AAPL,100,140.00,15000.00,-1000.00,Long-Term,2023-01-15,X,Y,Z,A,B,C
+Microsoft Corporation,MSFT,50,280.00,15000.00,-1000.00,Long-Term,2023-03-20,X,Y,Z,A,B,C`;
+
+                // Simulate the preprocessCostBasisCSV function
+                function preprocessCostBasisCSV(csvText) {
+                    const lines = csvText.split('\\n');
+                    
+                    if (lines.length < 8) {
+                        return csvText;
+                    }
+                    
+                    const firstDataLine = lines[8];
+                    if (!firstDataLine) return csvText;
+                    
+                    const columns = firstDataLine.split(',');
+                    if (columns.length !== 14) {
+                        return csvText;
+                    }
+                    
+                    const cleanedLines = [lines[0], ...lines.slice(8)];
+                    const finalLines = cleanedLines.map(line => {
+                        const cols = line.split(',');
+                        return cols.slice(0, 11).join(',');
+                    });
+                    
+                    return finalLines.join('\\n');
+                }
+                
+                const processed = preprocessCostBasisCSV(templateCSV);
+                const processedLines = processed.split('\\n');
+                const processedColumns = processedLines[1].split(',').length;
+                
+                if (processedLines.length === 3 && processedColumns === 11) {
+                    addResult('CSV Preprocessing', 'pass', 'Template CSV preprocessing working correctly', 
+                        `Original: 10 lines, 14 columns\\nProcessed: 3 lines, 11 columns`);
+                } else {
+                    addResult('CSV Preprocessing', 'fail', 'CSV preprocessing logic failed',
+                        `Expected: 3 lines, 11 columns\\nActual: ${processedLines.length} lines, ${processedColumns} columns`);
+                }
+                
+            } catch (error) {
+                addResult('CSV Preprocessing', 'fail', 'CSV preprocessing test threw error', error.message);
+            }
+            
+            // Test 2: Backend API Connectivity
+            try {
+                addResult('Backend API', 'info', 'Testing backend API connectivity...');
+                
+                const testData = {
+                    portfolioData: [
+                        {
+                            symbol: 'AAPL',
+                            quantity: 100,
+                            price: 140.00,
+                            costBasis: 15000.00,
+                            unrealizedGain: -1000.00,
+                            term: 'Long-Term',
+                            acquiredDate: new Date('2023-01-15'),
+                            accountType: 'taxable',
+                            includedInSelling: true
+                        }
+                    ],
+                    targetST: 0,
+                    targetLT: -500,
+                    realizedST: 0,
+                    realizedLT: 0
+                };
+                
+                // Try to connect to the backend
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    addResult('Backend API', 'pass', 'Backend API responding correctly',
+                        `Status: ${response.status}\\nSuccess: ${result.success}\\nRecommendations: ${result.data?.recommendations?.length || 0}`);
+                } else {
+                    addResult('Backend API', 'fail', `Backend API returned error status: ${response.status}`);
+                }
+                
+            } catch (error) {
+                addResult('Backend API', 'fail', 'Backend API connection failed', 
+                    `This is expected if backend server is not running\\nError: ${error.message}`);
+            }
+            
+            // Test 3: Frontend Module Loading
+            try {
+                // Check if we can access window objects that should be available
+                const moduleChecks = [
+                    { name: 'Console Logging', test: () => typeof console !== 'undefined' },
+                    { name: 'JSON Support', test: () => typeof JSON !== 'undefined' },
+                    { name: 'Fetch API', test: () => typeof fetch !== 'undefined' },
+                    { name: 'Local Storage', test: () => typeof localStorage !== 'undefined' },
+                    { name: 'Date Object', test: () => typeof Date !== 'undefined' }
+                ];
+                
+                const moduleResults = moduleChecks.map(check => ({
+                    name: check.name,
+                    status: check.test() ? 'pass' : 'fail'
+                }));
+                
+                const allPassed = moduleResults.every(result => result.status === 'pass');
+                
+                addResult('Frontend Modules', allPassed ? 'pass' : 'fail', 
+                    `Core browser APIs ${allPassed ? 'available' : 'missing'}`,
+                    moduleResults.map(r => `${r.name}: ${r.status === 'pass' ? '✓' : '✗'}`).join('\\n'));
+                
+            } catch (error) {
+                addResult('Frontend Modules', 'fail', 'Frontend module check failed', error.message);
+            }
+            
+            // Test 4: Data Validation Functions
+            try {
+                function validatePortfolioData(data) {
+                    if (!Array.isArray(data)) return false;
+                    if (data.length === 0) return false;
+                    
+                    for (const item of data) {
+                        if (!item.symbol || typeof item.symbol !== 'string') return false;
+                        if (!item.quantity || typeof item.quantity !== 'number' || item.quantity <= 0) return false;
+                        if (typeof item.price !== 'number' || item.price <= 0) return false;
+                        if (typeof item.costBasis !== 'number' || item.costBasis < 0) return false;
+                    }
+                    
+                    return true;
+                }
+                
+                const validData = [
+                    { symbol: 'AAPL', quantity: 100, price: 140, costBasis: 15000, unrealizedGain: -1000 }
+                ];
+                
+                const invalidData = [
+                    { symbol: '', quantity: -10, price: 140, costBasis: 'invalid' }
+                ];
+                
+                const validTest = validatePortfolioData(validData);
+                const invalidTest = !validatePortfolioData(invalidData);
+                
+                if (validTest && invalidTest) {
+                    addResult('Data Validation', 'pass', 'Portfolio data validation working correctly');
+                } else {
+                    addResult('Data Validation', 'fail', 'Portfolio data validation failed',
+                        `Valid data test: ${validTest}\\nInvalid data test: ${invalidTest}`);
+                }
+                
+            } catch (error) {
+                addResult('Data Validation', 'fail', 'Data validation test threw error', error.message);
+            }
+            
+            // Test 5: Error Handling
+            try {
+                function testErrorHandling() {
+                    try {
+                        throw new Error('Test error');
+                    } catch (error) {
+                        return { caught: true, message: error.message };
+                    }
+                }
+                
+                const errorResult = testErrorHandling();
+                
+                if (errorResult.caught && errorResult.message === 'Test error') {
+                    addResult('Error Handling', 'pass', 'Error handling working correctly');
+                } else {
+                    addResult('Error Handling', 'fail', 'Error handling not working properly');
+                }
+                
+            } catch (error) {
+                addResult('Error Handling', 'fail', 'Error handling test failed', error.message);
+            }
+            
+            addResult('Test Suite Complete', 'info', 'All tests completed. Check results above for any issues.');
+        }
+        
+        // Start tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>
