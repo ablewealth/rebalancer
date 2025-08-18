@@ -105,8 +105,8 @@ jobs:
         run: |
           cd backend
           node -e "
-            const { TaxHarvestingCore } = require('./shared/taxHarvestingCore');
-            const { PerformanceMonitor } = require('./shared/performanceMonitor');
+            const TaxHarvestingCore = require('../shared/taxHarvestingCore');
+            const PerformanceMonitor = require('../shared/performanceMonitor');
             
             const monitor = new PerformanceMonitor();
             const core = new TaxHarvestingCore();
