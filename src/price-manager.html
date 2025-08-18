@@ -400,12 +400,18 @@
 
                 for (const symbol of symbols) {
                     try {
-                        // Use a simple free API for demo purposes
-                        const response = await fetch(`https://api.finhub.io/api/v1/quote?symbol=${symbol}&token=demo`);
+                        // Use Yahoo Finance API as fallback (more reliable)
+                        const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`);
                         if (response.ok) {
                             const data = await response.json();
-                            if (data.c && data.c > 0) {
-                                symbolPrices.set(symbol, data.c);
+                            const result = data.chart?.result?.[0];
+                            const price = result?.meta?.regularMarketPrice;
+                            
+                            if (price && price > 0) {
+                                const symbolData = symbolPrices.get(symbol) || { symbol, name: symbol, models: new Set() };
+                                symbolData.price = price;
+                                symbolData.lastUpdated = new Date().toISOString();
+                                symbolPrices.set(symbol, symbolData);
                                 updatedCount++;
                             } else {
                                 failedCount++;
