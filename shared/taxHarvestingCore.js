@@ -509,7 +509,7 @@ class TaxHarvestingCore {
 
 // Export for both Node.js and browser environments
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { TaxHarvestingCore };
+  module.exports = TaxHarvestingCore;
 } else if (typeof window !== 'undefined') {
   window.TaxHarvestingCore = TaxHarvestingCore;
 }

@@ -90,20 +90,30 @@ async function loadModules() {
         
         // Finally load the algorithm (depends on utilities and version manager)
         if (ModuleRegistry.checkDependencies(['utilities', 'versionManager'])) {
-            // EMERGENCY FIX: Use the emergency version of the algorithm
-            await loadScript('js/tax-harvesting-algorithm-emergency.js')
+            // Load the shared tax harvesting core library
+            await loadScript('../shared/taxHarvestingCore.js')
                 .then(() => {
-                    if (!window.TaxHarvestingAlgorithm) {
-                        throw new Error('TaxHarvestingAlgorithm not defined after loading');
+                    if (!window.TaxHarvestingCore) {
+                        throw new Error('TaxHarvestingCore not defined after loading');
                     }
-                    ModuleRegistry.register('algorithm', 
-                                           window.TaxHarvestingAlgorithm,
-                                           window.TaxHarvestingAlgorithm.version);
-                    console.log('✅ Successfully loaded EMERGENCY TaxHarvestingAlgorithm v' + window.TaxHarvestingAlgorithm.version);
+                    ModuleRegistry.register('core', 
+                                           window.TaxHarvestingCore,
+                                           '3.0.0');
+                    console.log('✅ Successfully loaded TaxHarvestingCore v3.0.0');
                 })
                 .catch(err => {
-                    console.error('Failed to load Algorithm:', err);
-                    throw err;
+                    console.error('Failed to load Core:', err);
+                    // Fallback to emergency algorithm
+                    return loadScript('js/tax-harvesting-algorithm-emergency.js')
+                        .then(() => {
+                            if (!window.TaxHarvestingAlgorithm) {
+                                throw new Error('TaxHarvestingAlgorithm not defined after loading');
+                            }
+                            ModuleRegistry.register('algorithm', 
+                                                   window.TaxHarvestingAlgorithm,
+                                                   window.TaxHarvestingAlgorithm.version);
+                            console.log('✅ Successfully loaded EMERGENCY TaxHarvestingAlgorithm v' + window.TaxHarvestingAlgorithm.version);
+                        });
                 });
         }
         
