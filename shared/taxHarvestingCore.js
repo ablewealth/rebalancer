@@ -12,10 +12,11 @@ class TaxHarvestingCore {
   constructor(config = {}) {
     this.version = '3.0.0';
     this.config = {
-      maxOvershootPercent: config.maxOvershootPercent || 5,
-      minTradeAmount: config.minTradeAmount || 100,
+      maxOvershootPercent: config.maxOvershootPercent || 10,
+      minTradeAmount: config.minTradeAmount || 50,
       precisionThreshold: config.precisionThreshold || 1,
-      enableLogging: config.enableLogging !== false
+      enableLogging: config.enableLogging !== false,
+      minTargetThreshold: config.minTargetThreshold || 100
     };
   }
 
@@ -143,8 +144,8 @@ class TaxHarvestingCore {
   generateRecommendations(categories, neededST, neededLT) {
     const recommendations = [];
 
-    // Handle short-term targets
-    if (Math.abs(neededST) >= this.config.minTradeAmount) {
+    // Handle short-term targets - use lower threshold for individual trades
+    if (Math.abs(neededST) >= this.config.minTargetThreshold) {
       if (neededST > 0) {
         // Need short-term gains
         recommendations.push(...this.selectOptimalPositions(categories.stGains, neededST));
@@ -154,8 +155,8 @@ class TaxHarvestingCore {
       }
     }
 
-    // Handle long-term targets
-    if (Math.abs(neededLT) >= this.config.minTradeAmount) {
+    // Handle long-term targets - use lower threshold for individual trades
+    if (Math.abs(neededLT) >= this.config.minTargetThreshold) {
       if (neededLT > 0) {
         // Need long-term gains
         recommendations.push(...this.selectOptimalPositions(categories.ltGains, neededLT));
@@ -199,6 +200,11 @@ class TaxHarvestingCore {
     const targetAbs = Math.abs(target);
     const maxOvershoot = targetAbs * (this.config.maxOvershootPercent / 100);
     
+    // For small targets, use greedy approach instead of DP
+    if (targetAbs < 10000) {
+      return this.greedySelection(positions, target);
+    }
+    
     // DP table: dp[i][w] = best combination for first i items with weight w
     const dp = Array(n + 1).fill(null).map(() => Array(Math.floor(targetAbs + maxOvershoot) + 1).fill(null));
     
@@ -229,9 +235,10 @@ class TaxHarvestingCore {
       }
     }
 
-    // Find best solution within acceptable range
+    // Find best solution within acceptable range - more flexible for smaller targets
     let bestSolution = { value: 0, items: [] };
-    for (let w = Math.floor(targetAbs * 0.95); w <= targetAbs + maxOvershoot; w++) {
+    const minAcceptable = Math.max(this.config.minTradeAmount, Math.floor(targetAbs * 0.7));
+    for (let w = minAcceptable; w <= targetAbs + maxOvershoot; w++) {
       if (dp[n][w] && dp[n][w].value > bestSolution.value) {
         bestSolution = dp[n][w];
       }
@@ -243,6 +250,37 @@ class TaxHarvestingCore {
       quantity: position.quantity, // Full position for now
       proceeds: position.quantity * position.price
     }));
+  }
+
+  /**
+   * Greedy selection for smaller targets
+   */
+  greedySelection(positions, target) {
+    const targetAbs = Math.abs(target);
+    const selected = [];
+    let currentTotal = 0;
+    
+    for (const position of positions) {
+      const positionValue = Math.abs(position.unrealizedGain);
+      
+      // Add position if it helps us get closer to target
+      if (currentTotal < targetAbs && positionValue >= this.config.minTradeAmount) {
+        selected.push({
+          ...position,
+          action: 'sell',
+          quantity: position.quantity,
+          proceeds: position.quantity * position.price
+        });
+        currentTotal += positionValue;
+        
+        // Stop if we've exceeded target by reasonable amount
+        if (currentTotal >= targetAbs * 0.9) {
+          break;
+        }
+      }
+    }
+    
+    return selected;
   }
 
   /**
