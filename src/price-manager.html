@@ -272,14 +272,18 @@
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
                 <h2 class="text-xl font-semibold mb-4 border-b pb-3">Update Actions</h2>
                 
-                <!-- Google Sheets Configuration -->
-                <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <h3 class="text-sm font-semibold text-green-800 mb-2">Price Source: Google Sheets</h3>
-                    <p class="text-xs text-green-700 mb-2">Prices are loaded from the centralized Google Sheets price database:</p>
-                    <div class="text-xs text-green-600">
-                        <a href="https://docs.google.com/spreadsheets/d/15Bt2qPPJjwN-SjVjjv2FGFFo35o2La3FF0zX4MpzAcU/edit?usp=sharing" 
-                           target="_blank" class="underline font-medium">Model Price Manager Spreadsheet</a>
+                <!-- API Key Configuration -->
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 class="text-sm font-semibold text-blue-800 mb-2">API Configuration Required</h3>
+                    <p class="text-xs text-blue-700 mb-2">To update prices, you need a Polygon.io API key:</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="apiKeyInput" placeholder="Enter Polygon.io API Key" 
+                               class="flex-1 px-3 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="saveApiKeyBtn" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                            Save
+                        </button>
                     </div>
+                    <p class="text-xs text-blue-600 mt-1">Get free API key at <a href="https://polygon.io" target="_blank" class="underline">polygon.io</a></p>
                 </div>
                 
                 <div class="space-y-3">
@@ -291,7 +295,7 @@
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
                                 clip-rule="evenodd" />
                         </svg>
-                        Update Prices from Google Sheets
+                        Update Prices from Market
                     </button>
                     <button id="saveChangesBtn"
                         class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-all duration-200">
@@ -386,14 +390,32 @@
         scanModelsBtn.addEventListener('click', scanAllModels);
         priceFile.addEventListener('change', handlePriceFileUpload);
         exportPricesBtn.addEventListener('click', exportPricesCSV);
-        document.getElementById('updatePricesBtn').addEventListener('click', updatePricesFromGoogleSheets);
+        document.getElementById('updatePricesBtn').addEventListener('click', updatePricesFromMarket);
+        document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
         saveChangesBtn.addEventListener('click', saveChanges);
         updateModelsBtn.addEventListener('click', updateAllModels);
         searchInput.addEventListener('input', filterSymbols);
         priceTable.addEventListener('input', handlePriceEdit);
+        
+        // Load saved API key on page load
+        const savedApiKey = localStorage.getItem('POLYGON_API_KEY');
+        if (savedApiKey && savedApiKey !== 'YOUR_API_KEY_HERE') {
+            document.getElementById('apiKeyInput').value = savedApiKey;
+        }
 
         // --- Functions ---
-        async function updatePricesFromGoogleSheets() {
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                showNotification('Please enter a valid API key', 'error');
+                return;
+            }
+            
+            localStorage.setItem('POLYGON_API_KEY', apiKey);
+            showNotification('API key saved successfully', 'success');
+        }
+        
+        async function updatePricesFromMarket() {
             const symbols = Array.from(symbolPrices.keys());
             if (symbols.length === 0) {
                 showNotification('No symbols loaded. Please scan models first.', 'warning');
@@ -409,60 +431,44 @@
                 let updatedCount = 0;
                 let failedCount = 0;
 
-                // Google Sheets CSV export URL (publicly accessible)
-                const sheetId = '15Bt2qPPJjwN-SjVjjv2FGFFo35o2La3FF0zX4MpzAcU';
-                const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-                
-                try {
-                    const response = await fetch(csvUrl);
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch Google Sheets data: ${response.status}`);
-                    }
-                    
-                    const csvText = await response.text();
-                    const lines = csvText.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                    
-                    // Find column indices
-                    const symbolIndex = headers.findIndex(h => h.toLowerCase().includes('symbol') || h.toLowerCase().includes('ticker'));
-                    const priceIndex = headers.findIndex(h => h.toLowerCase().includes('price') || h.toLowerCase().includes('current'));
-                    const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('description'));
-                    
-                    if (symbolIndex === -1 || priceIndex === -1) {
-                        throw new Error('Could not find Symbol and Price columns in Google Sheets');
-                    }
-                    
-                    // Process data rows
-                    for (let i = 1; i < lines.length; i++) {
-                        const line = lines[i].trim();
-                        if (!line) continue;
+                for (const symbol of symbols) {
+                    try {
+                        // Get API key from localStorage or environment
+                        const apiKey = localStorage.getItem('POLYGON_API_KEY') || 'YOUR_API_KEY_HERE';
                         
-                        const columns = line.split(',').map(c => c.trim().replace(/"/g, ''));
-                        const symbol = columns[symbolIndex];
-                        const priceStr = columns[priceIndex];
-                        const name = nameIndex >= 0 ? columns[nameIndex] : symbol;
+                        if (apiKey === 'YOUR_API_KEY_HERE') {
+                            console.warn('Polygon.io API key not configured. Please set POLYGON_API_KEY in localStorage.');
+                            failedCount++;
+                            continue;
+                        }
                         
-                        if (symbol && priceStr && symbolPrices.has(symbol)) {
-                            const price = parseFloat(priceStr);
+                        // Try Polygon.io API (requires API key but has CORS support)
+                        const polygonResponse = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apikey=${apiKey}`);
+                        if (polygonResponse.ok) {
+                            const polygonData = await polygonResponse.json();
+                            const price = polygonData.results?.[0]?.c;
+                            
                             if (price && price > 0) {
-                                const symbolData = symbolPrices.get(symbol);
+                                const symbolData = symbolPrices.get(symbol) || { symbol, name: symbol, models: new Set() };
                                 symbolData.price = price;
-                                symbolData.name = name || symbol;
                                 symbolData.lastUpdated = new Date().toISOString();
                                 symbolPrices.set(symbol, symbolData);
                                 updatedCount++;
                             } else {
+                                console.warn(`No valid price data for ${symbol}`);
                                 failedCount++;
                             }
+                        } else {
+                            console.warn(`API request failed for ${symbol}: ${polygonResponse.status}`);
+                            failedCount++;
                         }
+                    } catch (error) {
+                        console.warn(`Failed to update ${symbol}:`, error);
+                        failedCount++;
                     }
                     
-                } catch (error) {
-                    console.error('Error fetching from Google Sheets:', error);
-                    showNotification(`Error loading from Google Sheets: ${error.message}`, 'error');
-                    updateBtn.disabled = false;
-                    updateBtn.innerHTML = originalText;
-                    return;
+                    // Add small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
                 renderPriceTable();
