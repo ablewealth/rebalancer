@@ -474,11 +474,12 @@
                 let updatedCount = 0;
                 let failedCount = 0;
 
-                // Google Sheets CSV export URL - using specific sheet gid
+                // Google Sheets CSV export URL - using public published link
+                const publicSheetId = '2PACX-1vTpwLl4nrpAU6Vhaf2WnsdmcvmnfVlRP9txZjZ0Z5KD6J7WJypD9XWFpgJs11oelIROj9hiXTlJDy_U';
                 const csvUrls = [
-                    `https://docs.google.com/spreadsheets/d/e/2PACX-1vTpwLl4nrpAU6Vhaf2WnsdmcvmnfVlRP9txZjZ0Z5KD6J7WJypD9XWFpgJs11oelIROj9hiXTlJDy_U/pub?gid=825068605&single=true&output=csv`,
-                    `https://docs.google.com/spreadsheets/d/e/2PACX-1vTpwLl4nrpAU6Vhaf2WnsdmcvmnfVlRP9txZjZ0Z5KD6J7WJypD9XWFpgJs11oelIROj9hiXTlJDy_U/pub?output=csv`,
-                    `https://docs.google.com/spreadsheets/d/e/2PACX-1vTpwLl4nrpAU6Vhaf2WnsdmcvmnfVlRP9txZjZ0Z5KD6J7WJypD9XWFpgJs11oelIROj9hiXTlJDy_U/export?format=csv`
+                    `https://docs.google.com/spreadsheets/d/e/${publicSheetId}/pub?output=csv`,
+                    `https://docs.google.com/spreadsheets/d/e/${publicSheetId}/pub?gid=0&single=true&output=csv`,
+                    `https://docs.google.com/spreadsheets/d/e/${publicSheetId}/export?format=csv`
                 ];
                 
                 let csvText = null;
