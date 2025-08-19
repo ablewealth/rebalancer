@@ -279,7 +279,7 @@
                     <div class="flex gap-2 items-center">
                         <input type="file" id="manualPriceFile" accept=".csv" 
                                class="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-blue-600 file:text-white file:text-xs hover:file:bg-blue-700">
-                        <a href="https://docs.google.com/spreadsheets/d/15Bt2qPPJjwN-SjVjjv2FGFFo35o2La3FF0zX4MpzAcU/edit?usp=sharing" 
+                        <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTpwLl4nrpAU6Vhaf2WnsdmcvmnfVlRP9txZjZ0Z5KD6J7WJypD9XWFpgJs11oelIROj9hiXTlJDy_U/pubhtml" 
                            target="_blank" class="text-xs text-blue-600 underline">Open Spreadsheet</a>
                     </div>
                     <p class="text-xs text-blue-600 mt-1">File → Download → CSV to get the data</p>
@@ -474,12 +474,12 @@
                 let updatedCount = 0;
                 let failedCount = 0;
 
-                // Google Sheets CSV export URL - try multiple formats
-                const sheetId = '15Bt2qPPJjwN-SjVjjv2FGFFo35o2La3FF0zX4MpzAcU';
+                // Google Sheets CSV export URL - using public published link
+                const publicSheetId = '2PACX-1vTpwLl4nrpAU6Vhaf2WnsdmcvmnfVlRP9txZjZ0Z5KD6J7WJypD9XWFpgJs11oelIROj9hiXTlJDy_U';
                 const csvUrls = [
-                    `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`,
-                    `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`,
-                    `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`
+                    `https://docs.google.com/spreadsheets/d/e/${publicSheetId}/pub?output=csv`,
+                    `https://docs.google.com/spreadsheets/d/e/${publicSheetId}/pub?gid=0&single=true&output=csv`,
+                    `https://docs.google.com/spreadsheets/d/e/${publicSheetId}/export?format=csv`
                 ];
                 
                 let csvText = null;
