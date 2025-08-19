@@ -498,7 +498,6 @@
                         if (response.ok) {
                             csvText = await response.text();
                             console.log(`Success with URL: ${csvUrl}`);
-                            console.log(`CSV data received (first 500 chars):`, csvText.substring(0, 500));
                             break;
                         } else {
                             lastError = `HTTP ${response.status}: ${response.statusText}`;
@@ -515,23 +514,19 @@
                 }
                 
                 const lines = csvText.split('\n');
-                console.log(`CSV lines count: ${lines.length}`);
                 if (lines.length < 2) {
                     throw new Error('Google Sheets returned empty or invalid CSV data');
                 }
                 
                 const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                console.log('CSV headers found:', headers);
                 
                 // Find column indices
                 const symbolIndex = headers.findIndex(h => h.toLowerCase().includes('symbol') || h.toLowerCase().includes('ticker'));
                 const priceIndex = headers.findIndex(h => h.toLowerCase().includes('price') || h.toLowerCase().includes('current'));
                 const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('description'));
                 
-                console.log(`Column indices - Symbol: ${symbolIndex}, Price: ${priceIndex}, Name: ${nameIndex}`);
-                
                 if (symbolIndex === -1 || priceIndex === -1) {
-                    throw new Error(`Could not find Symbol and Price columns. Headers: ${headers.join(', ')}`);
+                    throw new Error('Could not find Symbol and Price columns in Google Sheets');
                 }
                 
                 // Process data rows
@@ -560,8 +555,6 @@
                 }
 
                 renderPriceTable();
-                console.log(`Price update complete: ${updatedCount} updated, ${failedCount} failed`);
-                console.log('Available symbols in symbolPrices:', Array.from(symbolPrices.keys()).slice(0, 10));
                 showNotification(`Updated ${updatedCount} prices. ${failedCount} failed.`, 'success');
 
             } catch (error) {
