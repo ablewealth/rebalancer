@@ -409,60 +409,85 @@
                 let updatedCount = 0;
                 let failedCount = 0;
 
-                // Google Sheets CSV export URL (publicly accessible)
+                // Google Sheets CSV export URL - try multiple formats
                 const sheetId = '15Bt2qPPJjwN-SjVjjv2FGFFo35o2La3FF0zX4MpzAcU';
-                const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+                const csvUrls = [
+                    `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`,
+                    `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`,
+                    `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`
+                ];
                 
-                try {
-                    const response = await fetch(csvUrl);
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch Google Sheets data: ${response.status}`);
-                    }
-                    
-                    const csvText = await response.text();
-                    const lines = csvText.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                    
-                    // Find column indices
-                    const symbolIndex = headers.findIndex(h => h.toLowerCase().includes('symbol') || h.toLowerCase().includes('ticker'));
-                    const priceIndex = headers.findIndex(h => h.toLowerCase().includes('price') || h.toLowerCase().includes('current'));
-                    const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('description'));
-                    
-                    if (symbolIndex === -1 || priceIndex === -1) {
-                        throw new Error('Could not find Symbol and Price columns in Google Sheets');
-                    }
-                    
-                    // Process data rows
-                    for (let i = 1; i < lines.length; i++) {
-                        const line = lines[i].trim();
-                        if (!line) continue;
-                        
-                        const columns = line.split(',').map(c => c.trim().replace(/"/g, ''));
-                        const symbol = columns[symbolIndex];
-                        const priceStr = columns[priceIndex];
-                        const name = nameIndex >= 0 ? columns[nameIndex] : symbol;
-                        
-                        if (symbol && priceStr && symbolPrices.has(symbol)) {
-                            const price = parseFloat(priceStr);
-                            if (price && price > 0) {
-                                const symbolData = symbolPrices.get(symbol);
-                                symbolData.price = price;
-                                symbolData.name = name || symbol;
-                                symbolData.lastUpdated = new Date().toISOString();
-                                symbolPrices.set(symbol, symbolData);
-                                updatedCount++;
-                            } else {
-                                failedCount++;
+                let csvText = null;
+                let lastError = null;
+                
+                // Try each URL format until one works
+                for (const csvUrl of csvUrls) {
+                    try {
+                        console.log(`Trying URL: ${csvUrl}`);
+                        const response = await fetch(csvUrl, {
+                            mode: 'cors',
+                            headers: {
+                                'Accept': 'text/csv,application/csv,text/plain'
                             }
+                        });
+                        
+                        if (response.ok) {
+                            csvText = await response.text();
+                            console.log(`Success with URL: ${csvUrl}`);
+                            break;
+                        } else {
+                            lastError = `HTTP ${response.status}: ${response.statusText}`;
+                            console.warn(`Failed with ${csvUrl}: ${lastError}`);
+                        }
+                    } catch (error) {
+                        lastError = error.message;
+                        console.warn(`Error with ${csvUrl}:`, error);
+                    }
+                }
+                
+                if (!csvText) {
+                    throw new Error(`All Google Sheets URLs failed. Last error: ${lastError}`);
+                }
+                
+                const lines = csvText.split('\n');
+                if (lines.length < 2) {
+                    throw new Error('Google Sheets returned empty or invalid CSV data');
+                }
+                
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                
+                // Find column indices
+                const symbolIndex = headers.findIndex(h => h.toLowerCase().includes('symbol') || h.toLowerCase().includes('ticker'));
+                const priceIndex = headers.findIndex(h => h.toLowerCase().includes('price') || h.toLowerCase().includes('current'));
+                const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('description'));
+                
+                if (symbolIndex === -1 || priceIndex === -1) {
+                    throw new Error('Could not find Symbol and Price columns in Google Sheets');
+                }
+                
+                // Process data rows
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const columns = line.split(',').map(c => c.trim().replace(/"/g, ''));
+                    const symbol = columns[symbolIndex];
+                    const priceStr = columns[priceIndex];
+                    const name = nameIndex >= 0 ? columns[nameIndex] : symbol;
+                    
+                    if (symbol && priceStr && symbolPrices.has(symbol)) {
+                        const price = parseFloat(priceStr);
+                        if (price && price > 0) {
+                            const symbolData = symbolPrices.get(symbol);
+                            symbolData.price = price;
+                            symbolData.name = name || symbol;
+                            symbolData.lastUpdated = new Date().toISOString();
+                            symbolPrices.set(symbol, symbolData);
+                            updatedCount++;
+                        } else {
+                            failedCount++;
                         }
                     }
-                    
-                } catch (error) {
-                    console.error('Error fetching from Google Sheets:', error);
-                    showNotification(`Error loading from Google Sheets: ${error.message}`, 'error');
-                    updateBtn.disabled = false;
-                    updateBtn.innerHTML = originalText;
-                    return;
                 }
 
                 renderPriceTable();
