@@ -190,7 +190,135 @@ The core algorithm uses sophisticated optimization techniques:
 - **React Optimization**: Memoized components and efficient re-renders
 - **Responsive Design**: Works on desktop, tablet, and mobile
 
-## 🛠️ Development
+## � Deployment
+
+### Netlify Deployment (Frontend)
+
+The Enhanced Tax Harvesting Service supports multiple Netlify deployment formats:
+
+#### Quick Deploy (Drag & Drop)
+```bash
+# Build and deploy interactively
+npm run build:netlify
+npm run deploy:netlify
+```
+
+#### Automatic Git Integration
+1. **Connect Repository**: Link your GitHub repo to Netlify
+2. **Build Settings**:
+   - **Base directory**: `frontend`
+   - **Build command**: `npm run build`
+   - **Publish directory**: `frontend/build`
+3. **Environment Variables**:
+   ```bash
+   REACT_APP_API_URL=https://your-neon-backend.com
+   REACT_APP_NEON_PROJECT_ID=your-neon-project-id
+   REACT_APP_ENABLE_NEON_FEATURES=true
+   ```
+
+#### Legacy Static Deployment
+```bash
+# Deploy static HTML/JS version
+npm run build:static
+# Drag 'dist' folder to netlify.com/drop
+```
+
+### Backend Deployment (Neon + Railway/Render)
+
+#### Railway Deployment
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Deploy backend
+cd backend
+railway login
+railway new
+railway add postgresql  # Or use existing Neon database
+railway deploy
+```
+
+#### Environment Configuration
+```bash
+# Required for backend
+DATABASE_URL=postgresql://username:password@hostname/database?sslmode=require
+NEON_PROJECT_ID=your-neon-project-id
+NEON_API_KEY=your-neon-api-key
+PORT=8742
+```
+
+### Docker Deployment
+
+#### Frontend Container
+```dockerfile
+FROM node:18-alpine as build
+WORKDIR /app
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+COPY netlify.toml /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+#### Backend Container
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY backend/package*.json ./
+RUN npm ci --only=production
+COPY backend/ .
+EXPOSE 8742
+CMD ["npm", "start"]
+```
+
+### Full Stack Deployment
+
+#### Option 1: Netlify + Railway
+- **Frontend**: Netlify (React SPA)
+- **Backend**: Railway (Node.js + Neon DB)
+- **Database**: Neon PostgreSQL
+
+#### Option 2: Vercel + Render
+- **Frontend**: Vercel
+- **Backend**: Render
+- **Database**: Neon PostgreSQL
+
+#### Option 3: AWS/Azure/GCP
+- **Frontend**: S3/CloudFront or equivalent
+- **Backend**: ECS/Container Apps or equivalent  
+- **Database**: Neon PostgreSQL
+
+### Deployment Scripts
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `npm run build` | Interactive build | Development |
+| `npm run build:react` | React frontend only | CI/CD |
+| `npm run build:static` | Static distribution | Legacy support |
+| `npm run build:netlify` | Both formats | Manual deployment |
+| `npm run deploy:netlify` | Interactive deploy | Quick deployment |
+| `npm run clean` | Clean builds | Development |
+
+### Post-Deployment Checklist
+
+- [ ] Frontend loads correctly
+- [ ] API connectivity working
+- [ ] Environment variables configured
+- [ ] SSL certificates active
+- [ ] Custom domain configured (optional)
+- [ ] Monitoring and analytics set up
+- [ ] Error tracking configured
+- [ ] Performance optimized
+
+For detailed deployment instructions, see:
+- **Netlify**: `docs/NETLIFY_DEPLOYMENT_GUIDE.md`
+- **Neon Database**: `docs/NEON_DEPLOYMENT_GUIDE.md`
+
+## �🛠️ Development
 
 ### Backend Development
 ```bash
