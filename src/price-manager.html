@@ -237,7 +237,7 @@
                         </svg>
                         Scan All Models
                     </button>
-                    <p class="text-xs text-gray-500">Automatically discover all symbols from model portfolios</p>
+                    <p class="text-xs text-gray-500">Automatically discover all CSV files from data/models folder</p>
                     
                     <!-- Custom Model Files -->
                     <div class="mt-4 pt-3 border-t border-gray-200">
@@ -253,6 +253,16 @@
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
                 <h2 class="text-xl font-semibold mb-4 border-b pb-3">Import/Export</h2>
                 <div class="space-y-3">
+                    <button id="updateFromSheetsBtn"
+                        class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Update from Google Sheets
+                    </button>
                     <input type="file" id="priceFile" accept=".csv"
                         class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     <button id="exportPricesBtn"
@@ -272,16 +282,6 @@
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
                 <h2 class="text-xl font-semibold mb-4 border-b pb-3">Update Actions</h2>
                 <div class="space-y-3">
-                    <button id="updatePricesBtn"
-                        class="w-full bg-orange-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-700 transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
-                            fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        Update Prices from Market
-                    </button>
                     <button id="saveChangesBtn"
                         class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-all duration-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
@@ -355,9 +355,48 @@
         </div> <!-- End content-area -->
     </div>
 
+    <!-- Google Sheets URL Modal -->
+    <div id="googleSheetsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Import from Google Sheets</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <p class="text-sm text-gray-600 mb-4">
+                        Enter the CSV export URL of your Google Sheets. To get this URL:
+                        <br>1. Open your Google Sheets document
+                        <br>2. Go to File → Download → Comma Separated Values (.csv)
+                        <br>3. Or use: https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv&gid=0
+                    </p>
+                    <label for="googleSheetsUrl" class="block text-sm font-medium text-gray-700 mb-2">
+                        Google Sheets CSV URL:
+                    </label>
+                    <textarea id="googleSheetsUrl" rows="3" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="https://docs.google.com/spreadsheets/d/your-sheet-id/export?format=csv&gid=0">https://docs.google.com/spreadsheets/d/e/2PACX-1vTpwLl4nrpAU6Vhaf2WnsdmcvmnfVlRP9txZjZ0Z5KD6J7WJypD9XWFpgJs11oelIROj9hiXTlJDy_U/pub?gid=825068605&single=true&output=csv</textarea>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Your CSV should have columns for Symbol/Ticker and Price/Value. Name/Description is optional.
+                    </p>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button id="cancelGoogleSheets" 
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                        Cancel
+                    </button>
+                    <button id="importGoogleSheets" 
+                        class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        Import Prices
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- DOM Elements ---
         const scanModelsBtn = document.getElementById('scanModelsBtn');
+        const updateFromSheetsBtn = document.getElementById('updateFromSheetsBtn');
         const priceFile = document.getElementById('priceFile');
         const exportPricesBtn = document.getElementById('exportPricesBtn');
         const saveChangesBtn = document.getElementById('saveChangesBtn');
@@ -366,6 +405,12 @@
         const emptyState = document.getElementById('emptyState');
         const symbolCount = document.getElementById('symbolCount');
         const searchInput = document.getElementById('searchInput');
+        
+        // Google Sheets Modal Elements
+        const googleSheetsModal = document.getElementById('googleSheetsModal');
+        const googleSheetsUrl = document.getElementById('googleSheetsUrl');
+        const cancelGoogleSheets = document.getElementById('cancelGoogleSheets');
+        const importGoogleSheets = document.getElementById('importGoogleSheets');
 
         let symbolPrices = new Map();
         let originalPrices = new Map();
@@ -373,28 +418,58 @@
 
         // --- Event Listeners ---
         scanModelsBtn.addEventListener('click', scanAllModels);
+        updateFromSheetsBtn.addEventListener('click', showGoogleSheetsModal);
         priceFile.addEventListener('change', handlePriceFileUpload);
         exportPricesBtn.addEventListener('click', exportPricesCSV);
-        document.getElementById('updatePricesBtn').addEventListener('click', updatePricesFromMarket);
         saveChangesBtn.addEventListener('click', saveChanges);
         updateModelsBtn.addEventListener('click', updateAllModels);
         searchInput.addEventListener('input', filterSymbols);
         priceTable.addEventListener('input', handlePriceEdit);
+        
+        // Google Sheets Modal Event Listeners
+        cancelGoogleSheets.addEventListener('click', hideGoogleSheetsModal);
+        importGoogleSheets.addEventListener('click', updateFromGoogleSheets);
+        
+        // Close modal when clicking outside
+        googleSheetsModal.addEventListener('click', (e) => {
+            if (e.target === googleSheetsModal) {
+                hideGoogleSheetsModal();
+            }
+        });
 
         // --- Functions ---
-        async function updatePricesFromMarket() {
-            showNotification('Price update feature requires manual CSV upload. Use the file upload option above.', 'info');
-        }
-
         async function scanAllModels() {
-            // Complete list of all known model portfolio files - must match EXACT filenames in directory
-            const modelFiles = [
-                'data/models/AWM Model - All Equity.csv',
-                'data/models/AWM Model - Fixed_D.csv',
-                'data/models/AWM Model - Fixed_T csv.csv',
-                'data/models/AWM_Model_Tactical_Equity.csv',
-                'data/models/AWM_Model___All_Equity.csv'
-            ];
+            // Dynamically load model file list from models.json
+            let modelFiles = [];
+            
+            try {
+                console.log('Loading models list from models.json...');
+                const modelsResponse = await fetch('./data/models/models.json');
+                if (modelsResponse.ok) {
+                    modelFiles = await modelsResponse.json();
+                    console.log('Loaded model files from JSON:', modelFiles);
+                } else {
+                    console.warn('Could not load models.json, falling back to default list');
+                    // Fallback to a basic list if models.json is not available
+                    modelFiles = [
+                        'AWM Model - All Equity.csv',
+                        'AWM Model - Fixed_D.csv',
+                        'AWM Model - Fixed_T csv.csv',
+                        'AWM_Model_Tactical_Equity.csv',
+                        'AWM_Model___All_Equity.csv'
+                    ];
+                }
+            } catch (error) {
+                console.error('Error loading models.json:', error);
+                // Fallback to default list
+                modelFiles = [
+                    'AWM Model - All Equity.csv',
+                    'AWM Model - Fixed_D.csv',
+                    'AWM Model - Fixed_T csv.csv',
+                    'AWM_Model_Tactical_Equity.csv',
+                    'AWM_Model___All_Equity.csv'
+                ];
+            }
 
             // Add any custom models specified by the user
             const customModelsInput = document.getElementById('customModels');
@@ -408,7 +483,7 @@
             symbolPrices.clear();
             modelPortfolios = {};
 
-            showNotification('Scanning model portfolios...', 'info');
+            showNotification(`Scanning ${modelFiles.length} model portfolios...`, 'info');
 
             let foundModels = [];
             let notFoundModels = [];
@@ -416,8 +491,8 @@
             try {
                 for (const filename of modelFiles) {
                     try {
-                        console.log(`Attempting to load model: ../data/models/${filename}`);
-                        const response = await fetch(`../data/models/${filename}`);
+                        console.log(`Attempting to load model: ./data/models/${filename}`);
+                        const response = await fetch(`./data/models/${filename}`);
                         
                         if (response.ok) {
                             const csvText = await response.text();
@@ -701,6 +776,142 @@
                 }
             };
             reader.readAsText(file);
+        }
+
+        async function updateFromGoogleSheets() {
+            // Get the URL from the modal input
+            const url = googleSheetsUrl.value.trim();
+            
+            if (!url) {
+                showNotification('Please enter a valid Google Sheets URL', 'error');
+                return;
+            }
+
+            // Hide the modal
+            hideGoogleSheetsModal();
+
+            try {
+                showNotification('Fetching data from Google Sheets...', 'info');
+                
+                // Fetch the CSV data from the URL
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                const lines = csvText.trim().split('\n');
+
+                if (lines.length < 2) {
+                    throw new Error('CSV file is empty or invalid');
+                }
+
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+                console.log('CSV Headers:', headers);
+                
+                // Find the relevant columns (flexible header matching)
+                const symbolIndex = headers.findIndex(h => 
+                    h.includes('symbol') || h.includes('ticker') || h.includes('code')
+                );
+                const nameIndex = headers.findIndex(h => 
+                    h.includes('name') || h.includes('description') || h.includes('company')
+                );
+                const priceIndex = headers.findIndex(h => 
+                    h.includes('price') || h.includes('value') || h.includes('close') || h.includes('last')
+                );
+
+                console.log('Column indices:', { symbolIndex, nameIndex, priceIndex });
+
+                if (symbolIndex === -1) {
+                    throw new Error('CSV must contain a Symbol/Ticker column');
+                }
+                
+                if (priceIndex === -1) {
+                    throw new Error('CSV must contain a Price/Value column');
+                }
+
+                let updatedCount = 0;
+                let addedCount = 0;
+                const errors = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    try {
+                        // Parse CSV line (handle quoted values)
+                        const values = [];
+                        let currentValue = '';
+                        let inQuotes = false;
+                        
+                        for (let j = 0; j < lines[i].length; j++) {
+                            const char = lines[i][j];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                values.push(currentValue.trim());
+                                currentValue = '';
+                            } else {
+                                currentValue += char;
+                            }
+                        }
+                        values.push(currentValue.trim()); // Add the last value
+                        
+                        const symbol = values[symbolIndex]?.replace(/"/g, '').trim().toUpperCase();
+                        const name = nameIndex >= 0 ? values[nameIndex]?.replace(/"/g, '').trim() : '';
+                        const priceStr = values[priceIndex]?.replace(/[",\s$]/g, '');
+                        const price = parseFloat(priceStr);
+
+                        if (!symbol || isNaN(price) || price <= 0) {
+                            continue; // Skip invalid rows
+                        }
+
+                        if (symbolPrices.has(symbol)) {
+                            // Update existing symbol
+                            const symbolData = symbolPrices.get(symbol);
+                            symbolData.price = price;
+                            if (name) symbolData.name = name;
+                            symbolData.lastUpdated = new Date().toISOString();
+                            updatedCount++;
+                        } else {
+                            // Add new symbol
+                            symbolPrices.set(symbol, {
+                                symbol: symbol,
+                                name: name || symbol,
+                                price: price,
+                                models: new Set(),
+                                lastUpdated: new Date().toISOString()
+                            });
+                            addedCount++;
+                        }
+                    } catch (error) {
+                        errors.push(`Row ${i + 1}: ${error.message}`);
+                    }
+                }
+
+                renderPriceTable();
+                
+                let message = '';
+                if (updatedCount > 0) message += `Updated ${updatedCount} existing symbols. `;
+                if (addedCount > 0) message += `Added ${addedCount} new symbols. `;
+                if (errors.length > 0) {
+                    message += `${errors.length} rows had errors.`;
+                    console.warn('CSV parsing errors:', errors);
+                }
+                
+                showNotification(message || 'No symbols were updated.', updatedCount > 0 || addedCount > 0 ? 'success' : 'warning');
+                
+            } catch (error) {
+                console.error('Error fetching Google Sheets data:', error);
+                showNotification(`Error fetching data: ${error.message}`, 'error');
+            }
+        }
+
+        function showGoogleSheetsModal() {
+            googleSheetsModal.classList.remove('hidden');
+            googleSheetsUrl.focus();
+        }
+
+        function hideGoogleSheetsModal() {
+            googleSheetsModal.classList.add('hidden');
         }
 
         function exportPricesCSV() {

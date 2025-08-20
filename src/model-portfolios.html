@@ -450,17 +450,37 @@
 
         // Function to dynamically discover and load all CSV files from data/models/ directory
         async function loadModelPortfolios() {
-            // Try to get list of files dynamically, but since we can't list directory contents via fetch,
-            // we'll try common filenames and also provide a way to add more
-            const modelFiles = [
-                'data/models/AWM Model - All Equity.csv',
-                'data/models/AWM Model - Fixed_D.csv',  
-                'data/models/AWM Model - Fixed_T csv.csv',
-                'data/models/AWM_Model_Tactical_Equity.csv',
-                'data/models/AWM_Model___All_Equity.csv'
-            ];
+            // Dynamically load model file list from models.json
+            let modelFiles = [];
+            
+            try {
+                console.log('Loading models list from models.json...');
+                const modelsResponse = await fetch('./data/models/models.json');
+                if (modelsResponse.ok) {
+                    modelFiles = await modelsResponse.json();
+                    console.log('Loaded model files from JSON:', modelFiles);
+                } else {
+                    console.warn('Could not load models.json, falling back to default list');
+                    // Fallback to a basic list if models.json is not available
+                    modelFiles = [
+                        'AWM Model - All Equity.csv',
+                        'AWM Model - Fixed_D.csv',  
+                        'AWM Model - Fixed_T csv.csv',
+                        'AWM_Model_Tactical_Equity.csv'
+                    ];
+                }
+            } catch (error) {
+                console.error('Error loading models.json:', error);
+                // Fallback to default list
+                modelFiles = [
+                    'AWM Model - All Equity.csv',
+                    'AWM Model - Fixed_D.csv',  
+                    'AWM Model - Fixed_T csv.csv',
+                    'AWM_Model_Tactical_Equity.csv'
+                ];
+            }
 
-            console.log('Starting to load model portfolios...');
+            console.log(`Starting to load ${modelFiles.length} model portfolios...`);
 
             for (const filename of modelFiles) {
                 try {
