@@ -101,6 +101,19 @@ const testConnection = async () => {
     return true;
   } catch (error) {
     console.error('❌ Database connection test failed:', error.message);
+    
+    // Provide helpful guidance based on the error
+    if (error.code === 'ECONNREFUSED') {
+      console.error('💡 Suggestion: Database connection refused. This usually means:');
+      if (!process.env.DATABASE_URL) {
+        console.error('   • No DATABASE_URL configured for Neon');
+        console.error('   • No local PostgreSQL running');
+        console.error('   📚 See NEON_SETUP_GUIDE.md for configuration help');
+      } else {
+        console.error('   • Check your DATABASE_URL is correct');
+        console.error('   • Verify your Neon database is active');
+      }
+    }
     return false;
   }
 };
