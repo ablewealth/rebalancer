@@ -1,24 +1,32 @@
 # Tax Harvesting & Portfolio Rebalancer
 
-A sophisticated full-stack application for tax-loss harvesting, portfolio rebalancing, and cash raising optimization.
+A sophisticated full-stack application for tax-loss harvesting, portfolio rebalancing, and cash raising optimization with **Enhanced Tax Harvesting Service v2.0.0** and **Neon Database Integration**.
 
 ## 🚀 Features
 
-### Tax Harvesting
+### Enhanced Tax Harvesting Service v2.0.0
+- **Target-Based Optimization**: Advanced algorithm with precision matching and dynamic adjustment
 - **Tax Target Mode**: Generate trades to meet specific short-term and long-term gain/loss targets
 - **Cash Raising Mode**: Generate tax-optimized trades to raise a specific amount of cash
-- **Advanced Algorithm**: Sophisticated optimization with precision targeting and tax efficiency
-- **Wash Sale Detection**: Built-in compliance checking for IRS regulations
+- **Wash Sale Detection**: Built-in compliance checking with ETF alternatives database
+- **Real-time Analytics**: Portfolio performance tracking and tax optimization insights
 
 ### Portfolio Management
 - **Interactive Portfolio Grid**: Upload CSV files and manage positions
 - **Model Portfolios**: Create, edit, and manage reusable portfolio templates
 - **Buy Order Generation**: Convert cash to portfolio allocations based on model portfolios
 - **Price Management**: Centralized pricing system across all models
+- **Advanced Analytics**: Real-time performance metrics and tax efficiency analysis
+
+### Enterprise Database Integration
+- **Neon PostgreSQL**: Serverless database with automatic scaling and branching
+- **Real-time Data**: Live portfolio analytics and calculation storage
+- **CI/CD Integration**: Automated database branching for testing and deployment
+- **Performance Monitoring**: Built-in health checks and performance metrics
 
 ### Modern Architecture
 - **React Frontend**: Modern TypeScript SPA with Tailwind CSS
-- **Node.js Backend**: Express.js API with PostgreSQL database
+- **Node.js Backend**: Express.js API with Neon PostgreSQL integration
 - **Real-time Calculations**: Instant tax harvesting recommendations
 - **Professional UI/UX**: Responsive design with comprehensive error handling
 
@@ -42,16 +50,37 @@ A sophisticated full-stack application for tax-loss harvesting, portfolio rebala
 
 ### Prerequisites
 - Node.js 16+
-- PostgreSQL 12+ (optional - works with mock data)
+- Neon PostgreSQL account (recommended) or PostgreSQL 12+ (optional - works with mock data)
+
+### Option 1: Neon Database Setup (Recommended)
+
+1. **Create Neon Account**: Sign up at [neon.tech](https://neon.tech)
+2. **Create Project**: Get your connection string from Neon dashboard
+3. **Configure Environment**:
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Edit .env with your Neon credentials:
+   # DATABASE_URL=postgresql://username:password@hostname/database?sslmode=require
+   # NEON_PROJECT_ID=your-project-id
+   # NEON_API_KEY=your-api-key
+   ```
 
 ### Backend Setup
 ```bash
 cd backend
 npm install
-npm run dev
+
+# With Neon Database
+npm run db:migrate    # Run database migrations
+npm run db:seed       # Add sample data (optional)
+npm start            # Start server on port 8742
+
+# Without Database (Mock Data)
+npm run dev          # Works with mock data on port 3000
 ```
 
-The backend will start on `http://localhost:3000` with mock data.
+The backend will start with either Neon database integration or mock data.
 
 ### Frontend Setup
 ```bash
@@ -62,7 +91,7 @@ npm start
 
 The frontend will start on `http://localhost:3001`.
 
-### Full Database Setup (Optional)
+### Option 2: Local PostgreSQL Setup (Alternative)
 ```bash
 # Create database
 createdb tax_harvesting
@@ -74,6 +103,14 @@ psql tax_harvesting < backend/database/schema.sql
 cp backend/.env.example backend/.env
 # Edit .env with your database credentials
 ```
+
+### Neon Integration Features
+
+Access advanced database features at `/api/neon`:
+- **Portfolio Analytics**: Real-time performance tracking
+- **Tax Calculations**: Historical calculation storage and analysis  
+- **Wash Sale Detection**: Automated compliance checking with ETF alternatives
+- **Health Monitoring**: Database performance and connection status
 
 ## 📊 Usage
 

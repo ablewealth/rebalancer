@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wash Sale Avoidance Database & Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            min-width: 1800px; /* Force horizontal scroll on smaller screens */
+        }
+        th, td {
+            white-space: nowrap;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+        }
+        .new-row {
+            background-color: #FEFCE8; /* yellow-50 */
+        }
+        .new-row:hover {
+            background-color: #FEF9C3; /* yellow-100 */
+        }
+        /* Modal styles */
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-container {
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Upload Section -->
+        <div class="bg-white rounded-2xl shadow-lg mb-8 p-6">
+            <h2 class="text-xl font-bold text-gray-900">Upload Client's Realized Gains</h2>
+            <p class="mt-2 text-sm text-gray-600">Upload a CSV file with realized gains/losses. The tool will find all sales at a loss and populate them in the table below. New securities not in the database will be added and highlighted.</p>
+            <div class="mt-4 flex flex-wrap items-center gap-4">
+                <input type="file" id="csv-file-input" accept=".csv" class="block w-full max-w-xs text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"/>
+                <button id="process-csv-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Process File</button>
+                <button id="clear-data-btn" class="px-4 py-2 bg-gray-300 text-gray-800 text-sm font-semibold rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">Clear Uploaded Data</button>
+                <button id="research-guide-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Research Guide</button>
+            </div>
+            <div id="upload-status" class="mt-3 text-sm text-gray-500"></div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-900">Wash Sale Avoidance Database & Tracker</h1>
+                <p class="mt-2 text-sm text-gray-600">Enter a sale date for a primary fund to automatically calculate the 61-day wash sale window. This helps you identify safe periods to purchase substitute funds.</p>
+            </div>
+
+            <!-- Table Container for Horizontal Scrolling -->
+            <div class="table-container">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-4 py-3">Model</th>
+                            <th scope="col" class="px-4 py-3">Primary Symbol</th>
+                            <th scope="col" class="px-4 py-3">Primary Name</th>
+                            <th scope="col" class="px-4 py-3 bg-sky-50" style="min-width: 150px;">Sale Date</th>
+                            <th scope="col" class="px-4 py-3 bg-sky-50" style="min-width: 120px;">Sale Price</th>
+                            <th scope="col" class="px-4 py-3 bg-green-50">Window Start</th>
+                            <th scope="col" class="px-4 py-3 bg-red-50">Window End</th>
+                            <th scope="col" class="px-4 py-3">Sub Symbol 1</th>
+                            <th scope="col" class="px-4 py-3">Sub Name 1</th>
+                            <th scope="col" class="px-4 py-3">Risk Level 1</th>
+                            <th scope="col" class="px-4 py-3">Rationale 1</th>
+                            <th scope="col" class="px-4 py-3">Sub Symbol 2</th>
+                            <th scope="col" class="px-4 py-3">Sub Name 2</th>
+                            <th scope="col" class="px-4 py-3">Risk Level 2</th>
+                            <th scope="col" class="px-4 py-3">Rationale 2</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fund-table-body">
+                        <!-- Data rows will be injected here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer class="text-center mt-8 text-xs text-gray-500">
+            <p>Disclaimer: This tool is for informational purposes only and does not constitute financial or tax advice. Consult with a qualified professional before making any investment decisions.</p>
+        </footer>
+    </div>
+
+    <!-- Research Guide Modal -->
+    <div id="research-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div id="modal-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-60 modal-overlay"></div>
+        <div id="modal-container" class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto transform scale-95 modal-container">
+            <div class="sticky top-0 bg-white p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-900">Guide to Finding Compliant Substitutes</h2>
+                <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div class="p-8 space-y-6">
+                <div>
+                    <h3 class="font-bold text-lg text-gray-800">The Goal: Avoid "Substantially Identical" Securities</h3>
+                    <p class="mt-2 text-gray-600">The IRS wash sale rule prevents you from claiming a tax loss if you buy a "substantially identical" security within 30 days before or after the sale. The key is to choose a substitute fund that provides similar market exposure but is different enough to be compliant. The safest way is to ensure your economic position has genuinely changed.</p>
+                </div>
+                <div class="p-4 bg-blue-50 rounded-lg">
+                    <h3 class="font-bold text-lg text-blue-800">Your 3-Step Research Process</h3>
+                    <ol class="mt-2 list-decimal list-inside space-y-3 text-gray-700">
+                        <li>
+                            <strong class="text-gray-900">Identify the Primary Fund's Category.</strong> What is its core purpose? (e.g., U.S. Large-Cap Growth, International Value, Semiconductor Sector).
+                        </li>
+                        <li>
+                            <strong class="text-gray-900">Find Potential Substitutes in the Same Category.</strong> Use a fund screener (like those on Yahoo Finance, Morningstar, or your brokerage platform) to find other ETFs in that category.
+                        </li>
+                        <li>
+                            <strong class="text-gray-900">Analyze Using the "Low Risk" Criteria Below.</strong> The best substitutes will meet one or both of these primary criteria.
+                        </li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-gray-800">Primary Criteria for a "Low Risk" Substitute</h3>
+                    <div class="mt-4 space-y-4">
+                        <div class="p-4 border border-green-200 bg-green-50 rounded-lg">
+                            <h4 class="font-semibold text-green-800">Criterion #1: Different Benchmark Index (Most Important)</h4>
+                            <p class="mt-1 text-gray-600">This is the strongest defense. Selling a fund that tracks an S&P index and buying one that tracks a Russell, MSCI, Dow Jones, or CRSP index is a clear, defensible change.</p>
+                            <p class="mt-2 text-sm"><strong>Example:</strong> Selling an S&P 500 Growth fund (like SPYG) and buying a CRSP US Large Cap Growth fund (like VUG).</p>
+                        </div>
+                        <div class="p-4 border border-green-200 bg-green-50 rounded-lg">
+                            <h4 class="font-semibold text-green-800">Criterion #2: Different Investment Strategy</h4>
+                            <p class="mt-1 text-gray-600">Look for fundamental differences in how the portfolio is built.</p>
+                            <ul class="mt-2 list-disc list-inside space-y-1 text-sm text-gray-600">
+                                <li><strong>Active vs. Passive:</strong> Swap an actively managed fund for a passive index ETF, or vice-versa.</li>
+                                <li><strong>Weighting Methodology:</strong> Swap a market-cap weighted fund for an equal-weighted or fundamentally-weighted fund.</li>
+                                <li><strong>Factor Exposure:</strong> Swap a pure "momentum" fund for a multi-factor "value and momentum" fund.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h3 class="font-bold text-lg text-red-800">High-Risk Scenario to Avoid</h3>
+                    <p class="mt-2 text-gray-600"><strong>Do not</strong> sell an ETF and buy another ETF from a different company that tracks the <strong>exact same index</strong> (e.g., selling SPY and buying VOO, both of which track the S&P 500). The IRS would likely consider these substantially identical.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalFundData = [
+            { model: 'AWM Model - All Equity', primarySymbol: 'EFV', primaryName: 'iShares MSCI EAFE Value ETF', subSymbol1: 'FNDF', subName1: 'Schwab Fundamental Intl Large Co. Index ETF', risk1: 'Low', rationale1: 'Different Benchmark (Russell RAFI); Fundamental Weighting', subSymbol2: 'DFIV', subName2: 'Dimensional International Value ETF', risk2: 'Low', rationale2: 'Active Management vs. Passive Indexing' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'SPYG', primaryName: 'SPDR® Portfolio S&P 500 Growth ETF', subSymbol1: 'VUG', subName1: 'Vanguard Growth ETF', risk1: 'Low', rationale1: 'Different Benchmark (CRSP US Large Cap Growth)', subSymbol2: 'SCHG', subName2: 'Schwab U.S. Large-Cap Growth ETF™', risk2: 'Low', rationale2: 'Different Benchmark (Dow Jones U.S. Large-Cap Growth)' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'DYNF', primaryName: 'iShares U.S. Equity Fac Rotation Act ETF', subSymbol1: 'FCTR', subName1: 'First Trust Lunt U.S. Factor Rotation ETF', risk1: 'Low', rationale1: 'Different Active Strategy; Different Factor Inputs & Methodology', subSymbol2: 'ULVM', subName2: 'VictoryShares US Value Momentum ETF', risk2: 'Low', rationale2: 'Different Active Strategy; Focus on Value & Momentum Only' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'SPMO', primaryName: 'Invesco S&P 500® Momentum ETF', subSymbol1: 'MTUM', subName1: 'iShares MSCI USA Momentum Factor ETF', risk1: 'Low', rationale1: 'Different Benchmark (MSCI USA Momentum)', subSymbol2: 'ULVM', subName2: 'VictoryShares US Value Momentum ETF', risk2: 'Low', rationale2: 'Different Benchmark & Strategy (Multi-factor: Value & Momentum)' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'AUSF', primaryName: 'Global X Adaptive US Factor ETF', subSymbol1: 'JPUS', subName1: 'JPMorgan Diversified Return U.S. Equity ETF', risk1: 'Low', rationale1: 'Different Benchmark & Multi-Factor Methodology', subSymbol2: 'FCTR', subName2: 'First Trust Lunt U.S. Factor Rotation ETF', risk2: 'Low', rationale2: 'Different Benchmark & Factor Rotation Methodology' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'PVAL', primaryName: 'Putnam Focused Large Cap Value ETF', subSymbol1: 'SCHV', subName1: 'Schwab U.S. Large-Cap Value ETF™', risk1: 'Low', rationale1: 'Passive Indexing vs. Active Management', subSymbol2: 'VTV', subName2: 'Vanguard Value ETF', risk2: 'Low', rationale2: 'Passive Indexing vs. Active Management' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'DBEF', primaryName: 'Xtrackers MSCI EAFE Hedged Equity ETF', subSymbol1: 'DBAW', subName1: 'Xtrackers MSCI All World ex US Hedged Equity ETF', risk1: 'Low', rationale1: 'Different Benchmark (MSCI ACWI ex USA vs. EAFE)', subSymbol2: '', subName2: '', risk2: '', rationale2: '' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'EDIV', primaryName: 'SPDR® S&P Emerging Markets Dividend ETF', subSymbol1: 'DEM', subName1: 'WisdomTree Emerging Markets High Dividend Fund', risk1: 'Low', rationale1: 'Different Benchmark & Fundamental Weighting', subSymbol2: 'DVYE', subName2: 'iShares Emerging Markets Dividend ETF', risk2: 'Low', rationale2: 'Different Benchmark & Dividend Weighting' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'IDMO', primaryName: 'Invesco S&P International Dev Momt ETF', subSymbol1: 'IMTM', subName1: 'iShares MSCI Intl Momentum Factor ETF', risk1: 'Low', rationale1: 'Different Benchmark (MSCI World ex USA Momentum)', subSymbol2: 'PIZ', subName2: 'Invesco Dorsey Wright Dev Markets Momentum ETF', risk2: 'Low', rationale2: 'Different Benchmark & Relative Strength Strategy' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'SMH', primaryName: 'VanEck Semiconductor ETF', subSymbol1: 'SOXX', subName1: 'iShares Semiconductor ETF', risk1: 'Low', rationale1: 'Different Benchmark (ICE Semiconductor Index)', subSymbol2: 'XSD', subName2: 'SPDR® S&P Semiconductor ETF', risk2: 'Low', rationale2: 'Different Benchmark & Equal-Weighting Strategy' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'JQUA', primaryName: 'JPMorgan US Quality Factor ETF', subSymbol1: 'QUAL', subName1: 'iShares MSCI USA Quality Factor ETF', risk1: 'Low', rationale1: 'Different Benchmark (MSCI USA Quality)', subSymbol2: 'SPHQ', subName2: 'Invesco S&P 500® Quality ETF', risk2: 'Low', rationale2: 'Different Benchmark (S&P 500 Quality)' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'MOAT', primaryName: 'VanEck Morningstar Wide Moat ETF', subSymbol1: 'QUAL', subName1: 'iShares MSCI USA Quality Factor ETF', risk1: 'Low', rationale1: 'Different Benchmark & Strategy (Quality vs. Moat)', subSymbol2: 'SPHQ', subName2: 'Invesco S&P 500® Quality ETF', risk2: 'Low', rationale2: 'Different Benchmark & Strategy (Quality vs. Moat)' },
+            { model: 'AWM Model - All Equity', primarySymbol: 'EQWL', primaryName: 'Invesco S&P 100 Equal Weight ETF', subSymbol1: 'RSP', subName1: 'Invesco S&P 500® Equal Weight ETF', risk1: 'Low', rationale1: 'Different Benchmark (S&P 500 vs. S&P 100)', subSymbol2: 'SPLG', subName2: 'SPDR® Portfolio S&P 500 ETF', risk2: 'Low', rationale2: 'Different Benchmark & Weighting (Equal vs. Market-Cap)' }
+        ];
+
+        let currentFundData = [...originalFundData];
+        const tableBody = document.getElementById('fund-table-body');
+
+        function populateTable(data) {
+            tableBody.innerHTML = ''; // Clear existing rows
+            data.forEach((fund, index) => {
+                const row = document.createElement('tr');
+                const isNew = fund.isNew || false;
+                row.className = `bg-white border-b hover:bg-gray-50 ${isNew ? 'new-row' : ''}`;
+                const subSymbol1Content = isNew 
+                    ? `<a href="#" class="text-blue-600 hover:underline research-link italic">Research required</a>`
+                    : fund.subSymbol1;
+
+                row.innerHTML = `
+                    <td class="px-4 py-2 font-medium text-gray-900">${fund.model || 'N/A'}</td>
+                    <td class="px-4 py-2 font-semibold text-indigo-600">${fund.primarySymbol}</td>
+                    <td class="px-4 py-2">${fund.primaryName}</td>
+                    <td class="px-4 py-2 bg-sky-50">
+                        <input type="date" id="sale-date-${index}" class="sale-date-input block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                    </td>
+                    <td class="px-4 py-2 bg-sky-50">
+                        <input type="number" id="sale-price-${index}" placeholder="$ 0.00" step="0.01" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                    </td>
+                    <td class="px-4 py-2 font-medium text-green-700 bg-green-50" id="window-start-${index}"></td>
+                    <td class="px-4 py-2 font-medium text-red-700 bg-red-50" id="window-end-${index}"></td>
+                    <td class="px-4 py-2 font-semibold text-indigo-600">${subSymbol1Content}</td>
+                    <td class="px-4 py-2"><input type="text" class="w-full p-1 border-gray-200 rounded-md" value="${fund.subName1 || ''}"></td>
+                    <td class="px-4 py-2"><input type="text" class="w-20 p-1 border-gray-200 rounded-md" value="${fund.risk1 || ''}"></td>
+                    <td class="px-4 py-2"><input type="text" class="w-full p-1 border-gray-200 rounded-md" value="${fund.rationale1 || ''}"></td>
+                    <td class="px-4 py-2 font-semibold text-indigo-600"><input type="text" class="w-24 p-1 border-gray-200 rounded-md" value="${fund.subSymbol2 || ''}"></td>
+                    <td class="px-4 py-2"><input type="text" class="w-full p-1 border-gray-200 rounded-md" value="${fund.subName2 || ''}"></td>
+                    <td class="px-4 py-2"><input type="text" class="w-20 p-1 border-gray-200 rounded-md" value="${fund.risk2 || ''}"></td>
+                    <td class="px-4 py-2"><input type="text" class="w-full p-1 border-gray-200 rounded-md" value="${fund.rationale2 || ''}"></td>
+                `;
+                tableBody.appendChild(row);
+            });
+            addEventListeners();
+        }
+
+        function addEventListeners() {
+            document.querySelectorAll('.sale-date-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const index = this.id.split('-')[2];
+                    updateWashSaleWindow(index);
+                });
+            });
+            document.querySelectorAll('.research-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openModal();
+                });
+            });
+        }
+
+        function updateWashSaleWindow(index) {
+            const saleDateInput = document.getElementById(`sale-date-${index}`);
+            const windowStartCell = document.getElementById(`window-start-${index}`);
+            const windowEndCell = document.getElementById(`window-end-${index}`);
+
+            if (saleDateInput.value) {
+                const parts = saleDateInput.value.split('-');
+                const saleDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+
+                const startDate = new Date(saleDate);
+                startDate.setUTCDate(saleDate.getUTCDate() - 30);
+
+                const endDate = new Date(saleDate);
+                endDate.setUTCDate(saleDate.getUTCDate() + 30);
+                
+                const formatDate = (date) => date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+                windowStartCell.textContent = formatDate(startDate);
+                windowEndCell.textContent = formatDate(endDate);
+            } else {
+                windowStartCell.textContent = '';
+                windowEndCell.textContent = '';
+            }
+        }
+
+        // --- CSV Processing Logic ---
+        const processCsvBtn = document.getElementById('process-csv-btn');
+        const fileInput = document.getElementById('csv-file-input');
+        const statusDiv = document.getElementById('upload-status');
+        const clearBtn = document.getElementById('clear-data-btn');
+
+        processCsvBtn.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                statusDiv.textContent = 'Please select a CSV file first.';
+                statusDiv.className = 'mt-3 text-sm text-red-600';
+                return;
+            }
+
+            statusDiv.textContent = 'Processing...';
+            statusDiv.className = 'mt-3 text-sm text-gray-500';
+
+            Papa.parse(file, {
+                skipEmptyLines: true,
+                complete: function(results) {
+                    const headerIndex = results.data.findIndex(row => row[0] === 'Symbol');
+                    if (headerIndex === -1) {
+                        statusDiv.textContent = 'Error: Could not find a header row starting with "Symbol".';
+                        statusDiv.className = 'mt-3 text-sm text-red-600';
+                        return;
+                    }
+
+                    const headers = results.data[headerIndex];
+                    const dataRows = results.data.slice(headerIndex + 1);
+
+                    const jsonData = dataRows.map(row => {
+                        let obj = {};
+                        headers.forEach((header, i) => { obj[header] = row[i]; });
+                        return obj;
+                    }).filter(obj => obj.Symbol);
+
+                    processRealizedGains(jsonData);
+                },
+                error: function(error) {
+                    statusDiv.textContent = `Error parsing file: ${error.message}`;
+                    statusDiv.className = 'mt-3 text-sm text-red-600';
+                }
+            });
+        });
+
+        clearBtn.addEventListener('click', () => {
+            currentFundData = [...originalFundData];
+            populateTable(currentFundData);
+            fileInput.value = '';
+            statusDiv.textContent = 'Cleared uploaded data and reset the table.';
+            statusDiv.className = 'mt-3 text-sm text-green-600';
+        });
+
+        function processRealizedGains(data) {
+            let newFunds = [];
+            let updatedCount = 0;
+            let newCount = 0;
+
+            const cleanCurrency = (text) => {
+                if (typeof text !== 'string') return text;
+                let cleaned = text.replace(/[$,]/g, '');
+                if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+                    cleaned = '-' + cleaned.replace(/[()]/g, '');
+                }
+                return parseFloat(cleaned);
+            };
+
+            data.forEach(row => {
+                const symbol = row.Symbol;
+                const gainLossText = row['Total Realized Gain/Loss'];
+                if (!symbol || !gainLossText) return;
+
+                const gainLoss = cleanCurrency(gainLossText);
+                
+                if (gainLoss < 0) {
+                    const existingFundIndex = currentFundData.findIndex(f => f.primarySymbol === symbol);
+                    
+                    if (existingFundIndex !== -1) {
+                        const saleDate = new Date(row['Sold/Closed']);
+                        const proceeds = cleanCurrency(row['Total Proceeds']);
+                        
+                        setTimeout(() => {
+                           const dateInput = document.getElementById(`sale-date-${existingFundIndex}`);
+                           const priceInput = document.getElementById(`sale-price-${existingFundIndex}`);
+                           if(dateInput) {
+                               dateInput.value = saleDate.toISOString().split('T')[0];
+                               updateWashSaleWindow(existingFundIndex);
+                           }
+                           if(priceInput) priceInput.value = proceeds.toFixed(2);
+                        }, 0);
+                        updatedCount++;
+
+                    } else {
+                        const alreadyInNew = newFunds.some(f => f.primarySymbol === symbol);
+                        if (!alreadyInNew) {
+                            newFunds.push({
+                                isNew: true,
+                                model: 'From Upload',
+                                primarySymbol: symbol,
+                                primaryName: row.Name,
+                                saleDate: new Date(row['Sold/Closed']),
+                                salePrice: cleanCurrency(row['Total Proceeds']),
+                                subSymbol1: '', subName1: '', risk1: '', rationale1: '',
+                                subSymbol2: '', subName2: '', risk2: '', rationale2: ''
+                            });
+                            newCount++;
+                        }
+                    }
+                }
+            });
+
+            if (newFunds.length > 0) {
+                currentFundData = [...newFunds, ...currentFundData];
+                populateTable(currentFundData);
+                 setTimeout(() => {
+                    newFunds.forEach((fund, index) => {
+                        const dateInput = document.getElementById(`sale-date-${index}`);
+                        const priceInput = document.getElementById(`sale-price-${index}`);
+                        if(dateInput) {
+                            dateInput.value = fund.saleDate.toISOString().split('T')[0];
+                            updateWashSaleWindow(index);
+                        }
+                        if(priceInput) priceInput.value = fund.salePrice.toFixed(2);
+                    });
+                }, 0);
+            }
+            
+            statusDiv.textContent = `Processing complete. Updated ${updatedCount} existing securities and added ${newCount} new securities with losses.`;
+            statusDiv.className = 'mt-3 text-sm text-green-600';
+        }
+
+        // --- Modal Logic ---
+        const modal = document.getElementById('research-modal');
+        const overlay = document.getElementById('modal-overlay');
+        const container = document.getElementById('modal-container');
+        const openBtn = document.getElementById('research-guide-btn');
+        const closeBtn = document.getElementById('close-modal-btn');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                container.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            overlay.classList.add('opacity-0');
+            container.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }, 300);
+        }
+
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', closeModal);
+
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTable(currentFundData);
+        });
+    </script>
+
+</body>
+</html>
