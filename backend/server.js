@@ -228,6 +228,16 @@ try {
   });
 }
 
+// Serve static files from the src directory
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../src')));
+
+// Serve static files from the frontend build directory (if it exists)
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// Serve static files from the dist directory (if it exists)
+app.use(express.static(path.join(__dirname, '../dist')));
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
