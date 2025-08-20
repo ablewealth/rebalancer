@@ -107,3 +107,6 @@ logs
 # Test files
 test-*.json
 *.test.json
+# Local Netlify folder
+.netlify
+.vercel
