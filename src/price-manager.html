@@ -264,11 +264,7 @@
                         Update from Google Sheets
                     </button>
                     <input type="file" id="priceFile" accept=".csv"
-                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        title="Upload CSV file with Symbol and Price columns. Scan models first!">
-                    <div class="text-xs text-gray-600 mt-1">
-                        📋 CSV format: Symbol, Price columns required. <strong>Scan models first!</strong>
-                    </div>
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     <button id="exportPricesBtn"
                         class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
@@ -398,28 +394,6 @@
     </div>
 
     <script>
-        // Global error handling
-        window.addEventListener('error', function(e) {
-            console.error('Global JavaScript error:', e.error, e.message, e.filename, e.lineno);
-            try {
-                showNotification('JavaScript error detected - check console for details', 'error');
-            } catch (notifError) {
-                alert('JavaScript error: ' + e.message);
-            }
-        });
-
-        window.addEventListener('unhandledrejection', function(e) {
-            console.error('Unhandled promise rejection:', e.reason);
-            try {
-                showNotification('Promise rejection error - check console for details', 'error');
-            } catch (notifError) {
-                alert('Promise error: ' + e.reason);
-            }
-        });
-
-        // Initialize with debug logging
-        console.log('🚀 Price Manager starting initialization...');
-
         // --- DOM Elements ---
         const scanModelsBtn = document.getElementById('scanModelsBtn');
         const updateFromSheetsBtn = document.getElementById('updateFromSheetsBtn');
@@ -431,14 +405,6 @@
         const emptyState = document.getElementById('emptyState');
         const symbolCount = document.getElementById('symbolCount');
         const searchInput = document.getElementById('searchInput');
-
-        // Debug: Check if critical elements exist
-        console.log('📋 DOM Elements check:', {
-            scanModelsBtn: !!scanModelsBtn,
-            priceFile: !!priceFile,
-            priceTable: !!priceTable,
-            updateFromSheetsBtn: !!updateFromSheetsBtn
-        });
         
         // Google Sheets Modal Elements
         const googleSheetsModal = document.getElementById('googleSheetsModal');
@@ -451,39 +417,25 @@
         let modelPortfolios = {};
 
         // --- Event Listeners ---
-        try {
-            scanModelsBtn.addEventListener('click', scanAllModels);
-            updateFromSheetsBtn.addEventListener('click', showGoogleSheetsModal);
-            
-            // File input with error protection
-            if (priceFile) {
-                priceFile.addEventListener('change', handlePriceFileUpload);
-            } else {
-                console.warn('Price file input not found');
+        scanModelsBtn.addEventListener('click', scanAllModels);
+        updateFromSheetsBtn.addEventListener('click', showGoogleSheetsModal);
+        priceFile.addEventListener('change', handlePriceFileUpload);
+        exportPricesBtn.addEventListener('click', exportPricesCSV);
+        saveChangesBtn.addEventListener('click', saveChanges);
+        updateModelsBtn.addEventListener('click', updateAllModels);
+        searchInput.addEventListener('input', filterSymbols);
+        priceTable.addEventListener('input', handlePriceEdit);
+        
+        // Google Sheets Modal Event Listeners
+        cancelGoogleSheets.addEventListener('click', hideGoogleSheetsModal);
+        importGoogleSheets.addEventListener('click', updateFromGoogleSheets);
+        
+        // Close modal when clicking outside
+        googleSheetsModal.addEventListener('click', (e) => {
+            if (e.target === googleSheetsModal) {
+                hideGoogleSheetsModal();
             }
-            
-            exportPricesBtn.addEventListener('click', exportPricesCSV);
-            saveChangesBtn.addEventListener('click', saveChanges);
-            updateModelsBtn.addEventListener('click', updateAllModels);
-            searchInput.addEventListener('input', filterSymbols);
-            priceTable.addEventListener('input', handlePriceEdit);
-            
-            // Google Sheets Modal Event Listeners
-            cancelGoogleSheets.addEventListener('click', hideGoogleSheetsModal);
-            importGoogleSheets.addEventListener('click', updateFromGoogleSheets);
-            
-            // Close modal when clicking outside
-            googleSheetsModal.addEventListener('click', (e) => {
-                if (e.target === googleSheetsModal) {
-                    hideGoogleSheetsModal();
-                }
-            });
-            
-            console.log('✅ All event listeners initialized successfully');
-        } catch (error) {
-            console.error('❌ Error setting up event listeners:', error);
-            showNotification('Error initializing page - some features may not work', 'error');
-        }
+        });
 
         // --- Functions ---
         async function scanAllModels() {
@@ -777,133 +729,52 @@
             }
         }
 
-        // Debug function - can be called from browser console
-        window.debugPriceManager = function() {
-            console.log('🔍 Price Manager Debug Info:');
-            console.log('- symbolPrices size:', symbolPrices ? symbolPrices.size : 'undefined');
-            console.log('- priceFile element:', priceFile);
-            console.log('- priceFile listeners:', priceFile ? 'attached' : 'none');
-            console.log('- Event handler function:', typeof handlePriceFileUpload);
-            
-            if (priceFile) {
-                console.log('- File input attributes:', {
-                    accept: priceFile.accept,
-                    disabled: priceFile.disabled,
-                    multiple: priceFile.multiple
-                });
-            }
-            
-            return {
-                symbolPricesSize: symbolPrices ? symbolPrices.size : 0,
-                fileInputReady: !!priceFile,
-                handlerReady: typeof handlePriceFileUpload === 'function'
-            };
-        };
-
-        // Test file input function
-        window.testFileInput = function() {
-            console.log('🧪 Testing file input...');
-            if (!priceFile) {
-                console.error('❌ File input not found!');
-                return false;
-            }
-            
-            // Simulate a click event
-            try {
-                priceFile.click();
-                console.log('✅ File input click simulated successfully');
-                return true;
-            } catch (error) {
-                console.error('❌ Error clicking file input:', error);
-                return false;
-            }
-        };
-
         function handlePriceFileUpload(event) {
-            console.log('🔥 handlePriceFileUpload called', event);
             const file = event.target.files[0];
             if (!file) return;
-
-            // Check if symbolPrices is initialized
-            if (!symbolPrices || symbolPrices.size === 0) {
-                showNotification('Please scan models first before uploading price data', 'error');
-                // Reset the file input
-                event.target.value = '';
-                return;
-            }
 
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const csvText = e.target.result;
-                    if (!csvText || csvText.trim() === '') {
-                        throw new Error('File is empty');
-                    }
-
                     const lines = csvText.trim().split('\n');
 
                     if (lines.length < 2) {
-                        throw new Error('CSV file must contain header row and at least one data row');
+                        throw new Error('CSV file is empty or invalid');
                     }
 
                     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-                    console.log('CSV Headers:', headers);
-                    
                     const symbolIndex = headers.findIndex(h => h.includes('symbol'));
                     const nameIndex = headers.findIndex(h => h.includes('name'));
                     const priceIndex = headers.findIndex(h => h.includes('price'));
 
                     if (symbolIndex === -1 || priceIndex === -1) {
-                        throw new Error('CSV must contain Symbol and Price columns. Found headers: ' + headers.join(', '));
+                        throw new Error('CSV must contain Symbol and Price columns');
                     }
 
                     let updatedCount = 0;
-                    let errorCount = 0;
 
                     for (let i = 1; i < lines.length; i++) {
-                        try {
-                            const line = lines[i].trim();
-                            if (!line) continue; // Skip empty lines
-                            
-                            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
-                            const symbol = values[symbolIndex] ? values[symbolIndex].toUpperCase() : '';
-                            const name = nameIndex >= 0 ? values[nameIndex] : '';
-                            const priceText = values[priceIndex] || '0';
-                            const price = parseFloat(priceText.replace(/[$\s,]/g, '')) || 0;
+                        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                        const symbol = values[symbolIndex];
+                        const name = nameIndex >= 0 ? values[nameIndex] : '';
+                        const price = parseFloat(values[priceIndex].replace(/[$\s,]/g, '')) || 0;
 
-                            if (symbol && symbolPrices.has(symbol)) {
-                                const symbolData = symbolPrices.get(symbol);
-                                symbolData.price = price;
-                                if (name) symbolData.name = name;
-                                symbolData.lastUpdated = new Date().toISOString();
-                                updatedCount++;
-                            }
-                        } catch (lineError) {
-                            console.warn(`Error processing line ${i + 1}:`, lineError);
-                            errorCount++;
+                        if (symbol && symbolPrices.has(symbol)) {
+                            const symbolData = symbolPrices.get(symbol);
+                            symbolData.price = price;
+                            if (name) symbolData.name = name;
+                            symbolData.lastUpdated = new Date().toISOString();
+                            updatedCount++;
                         }
                     }
 
                     renderPriceTable();
-                    
-                    let message = `Updated prices for ${updatedCount} symbols`;
-                    if (errorCount > 0) {
-                        message += ` (${errorCount} errors)`;
-                    }
-                    
-                    showNotification(message, updatedCount > 0 ? 'success' : 'warning');
-                    
+                    showNotification(`Updated prices for ${updatedCount} symbols`, 'success');
                 } catch (error) {
-                    console.error('CSV parsing error:', error);
                     showNotification(`Error parsing CSV: ${error.message}`, 'error');
                 }
             };
-
-            reader.onerror = (error) => {
-                console.error('File reading error:', error);
-                showNotification('Error reading file', 'error');
-            };
-
             reader.readAsText(file);
         }
 

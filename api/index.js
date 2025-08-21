@@ -1,88 +1,75 @@
-// Vercel Serverless Function for Tax Harvesting Backend
-const express = require('express');
-const cors = require('cors');
+// Vercel API Handler for Tax Harvesting Backend
+// This creates a serverless function from the Express app
 
-// Create Express app
-const app = express();
+const path = require('path');
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Set up environment for backend
+process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    service: 'tax-harvesting-backend',
-    timestamp: new Date().toISOString(),
-    environment: 'production'
+// Import the express app
+const createApp = () => {
+  const express = require('express');
+  const cors = require('cors');
+  const helmet = require('helmet');
+  const morgan = require('morgan');
+  
+  const app = express();
+  
+  // Middleware
+  app.use(helmet());
+  app.use(cors({
+    origin: ['https://awm-rebalancer.netlify.app', 'http://localhost:3000'],
+    credentials: true
+  }));
+  app.use(morgan('combined'));
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+  
+  // Basic routes
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'Tax Harvesting Backend API',
+      version: '2.0.0',
+      status: 'running',
+      timestamp: new Date().toISOString()
+    });
   });
-});
-
-// API info endpoint
-app.get('/api', (req, res) => {
-  res.json({
-    message: 'Tax Harvesting Backend API',
-    version: '2.0.0',
-    status: 'active',
-    features: {
-      portfolio_analytics: true,
-      tax_calculations: true,
-      wash_sale_detection: true,
-      neon_database: true
-    },
-    endpoints: {
-      health: '/api/health',
-      test: '/api/test'
-    }
+  
+  app.get('/health', (req, res) => {
+    res.json({
+      status: 'healthy',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString()
+    });
   });
-});
+  
+  // Try to load the full backend routes
+  try {
+    const devRoutes = require('../backend/routes/dev');
+    app.use('/api', devRoutes);
+    
+    const marketDataRoutes = require('../backend/routes/marketData');
+    app.use('/api/market-data', marketDataRoutes);
+    
+    const advancedTaxRoutes = require('../backend/routes/advancedTaxStrategies');
+    app.use('/api/advanced-tax', advancedTaxRoutes);
+    
+    console.log('✅ Backend routes loaded successfully');
+  } catch (error) {
+    console.warn('⚠️ Could not load all backend routes:', error.message);
+    
+    // Fallback API
+    app.get('/api', (req, res) => {
+      res.json({
+        message: 'Tax Harvesting API (Serverless)',
+        status: 'partial',
+        note: 'Some routes may not be available'
+      });
+    });
+  }
+  
+  return app;
+};
 
-// Test endpoint
-app.get('/api/test', (req, res) => {
-  res.json({
-    message: 'API test successful',
-    timestamp: new Date().toISOString(),
-    query: req.query,
-    headers: {
-      'user-agent': req.get('User-Agent'),
-      'host': req.get('Host')
-    }
-  });
-});
-
-// Mock portfolio endpoint for testing
-app.get('/api/portfolios', (req, res) => {
-  res.json({
-    message: 'Portfolio data endpoint',
-    portfolios: [
-      {
-        id: 1,
-        name: 'Sample Portfolio',
-        total_value: 100000,
-        status: 'active'
-      }
-    ]
-  });
-});
-
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    error: 'API endpoint not found',
-    path: req.path,
-    available_endpoints: ['/api', '/api/health', '/api/test', '/api/portfolios']
-  });
-});
-
-// Root handler
-app.use('*', (req, res) => {
-  res.json({
-    message: 'Tax Harvesting Backend Serverless Function',
-    note: 'Use /api/* routes for API access'
-  });
-});
-
-// Export for Vercel
-module.exports = app;
+// Export for Vercel serverless
+module.exports = createApp();
