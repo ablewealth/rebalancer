@@ -264,7 +264,11 @@
                         Update from Google Sheets
                     </button>
                     <input type="file" id="priceFile" accept=".csv"
-                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        title="Upload CSV file with Symbol and Price columns. Scan models first!">
+                    <div class="text-xs text-gray-600 mt-1">
+                        📋 CSV format: Symbol, Price columns required. <strong>Scan models first!</strong>
+                    </div>
                     <button id="exportPricesBtn"
                         class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-2" viewBox="0 0 20 20"
@@ -394,6 +398,28 @@
     </div>
 
     <script>
+        // Global error handling
+        window.addEventListener('error', function(e) {
+            console.error('Global JavaScript error:', e.error, e.message, e.filename, e.lineno);
+            try {
+                showNotification('JavaScript error detected - check console for details', 'error');
+            } catch (notifError) {
+                alert('JavaScript error: ' + e.message);
+            }
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+            try {
+                showNotification('Promise rejection error - check console for details', 'error');
+            } catch (notifError) {
+                alert('Promise error: ' + e.reason);
+            }
+        });
+
+        // Initialize with debug logging
+        console.log('🚀 Price Manager starting initialization...');
+
         // --- DOM Elements ---
         const scanModelsBtn = document.getElementById('scanModelsBtn');
         const updateFromSheetsBtn = document.getElementById('updateFromSheetsBtn');
@@ -405,6 +431,14 @@
         const emptyState = document.getElementById('emptyState');
         const symbolCount = document.getElementById('symbolCount');
         const searchInput = document.getElementById('searchInput');
+
+        // Debug: Check if critical elements exist
+        console.log('📋 DOM Elements check:', {
+            scanModelsBtn: !!scanModelsBtn,
+            priceFile: !!priceFile,
+            priceTable: !!priceTable,
+            updateFromSheetsBtn: !!updateFromSheetsBtn
+        });
         
         // Google Sheets Modal Elements
         const googleSheetsModal = document.getElementById('googleSheetsModal');
@@ -743,7 +777,50 @@
             }
         }
 
+        // Debug function - can be called from browser console
+        window.debugPriceManager = function() {
+            console.log('🔍 Price Manager Debug Info:');
+            console.log('- symbolPrices size:', symbolPrices ? symbolPrices.size : 'undefined');
+            console.log('- priceFile element:', priceFile);
+            console.log('- priceFile listeners:', priceFile ? 'attached' : 'none');
+            console.log('- Event handler function:', typeof handlePriceFileUpload);
+            
+            if (priceFile) {
+                console.log('- File input attributes:', {
+                    accept: priceFile.accept,
+                    disabled: priceFile.disabled,
+                    multiple: priceFile.multiple
+                });
+            }
+            
+            return {
+                symbolPricesSize: symbolPrices ? symbolPrices.size : 0,
+                fileInputReady: !!priceFile,
+                handlerReady: typeof handlePriceFileUpload === 'function'
+            };
+        };
+
+        // Test file input function
+        window.testFileInput = function() {
+            console.log('🧪 Testing file input...');
+            if (!priceFile) {
+                console.error('❌ File input not found!');
+                return false;
+            }
+            
+            // Simulate a click event
+            try {
+                priceFile.click();
+                console.log('✅ File input click simulated successfully');
+                return true;
+            } catch (error) {
+                console.error('❌ Error clicking file input:', error);
+                return false;
+            }
+        };
+
         function handlePriceFileUpload(event) {
+            console.log('🔥 handlePriceFileUpload called', event);
             const file = event.target.files[0];
             if (!file) return;
 
