@@ -417,25 +417,39 @@
         let modelPortfolios = {};
 
         // --- Event Listeners ---
-        scanModelsBtn.addEventListener('click', scanAllModels);
-        updateFromSheetsBtn.addEventListener('click', showGoogleSheetsModal);
-        priceFile.addEventListener('change', handlePriceFileUpload);
-        exportPricesBtn.addEventListener('click', exportPricesCSV);
-        saveChangesBtn.addEventListener('click', saveChanges);
-        updateModelsBtn.addEventListener('click', updateAllModels);
-        searchInput.addEventListener('input', filterSymbols);
-        priceTable.addEventListener('input', handlePriceEdit);
-        
-        // Google Sheets Modal Event Listeners
-        cancelGoogleSheets.addEventListener('click', hideGoogleSheetsModal);
-        importGoogleSheets.addEventListener('click', updateFromGoogleSheets);
-        
-        // Close modal when clicking outside
-        googleSheetsModal.addEventListener('click', (e) => {
-            if (e.target === googleSheetsModal) {
-                hideGoogleSheetsModal();
+        try {
+            scanModelsBtn.addEventListener('click', scanAllModels);
+            updateFromSheetsBtn.addEventListener('click', showGoogleSheetsModal);
+            
+            // File input with error protection
+            if (priceFile) {
+                priceFile.addEventListener('change', handlePriceFileUpload);
+            } else {
+                console.warn('Price file input not found');
             }
-        });
+            
+            exportPricesBtn.addEventListener('click', exportPricesCSV);
+            saveChangesBtn.addEventListener('click', saveChanges);
+            updateModelsBtn.addEventListener('click', updateAllModels);
+            searchInput.addEventListener('input', filterSymbols);
+            priceTable.addEventListener('input', handlePriceEdit);
+            
+            // Google Sheets Modal Event Listeners
+            cancelGoogleSheets.addEventListener('click', hideGoogleSheetsModal);
+            importGoogleSheets.addEventListener('click', updateFromGoogleSheets);
+            
+            // Close modal when clicking outside
+            googleSheetsModal.addEventListener('click', (e) => {
+                if (e.target === googleSheetsModal) {
+                    hideGoogleSheetsModal();
+                }
+            });
+            
+            console.log('✅ All event listeners initialized successfully');
+        } catch (error) {
+            console.error('❌ Error setting up event listeners:', error);
+            showNotification('Error initializing page - some features may not work', 'error');
+        }
 
         // --- Functions ---
         async function scanAllModels() {
@@ -733,48 +747,86 @@
             const file = event.target.files[0];
             if (!file) return;
 
+            // Check if symbolPrices is initialized
+            if (!symbolPrices || symbolPrices.size === 0) {
+                showNotification('Please scan models first before uploading price data', 'error');
+                // Reset the file input
+                event.target.value = '';
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const csvText = e.target.result;
+                    if (!csvText || csvText.trim() === '') {
+                        throw new Error('File is empty');
+                    }
+
                     const lines = csvText.trim().split('\n');
 
                     if (lines.length < 2) {
-                        throw new Error('CSV file is empty or invalid');
+                        throw new Error('CSV file must contain header row and at least one data row');
                     }
 
                     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                    console.log('CSV Headers:', headers);
+                    
                     const symbolIndex = headers.findIndex(h => h.includes('symbol'));
                     const nameIndex = headers.findIndex(h => h.includes('name'));
                     const priceIndex = headers.findIndex(h => h.includes('price'));
 
                     if (symbolIndex === -1 || priceIndex === -1) {
-                        throw new Error('CSV must contain Symbol and Price columns');
+                        throw new Error('CSV must contain Symbol and Price columns. Found headers: ' + headers.join(', '));
                     }
 
                     let updatedCount = 0;
+                    let errorCount = 0;
 
                     for (let i = 1; i < lines.length; i++) {
-                        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-                        const symbol = values[symbolIndex];
-                        const name = nameIndex >= 0 ? values[nameIndex] : '';
-                        const price = parseFloat(values[priceIndex].replace(/[$\s,]/g, '')) || 0;
+                        try {
+                            const line = lines[i].trim();
+                            if (!line) continue; // Skip empty lines
+                            
+                            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+                            const symbol = values[symbolIndex] ? values[symbolIndex].toUpperCase() : '';
+                            const name = nameIndex >= 0 ? values[nameIndex] : '';
+                            const priceText = values[priceIndex] || '0';
+                            const price = parseFloat(priceText.replace(/[$\s,]/g, '')) || 0;
 
-                        if (symbol && symbolPrices.has(symbol)) {
-                            const symbolData = symbolPrices.get(symbol);
-                            symbolData.price = price;
-                            if (name) symbolData.name = name;
-                            symbolData.lastUpdated = new Date().toISOString();
-                            updatedCount++;
+                            if (symbol && symbolPrices.has(symbol)) {
+                                const symbolData = symbolPrices.get(symbol);
+                                symbolData.price = price;
+                                if (name) symbolData.name = name;
+                                symbolData.lastUpdated = new Date().toISOString();
+                                updatedCount++;
+                            }
+                        } catch (lineError) {
+                            console.warn(`Error processing line ${i + 1}:`, lineError);
+                            errorCount++;
                         }
                     }
 
                     renderPriceTable();
-                    showNotification(`Updated prices for ${updatedCount} symbols`, 'success');
+                    
+                    let message = `Updated prices for ${updatedCount} symbols`;
+                    if (errorCount > 0) {
+                        message += ` (${errorCount} errors)`;
+                    }
+                    
+                    showNotification(message, updatedCount > 0 ? 'success' : 'warning');
+                    
                 } catch (error) {
+                    console.error('CSV parsing error:', error);
                     showNotification(`Error parsing CSV: ${error.message}`, 'error');
                 }
             };
+
+            reader.onerror = (error) => {
+                console.error('File reading error:', error);
+                showNotification('Error reading file', 'error');
+            };
+
             reader.readAsText(file);
         }
 
