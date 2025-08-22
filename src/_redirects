@@ -1,0 +1,5 @@
+# API redirects for Neon backend
+/api/*  https://tax-harvesting-backend-4soumbr3r-able-wealth-projects.vercel.app/api/:splat  200
+
+# SPA routing
+/*    /index.html   200
